@@ -1,0 +1,24 @@
+{
+  "name": "views",
+  "version": "1",
+  "private": true,
+  "main": "server/index.js",
+  "scripts": {
+    "dev":"scrat release -wd local2pms"
+  },
+  "dependencies": {
+    "express": "4.6.1",
+    "compression": "1.0.8",
+    "errorhandler": "1.1.1",
+    "http-proxy": "1.1.5"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-jsdoc": "^1.0.0",
+    "grunt-jsdoc-ng": "0.0.3",
+    "load-grunt-tasks": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  }
+}

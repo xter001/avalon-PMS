@@ -1,0 +1,17 @@
+<div id="order-operate-popups" class="tomasky-ui-popups check-in ms-controller" ms-controller="vm_order_operate">
+    <div class="ui-popups-dialog">
+    <em class="close" ms-click="reset()" data-dismiss="popups">X</em>
+    <div class="ui-popups-head" ms-if="!isBeforeCheckOut">
+        <h3 class="ui-popups-title">{{text.title}}</h3>
+    </div>
+        <div class="ui-popups-head ui-popups-head-red" ms-if="isBeforeCheckOut">
+            <h3 class="ui-popups-title">提前退房</h3>
+        </div>
+    <div class="ui-popups-body tomasky-hidden-x">
+        <div id="order-info-input-container" class="container order-info-input"></div>
+    </div>
+    <div id="order-operate-popups-foot" class="ui-popups-foot" ms-if="buttonHandler.visible">
+        <button ms-repeat="buttonHandler.items" class="btn btndefault" ms-class="{{$index == 0 ? 'enter':'cancel'}}" data-ui="popups" ms-click="buttonHandler.btnClick(el.fn)">{{el.text}}</button>
+    </div>
+</div>
+</div>

@@ -1,0 +1,125 @@
+var CommonUtil = require('../../../common/js/utils/common-util.js');
+var vm_checkIn_new = avalon.define({
+    $id : 'vm_checkIn_new',
+    datas : {
+        from : '',
+        to : '',
+        input : '',
+        searchType:'2'
+    },
+    tempTime : {
+        from : '',
+        to : ''
+    },
+    datasList : [],
+
+    init : function () {
+        var vm = vm_checkIn_new
+        vm.datas.to = tmsky.date.format(tmsky.date.today(), 'yyyy-MM-dd')
+        vm.tempTime.to = tmsky.date.format(tmsky.date.today(), 'yyyy-MM-dd')
+        vm.datas.from = tmsky.date.format(tmsky.date.yesterday(), 'yyyy-MM-dd')
+        vm.tempTime.from = tmsky.date.format(tmsky.date.yesterday(), 'yyyy-MM-dd')
+        vm.getOrderPersons(1)
+    },
+
+    //    格式化时间：如（16-09-08）
+    formatTime : function (time, hhmmss) {
+        var t = ''
+        if (time == '' || time == null) {
+            return '请选择时间'
+        }
+        if (hhmmss) {
+            t = tmsky.date.format(time, 'yy-MM-dd hh:mm')
+        } else {
+            t = tmsky.date.format(time, 'yy-MM-dd')
+        }
+        return t
+    },
+    openTimeBox : function () {
+        var vm = vm_checkIn_new
+        $(this).next().show();
+        CommonUtil.bindingDatepickerByElement($('#c_checkin_new_from'), true, "#c_checkin_new_from", "#c_checkin_new_to", true);
+        CommonUtil.bindingDatepickerByElement($('#c_checkin_new_to'), false, "#c_checkin_new_from", "#c_checkin_new_to", true);
+    },
+    totalNum:'',
+    getOrderPersons : function (pageNo) {
+        var vm = vm_checkIn_new
+        tmsky.ui.dialog.loading()
+        var url = '/person/getOrderPersonsWithPage?temp=' + new Date().getTime(),
+            datas = {
+                pageNo : pageNo,
+                input : vm.datas.input,
+                from : vm.tempTime.from,
+                to : vm.tempTime.to,
+                searchDateType:vm.datas.searchType
+            }
+
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.datasList = rs.page.result
+                vm.totalNum=rs.page.totalCount
+                avalon.nextTick(function () {
+                    tmsky.getVm('vm_customers').renderPage('checkin_page_new', rs.page, function () {
+                        var pageInfo = tmsky.ui.page.getParams("checkin_page_new")
+                        vm.getOrderPersons(pageInfo.pageNo)
+                    })
+                })
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    sureTime : function () {
+        var vm = vm_checkIn_new
+        var defTime = parseInt(tmsky.date.diffDays(vm.tempTime.from, vm.tempTime.to))
+        if (vm.datas.from == vm.tempTime.from && vm.datas.to == vm.tempTime.to) {
+            $(this).parent().hide()
+            return
+        }
+        if (defTime < 0) {
+            tmsky.ui.dialog.errorTips('开始日期不能大于结束日期，请重新选择！')
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.datas.from = vm.tempTime.from
+            vm.datas.to = vm.tempTime.to
+            vm.getOrderPersons(1)
+            $(this).parent().hide()
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的财务信息！')
+        }
+    },
+//    导出excel
+    urls : {
+        exportExcel : '/person/exportOrderPersons'
+    },
+    exportExcel : function () {
+        var vm = vm_checkIn_new
+        var datas = {
+            input : vm.datas.input,
+            from : vm.datas.from,
+            to : vm.datas.to,
+            searchDateType:vm.datas.searchType
+        }
+        vm.toExportExcel(datas)
+    },
+    toExportExcel : function (data) {
+        /*$.post(vm_checkIn_new.urls.exportExcel, $.param(data, true)).done(function (rs) {
+            //tmsky.ui.dialog.alert(rs.message)
+        });*/
+        var loadUrl = vm_checkIn_new.urls.exportExcel
+          var $form = $('<form></form>').attr({
+            'action' : loadUrl,
+            'method' : 'post'
+        });
+        for (prop in data) {
+            if (data.hasOwnProperty(prop)) {
+                var $input = $('<input />')
+                $input.attr('name', prop).attr('value', data[prop]).appendTo($form);
+            }
+        }
+        $form.hide().appendTo($("body")).submit();
+      //  tmsky.ui.dialog.loading.close();
+    },
+})

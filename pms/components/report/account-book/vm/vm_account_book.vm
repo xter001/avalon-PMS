@@ -1,0 +1,145 @@
+var vm_account_book = avalon.define({
+    $id : 'vm_account_book',
+    page:{pageNo:1,pageSize:15,totalPages:-1,totalCount:-1},
+    data:{listType: 0, fcItem: '', acItem: '', pcname: '', operateUser: ''},
+    listType:{0:'类型',1:'房费',2:'押金',3:'商品',4:'账本'},
+    total:{fee: '', income: 0, payout: 0},
+    urls:{
+        getFinanceRecords : '/innBook/getNewAccounts',
+        exportExcel : '/innBook/exportNewExcel',
+    },
+    accountBooks: [],
+    books: [],
+    orderInfo: {customerFromName:'',orderNo:'',roomNos:'',checkins:'',checkouts:'',orderFee:'',paidAmount:'',paidPayment:'',name:'',contact:'',updatedAt:'',updatedUser:''},
+    init : function () {
+        vm_account_book.data.accountDate = tmsky.date.format(new Date(), 'yyyy-MM-dd hh:mm:ss');
+        vm_account_book.data.from = tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00'
+        vm_account_book.data.to = tmsky.date.addDays(new Date(), 1, 'yyyy-MM-dd')+ ' 00:00'
+        vm_account_book.data.sortType = 'accountTime desc,id desc'
+        $("#account_from").datetimepicker({
+            changeMonth: true,
+            maxDate : $("#account_to").val(),
+            onSelect : function(selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(selectedDate, vm_account_book.data.to))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#account_to").datetimepicker("setDate", tmsky.date.addDays(selectedDate, 30));
+                }
+                vm_account_book.data.to = tmsky.date.format(vm_account_book.data.to, 'yyyy-MM-dd hh:mm')
+                vm_account_book.data.detailDate = ''
+                vm_account_book.getFinanceRecords(1)
+            }
+        })
+        $("#account_to").datetimepicker({
+            changeMonth: true,
+            minDate : $("#account_from").val(),
+            onSelect : function(selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(vm_account_book.data.from, selectedDate))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#account_from").datetimepicker("setDate", tmsky.date.addDays(selectedDate, -30));
+                }
+                vm_account_book.data.from = tmsky.date.format(vm_account_book.data.from, 'yyyy-MM-dd hh:mm')
+                vm_account_book.data.detailDate = ''
+                vm_account_book.getFinanceRecords(1)
+            }
+        })
+        $("#account_time,#account_book_list_date").datetimepicker({
+        });
+        return this
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('account_book_div'))
+        return this
+    },
+    changeItem : function (event) {
+        var $select = $(this)
+        if($select.val() == ''){
+            vm_account_book.data.fcItem = ''
+            vm_account_book.data.acItem = ''
+            vm_account_book.getFinanceRecords(1)
+            return
+        }
+        var $option = $select.find('option[value='+$select.val()+']')
+        var type = $option.attr('tag')
+        if(type == 'ac_item'){
+            vm_account_book.data.acItem = $option.val()
+            vm_account_book.data.fcItem = -9999
+        }else if(type == 'fi_item'){
+            vm_account_book.data.acItem = -9999
+            vm_account_book.data.fcItem = $option.val()
+        }
+        vm_account_book.getFinanceRecords(1)
+    },
+    getFinanceRecords : function (pageNo, type) {
+        if(vm_account_book.page.totalPages > 0 && vm_account_book.page.totalPages < pageNo){
+            return;
+        }
+        var data = {
+            listType : vm_account_book.data.listType,
+            operateUser : vm_account_book.data.operateUser,
+            pcname : vm_account_book.data.pcname,
+            acItem : vm_account_book.data.acItem,
+            fcItem : vm_account_book.data.fcItem,
+            from : vm_account_book.data.from,
+            to : vm_account_book.data.to,
+            pageNo : pageNo || vm_account_book.page.pageNo
+        };
+        if(type == 'export'){
+            vm_account_book.exportExcel(data)
+        }else{
+            vm_account_book.ajaxGetRecords(data)
+        }
+    },
+    exportExcel : function (data) {
+        tmsky.ui.dialog.loading();
+        var loadUrl = vm_account_book.urls.exportExcel
+        var $form = $('<form></form>').attr({
+            'action' : loadUrl,
+            'method' : 'POST'
+        });
+        for (prop in data) {
+            if (data.hasOwnProperty(prop)) {
+                var $input = $('<input />')
+                $input.attr('name', prop).attr('value', data[prop]).appendTo($form);
+            }
+        }
+        $form.hide().appendTo($("body")).submit();
+        tmsky.ui.dialog.loading.close();
+    },
+    ajaxGetRecords : function (data) {
+        tmsky.ui.dialog.loading();
+        var url = vm_account_book.urls.getFinanceRecords  + tmsky.util.generateUrlEndStr()
+        $.post(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                vm_account_book.books = vm_account_book.filterBook(rs.page.result)
+                vm_account_book.total.income = rs.totalIncome
+                vm_account_book.total.payout = rs.totalPayout
+                var page = {};
+                page.totalPages = rs.page.totalPages;
+                page.pageNo = rs.page.pageNo;
+                page.pageSize = 20;
+                tmsky.getVm('vm_report_main').initPage('account_book_page', page, function(){
+                    var pageInfo = tmsky.ui.page.getParams("account_book_page")
+                    vm_account_book.page.pageNo = pageInfo.pageNo
+                    vm_account_book.getFinanceRecords(pageInfo.pageNo)
+                });
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    filterBook : function (books) {
+        var list = []
+        if(books == undefined || books.length == 0){
+            return list
+        }
+        for (var i = 0; i < books.length; i++) {
+            var o = books[i]
+            o.itemName = (o.recordType == 1)?REPORT_CONST.FINANCE_ITEM[o.item]:o.item
+            o.cashIn = (o.cashIn)?tmsky.number.fixFloat(o.cashIn, 2, ''):''
+            o.cashOut = (o.cashOut)?tmsky.number.fixFloat(o.cashOut, 2, ''):''
+        }
+        return books
+    }
+})

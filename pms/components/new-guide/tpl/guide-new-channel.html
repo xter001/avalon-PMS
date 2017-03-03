@@ -1,0 +1,40 @@
+<div ms-controller="vm_new_channel" class="ms-controller">
+    <div class="guide-top-cover">
+    </div>
+    <div class="guide-left-cover">
+    </div>
+    <div id="GuideaddChannel">
+        <div class="border-orange add-channel-border" ms-visible="false" >
+            <div class="guide-add-channel box-tips-guide">
+                <div class="triangle-up-bg triangle-up-channel"></div>
+                <div class="triangle-up-border triangle-up-white-channel"></div>
+                <h2 class="guide-h2">试着添加一个渠道</h2>
+                <p class="guide-p guide-p-channel">您可以建“自来客”“熟人介绍”等渠道。</p>
+                <p class="guide-p guide-p-channel">建立渠道后，将鼠标移动到渠道上方即可在出现的色板中设置渠道颜色。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="box-tips-guide channel" ms-if="step.two">
+        <div class="triangle-up-bg triangle-up-channel"></div>
+        <div class="triangle-up-border triangle-up-white-channel"></div>
+        <p class="guide-p">如果您需要进行<span>“去哪儿”“携程”“艺龙”“信用住”</span>的渠道直连，请申请开通正式版番茄来了！</p>
+        <div style="text-align:center;">
+            <button class="guide-btn-orange" ms-click="nextStep()">下一步</button>
+        </div>
+    </div>
+    <div class="tomasky-ui-popups" style="dispaly:none;" id="finishinnCreate">
+        <div class="ui-popups-dialog finish-inn-dialoag">
+            <div class="ui-popups-body finish-inn-create">
+            </div>
+            <div class="ui-popups-foot">
+                <button class="go-mana-house" name="confirm_btn" ms-click="intoHouse()">去学习管理房态</button>
+                <button class="old-user" name="confirm_btn" ms-click="finishGuide()" id="finishGuide">我是老用户不需要学习
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+<link rel="stylesheet" href="../css/guide-new-channel.css?__inline">

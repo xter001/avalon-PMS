@@ -1,0 +1,41 @@
+<div class="room-type-container ms-controller" ms-controller="vm_room_type">
+    <div class="callout-head">
+        <h1>房型管理</h1>
+        <a class="btn btn-sm fr mg-r10" ms-click="navigateToTrash"><i class="iconfont icon-trash"></i>房间回收站</a>
+        <a id="addRoomTypeBtn" class="btn btn-success btn-sm fr mg-r10" ms-click="button.addNewRoomtype()"><i class="iconfont icon-plus"></i>新增房型</a>
+    </div>
+
+    <div class="room-type-tb">
+        <table class="table table-bordered arrive-table table-hover table-th">
+            <thead>
+            <tr>
+                <th>房型</th>
+                <th style="width: 72px">简称</th>
+                <th style="width: 100px">房间数</th>
+                <th>房间号</th>
+                <th class="textc" style="width: 140px">默认价格</th>
+                <th class="textc">设置价格</th>
+                <th class="textc" style="width: 173px">操作</th>
+            </tr>
+            </thead>
+            </table>
+        <table class="table table-bordered arrive-table table-hover table-tb">
+            <tbody>
+            <tr ms-repeat="roomTypeList">
+                <td>{{el.name}}</td>
+                <td style="width: 72px">{{el.shortName}}</td>
+                <td style="width: 100px">{{el.rooms.length}}</td>
+                <td>{{roomNumberList[$index]}}</td>
+                <td class="textc" style="width: 140px">￥{{el.normalPrice}}</td>
+                <td class="textc"><a ms-click="price.getRoomSet(el.id,el.normalPrice)" class="btn room-hover1">设置周末价/特殊价</a></td>
+                <td class="textc" style="width: 173px"><a ms-click="button.getRoomEdit($index)" class="btn room-hover1">编辑</a>
+                <a ms-click="button.isSureRemoveRoomType(el.id)" class="btn room-hover2">删除</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<link rel="import" href="popup-room-edit.html?__inline">
+<link rel="import" href="popup-room-set.html?__inline">
+<link rel="import" href="rooms.html?__inline">
+

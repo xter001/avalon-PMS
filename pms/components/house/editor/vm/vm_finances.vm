@@ -1,0 +1,673 @@
+var _defaultPay = {"id" : 4, "name" : '现金'},
+    _JI_FEN_PAY_ = {"id" : null, "name" : '积分'},
+    _KUAIJIE_ID_ = 1,// 快捷支付
+    _SAOMA_ID_ = 6,// 条码支付
+    _RETAPLAN_PAY_ID_ = 7,// 信用住
+    _canclePopups = '#cancle_order_popups',
+    _cancleRatePlanPopups = '#cancle_ratePlan_popups',
+    _outRatePlanPopups = '#out_ratePlan_popups',
+    _tempRemark = ''
+
+var vm_finances = avalon.define({
+    $id : 'vm_finances',
+    $g_status : null,
+    $payEnumMap : {},
+    inputView : false,
+    infoView : false,
+    additionView : false,
+    cashierFunc : false,
+    saomaFunc : true,
+    financeAlert : false,
+    payEnum : [],
+    financeEnum : {
+        1 : {name : '收取订金', value : 1},
+        2 : {name : '收取房费', value : 1},
+        3 : {name : '收取押金', value : 1},
+        4 : {name : '退还订金', value : -1},
+        5 : {name : '退还房费', value : -1},
+        6 : {name : '退还押金', value : -1},
+        9 : {name : '商品收入', value : 1},
+        10 : {name : '商品支出', value : -1},
+        11 : {name : '抵扣积分', value : 1, isHide : true}
+    },
+    totalAmount : 0, // 订单金额
+    paidAmount : 0, // 已收金额
+    paidPayment : 0, // 已收押金
+    roomFee : 0, // 房费
+    overage : 0,  // 订单金额 - 已收金额 - 优惠金额
+    penalty : null, // 违约金
+    discountType : '',//优惠类型
+    discountAmount : 0,//优惠金额
+    penaltyInput : false,
+    penaltyVisible : false,
+    nopayToggle : false,
+    payToggle : false,
+    // 信用住
+    ratePlan : {
+        isToCharge : null,
+        rateFunction : '',
+        incidentalId : null, // 杂费Id
+        incidentalOldPrice : 0, // 杂费初始金额
+        incidentals : null, // 修改后的杂费金额
+        incidentalDetail : '', // 杂费明细
+        incidentalRecordAt : null,// 杂费记录时间
+        incidentalNoModifyTime : null,// 杂费不能修改的时间
+        incidentalUniqueCode : null, // 杂费唯一码
+        canSettle : true // 是否可以结算
+    },
+    datas : [],
+    backRoomFee : {
+        amount : '',
+        financeId : 5,
+        payId : _defaultPay.id,
+        payName : _defaultPay.name,
+        canModify : true
+    },
+    backPayment : {
+        amount : '',
+        financeId : 6,
+        payId : _defaultPay.id,
+        payName : _defaultPay.name,
+        canModify : true,
+        show : true
+    },
+    initPayEnum : function (list) {
+        var vm = vm_finances
+
+        list = list || []
+        list.forEach(function (el) {
+            if (el.name === '积分') {
+                _JI_FEN_PAY_.id = el.id
+                return true
+            }
+
+            var obj = {
+                id : el.id,
+                name : el.name,
+                show : true
+            }
+            vm.payEnum.push(obj)
+            vm.$payEnumMap[el.id] = el.name
+
+            // 财务详情
+            vm_finance_detail.payEnum.push(obj)
+            vm_finance_detail.$payEnumMap[el.id] = el.name
+        })
+        //vm.cashierFunc ? vm.payEnum.splice(1, 0, {id: 1, name: '快捷支付', show: true}, {id: 6, name: '条码支付', show: true}) : ""
+        //vm.cashierFunc ? vm.payEnum.splice(1, 0, {id : 1, name : '快捷支付', show : true}) : ""
+    },
+    _getDefItem : function () {
+        return {
+            id : '',
+            amount : '',
+            financeId : 2,
+            payId : _defaultPay.id,
+            // financeName: '支付订金',
+            // payName: _defaultPay.name,
+            payStatus : null, // 支付状态（0：待支付，1：支付成功，2：已关闭，3：支付失败）
+            canModify : true,
+            show : true,
+            alive : true
+        }
+    },
+    // 取消以及退房操作自动填充财务
+    _autoCancleItem : function (isCheckouting, isNormalCheckOut) {
+        var vm = vm_finances,
+            backRoomFee = vm.backRoomFee,
+            backPayment = vm.backPayment,
+            paidAmount = vm.paidAmount,
+            overage = vm.totalAmount - paidAmount - -vm.discountAmount,
+            toResetAmount = true;
+
+        vm.financeAlert = !isNormalCheckOut;
+        // 退还房费
+        if (isCheckouting) {
+            backRoomFee.financeId = overage > 0 ? 2 : 5;
+            backRoomFee.amount = isNormalCheckOut ? Math.abs(overage) : '';
+            toResetAmount = false;
+        } else {
+            backRoomFee.financeId = paidAmount <= 0 ? 2 : 5
+            // backRoomFee.amount = Math.abs(paidAmount)
+            // vm.penalty = Math.abs(paidAmount)
+        }
+        if (toResetAmount) backRoomFee.amount = '';
+
+        // 退还押金
+        backPayment.financeId = vm.paidPayment > 0 ? 6 : 3;
+        backPayment.amount = isNormalCheckOut ? Math.abs(vm.paidPayment) : '';
+        backPayment.show = vm.paidPayment != 0;
+        if (backPayment.amount) {
+            backPayment.amount = avalon.filters.toFixed(backPayment.amount);
+        }
+        if (backRoomFee.amount) {
+            backRoomFee.amount = avalon.filters.toFixed(backRoomFee.amount);
+        }
+    },
+    add : function (data, collect) {
+        var vm = vm_finances,
+            collect = collect || vm.datas,
+            financeEnum = vm.financeEnum,
+            payEnumMap = vm.$payEnumMap
+
+        // 一个订单一次最多添加20个财务记录
+        if (collect.length >= 20) {
+            tmsky.ui.dialog.tips('一个订单一次最多添加20个财务记录！', 'error')
+            return
+        }
+
+        data = data || vm._getDefItem()
+        // 容错
+        if (data) {
+            data.financeId = financeEnum[data.financeId] ? data.financeId : 2
+            data.payId = data.payId ? data.payId : _defaultPay.id
+            data.canModify = data.canModify == 1 ? true : false
+
+            // 收银台/条码支付 未支付成功的隐藏 ( 改为了只能新增，有id的隐藏)
+            // data.payStatus !== "1" && ( data.payId == _KUAIJIE_ID_ || data.payId == _SAOMA_ID_)
+            data.show = data.id ? false : true
+
+            data.financeName = financeEnum[data.financeId].name
+            data.payName = payEnumMap[data.payId]
+            collect.push(data)
+        }
+    },
+    // 状态变化 回调
+    gStatusOnChange : function (g_status, g_prev, isNormalCheckOut) {
+        var vm = vm_finances,
+            btn_vmodel = avalon.vmodels.vm_btns,
+            item
+        vm.$g_status = g_status
+        $(_canclePopups).popups('hide')
+        $(_cancleRatePlanPopups).popups('hide')
+        $(_outRatePlanPopups).popups('hide')
+        // 自动填充
+        switch (g_status) {
+            // 新增办理
+            case CONST.G_ROOMS:
+                vm.datas.removeAll()
+                if (vm.totalAmount > vm.paidAmount) {
+                    item = vm._getDefItem()
+                    item.financeId = 2
+                    vm.add(item)
+
+                    item = vm._getDefItem()
+                    item.financeId = 3
+                    vm.add(item)
+                }
+                break
+            // 预定转入住
+            case CONST.G_PART_INING:
+                if (vm.totalAmount > vm.paidAmount) {
+                    item = vm._getDefItem()
+                    item.financeId = 2
+                    // item.amount = vm.totalAmount - vm.paidAmount
+                    vm.add(item)
+                }
+                if (g_prev === CONST.G_BOOK) {
+                    item = vm._getDefItem()
+                    item.financeId = 3
+                    vm.add(item)
+                }
+                break
+            // 办理未到/取消
+            case CONST.G_BOOK_CANCLEING:
+                vm._autoCancleItem()
+                // vm.penalty = 0
+                _tempRemark = vm_remark.content
+                $(_canclePopups).popups()
+                break;
+            // 信用住办理取消
+            case CONST.G_RATEPLAN_CANCLEING:
+                $(_cancleRatePlanPopups).popups()
+                break;
+            // 信用住办理退房
+            case CONST.G_RATEPLAN_OUTING:
+                vm.ratePlan.rateFunction = 'out_save'
+                var goodPrice = 0, detail = ''
+                $.each(vm_orders.$g_mainOrder.goodSpends, function (i, el) {
+                    goodPrice = Number(goodPrice) + Number(el.realPrice)
+                    detail += el.good.name + ":" + el.realPrice + ";"
+                });
+                vm.ratePlan.incidentals = goodPrice == 0 ? null : goodPrice
+                vm.ratePlan.incidentalDetail = detail
+                vm.setCanSettle()
+                $(_outRatePlanPopups).popups()
+                break;
+            // 信用住杂费更新
+            case CONST.G_RATEPLAN_UPDATE:
+                vm.ratePlan.rateFunction = 'rate_plan_update'
+                vm.setCanSettle()
+                $(_outRatePlanPopups).popups()
+                break;
+            // 办理退房
+            case CONST.G_OUTING:
+                //case CONST.G_OUT_BEFOREING:
+                vm._autoCancleItem(true, isNormalCheckOut)
+                // vm.updateAmount()
+                break
+        }
+    },
+    setCanSettle : function () {
+        var vm = vm_finances
+        if (!vm.ratePlan.incidentalNoModifyTime) {
+            vm.ratePlan.canSettle = true
+        } else {
+            if (tmsky.date.diffHours(vm.ratePlan.incidentalNoModifyTime, new Date()) >= 0) {
+                vm.ratePlan.canSettle = false
+            } else {
+                vm.ratePlan.canSettle = true
+            }
+        }
+    },
+    toggleAlive : function (el) {
+        el.alive = !el.alive
+        // vm_finances.updateAmount()
+    },
+    financeChange : function (el, e) {
+        var vm = vm_finances,
+            financeEnum = vm.financeEnum,
+            payEnumMap = vm.$payEnumMap,
+            financeObj
+
+        el.financeId = e.target.value
+        financeObj = financeEnum[el.financeId]
+        el.financeName = financeObj.name
+
+        if (financeObj && financeObj.value === -1 && ( el.payId == _KUAIJIE_ID_ || el.payId == _SAOMA_ID_)) {
+            el.payId = _defaultPay.id
+            el.payName = payEnumMap[el.payId]
+        }
+        // vm_finances.updateAmount()
+    },
+    payChange : function (el, e) {
+        var vm = vm_finances,
+            payEnumMap = vm.$payEnumMap
+
+        el.payId = e.target.value
+        el.payName = payEnumMap[el.payId]
+    },
+    payEnumClick : function (el, e) {
+        if ($(e.currentTarget).hasClass('open')) return;
+
+        var vm = vm_finances
+
+        var rs = vm.isAddCashier(el)
+
+        rs ? vm.addCashier() : vm.removeCashier()
+    },
+    // 是否添加收银台
+    isAddCashier : function (item) {
+        var vm = vm_finances,
+            isCancleOpt = vm.$g_status === CONST.G_BOOK_CANCLEING || vm.$g_status === CONST.G_OUTING,
+            financeEnum = vm.financeEnum.$model,
+            rs = true
+
+        // 原有记录 ， 取消操作 ， 项目value = -1
+        if (item.id || isCancleOpt || financeEnum[item.financeId].value === -1) {
+            rs = false;
+        } else {
+            // 有新财务 选择了收银台
+            var arr = vm.datas.$model || [];
+            for (i = 0, len = arr.length; i < len; i++) {
+                el = arr[i];
+                if (el.canModify && el.show && ( el.payId == _KUAIJIE_ID_ || el.payId == _SAOMA_ID_)) {
+                    rs = false;
+                    break;
+                }
+            }
+        }
+        return rs
+    },
+    addCashier : function () {
+        var vm = vm_finances,
+            kuaijiePay = vm.payEnum[1],
+            saomaPay = vm.payEnum[2]
+
+        if (kuaijiePay && kuaijiePay.id === _KUAIJIE_ID_) {
+            // 开启插件判断
+            kuaijiePay.show = vm.cashierFunc
+        }
+        if (saomaPay && saomaPay.id === _SAOMA_ID_) {
+            saomaPay.show = vm.saomaFunc
+        }
+    },
+    removeCashier : function () {
+        var vm = vm_finances,
+            kuaijiePay = vm.payEnum[1],
+            saomaPay = vm.payEnum[2]
+
+        if (kuaijiePay && kuaijiePay.id === _KUAIJIE_ID_) {
+            kuaijiePay.show = false
+        }
+        if (saomaPay && saomaPay.id === _SAOMA_ID_) {
+            saomaPay.show = false
+        }
+    },
+    backFinanceChange : function (el, e) {
+        var vm = vm_finances
+        el.financeId = e.target.value
+        vm.updatePenalty()
+    },
+    updateAmount : function () {
+        var vm = vm_finances,
+            datas = vm.datas.$model,
+            fEnum = vm.financeEnum.$model,
+            backRoomFee = vm.backRoomFee.$model,
+            backPayment = vm.backPayment.$model,
+            paidAmount = 0,
+            paidPayment = 0
+
+        if (vm.$g_status == CONST.G_OUTING) {
+            backRoomFee.alive = backPayment.alive = true
+            datas = datas.concat([backRoomFee, backPayment])
+        }
+        datas.forEach(function (el) {
+            if (!el.alive) return
+
+            var fId = el.financeId,
+                fv = fEnum[el.financeId],
+                val = el.amount * fv.value
+
+            // 关于押金
+            if (fId == 3 || fId == 6) {
+                paidPayment += val;
+            } else {
+                paidAmount += val;
+            }
+        })
+
+        vm.paidPayment = paidPayment
+        vm.paidAmount = paidAmount
+    },
+    getAmount : function () {
+        var vm = vm_finances,
+            datas = vm.datas.$model,
+            fEnum = vm.financeEnum.$model,
+            backRoomFee = vm.backRoomFee.$model,
+            backPayment = vm.backPayment.$model,
+            paidAmount = 0,
+            paidPayment = 0,
+            integralCount = 0
+
+        if (vm.$g_status == CONST.G_OUTING || vm.$g_status == CONST.G_RATEPLAN_OUTING) {
+            backRoomFee.alive = backPayment.alive = true
+            datas = datas.concat([backRoomFee, backPayment])
+        }
+        datas.forEach(function (el) {
+            if (!el.alive) return
+
+            var fId = el.financeId,
+                fv = fEnum[el.financeId],
+                val = el.amount * fv.value
+
+            // 关于押金
+            if (fId == 3 || fId == 6) {
+                paidPayment += val;
+            } else {
+                paidAmount += val;
+            }
+
+            // 积分
+            if (fId == 11) {
+                integralCount += val;
+            }
+        })
+
+        return {
+            paidPayment : paidPayment,
+            paidAmount : paidAmount,
+            integralCount : integralCount * 100
+        }
+    },
+    closeCancle : function () {
+        vm_remark.content = _tempRemark
+        vm_orders.flushMainOrder(vm_orders.$g_mainOrder)
+    },
+    updatePenalty : function () {
+        var vm = vm_finances,
+            paidAmount = vm.paidAmount,
+            paidPayment = vm.paidPayment,
+            financeEnum = vm.financeEnum.$model,
+            backRoomFee = vm.backRoomFee.$model,
+            backPayment = vm.backPayment.$model
+
+        backRoomFee.alive = backPayment.alive = true
+        // var back = backRoomFee.amount * financeEnum[backRoomFee.financeId].value + backPayment.amount * financeEnum[backPayment.financeId].value
+        // vm.penalty = paidAmount + paidPayment + back
+    },
+    checkPenalty : function (penalty) {
+        var vm = vm_finances
+        vm.penalty = tmsky.number.filt(penalty)
+    },
+    // 检验取消办理金额情况
+    checkBackPrice : function (el, e) {
+        var vm = vm_finances,
+            inputVal = e.target.value
+
+        if (inputVal !== '' && isNaN(inputVal)) {
+            inputVal = 0
+        }
+
+        el.amount = inputVal
+        vm.updatePenalty()
+    },
+    checkPrice : function (el, e) {
+        var vm = vm_finances,
+            inputVal = e.target.value
+
+        if (inputVal !== '' && isNaN(inputVal == parseFloat(inputVal))) {
+            inputVal = 0
+        }
+        el.amount = inputVal
+        // vm.updateAmount()
+    },
+    reset : function () {
+        var vm = vm_finances
+        vm.datas.removeAll()
+        vm.backRoomFee.amount = ''
+        vm.backPayment.amount = ''
+        vm.paidAmount = 0
+        vm.paidPayment = 0
+        vm.penalty = null
+        vm.penaltyVisible = false
+        vm.penaltyInput = false
+        vm.ratePlan.incidentalOldPrice = 0
+        vm.ratePlan.incidentals = null
+        vm.ratePlan.incidentalDetail = ''
+        vm.ratePlan.incidentalNoModifyTime = null
+        vm.ratePlan.canSettle = true
+        vm.discountType = ''
+    },
+    flushMainOrder : function (g_mainOrder) {
+        var vm = vm_finances
+        vm.datas.removeAll()
+        vm.backRoomFee.amount = ''
+        vm.backPayment.amount = ''
+        vm.paidAmount = g_mainOrder.paidAmount
+        vm.paidPayment = g_mainOrder.paidPayment
+        vm.penalty = g_mainOrder.penalty
+        vm.discountType = g_mainOrder.discountType
+        vm.discountAmount = g_mainOrder.discountAmount
+
+        // 信用住
+        $.each(g_mainOrder.financeRecords, function (i, el) {
+            if (el.item == 9 && el.payChannel.id == 7) {
+                vm.ratePlan.incidentalId = el.id
+                vm.ratePlan.incidentalOldPrice = el.price
+                vm.ratePlan.incidentals = el.price
+                vm.ratePlan.incidentalDetail = el.rmk ? el.rmk : ''
+                vm.ratePlan.incidentalRecordAt = el.recordAt
+                vm.ratePlan.incidentalNoModifyTime = tmsky.date.addHours(el.recordAt, 2, 'yyyy-MM-dd hh:mm')
+                vm.ratePlan.incidentalUniqueCode = el.uniqueCode
+                return false;
+            }
+        });
+    },
+    // 刷新纪录
+    refreshFinance : function (paidAmount, paidPayment, incidentalOldPrice, ratePlanRecordAt) {
+        var vm = vm_finances
+        vm.paidAmount = paidAmount || paidAmount == 0 ? paidAmount : vm.paidAmount
+        vm.paidPayment = paidPayment || paidPayment == 0 ? paidPayment : vm.paidPayment
+        vm.ratePlan.incidentalOldPrice = incidentalOldPrice ? incidentalOldPrice : vm.ratePlan.incidentalOldPrice
+        vm.ratePlan.incidentalNoModifyTime = ratePlanRecordAt ? tmsky.date.addHours(ratePlanRecordAt, 2, 'yyyy-MM-dd hh:mm') : vm.ratePlan.incidentalNoModifyTime
+    },
+    // ===== 提取值 ====
+    convertData : function () {
+        var vm = vm_finances,
+            collect = vm.datas.$model,
+            financeEnum = vm.financeEnum.$model,
+            backRoomFee = vm.backRoomFee.$model,
+            backPayment = vm.backPayment.$model,
+            penalty = vm.penalty,
+            backs = [backRoomFee, backPayment],
+            ret = {
+                financeRecords : [],
+                paidAmount : vm.paidAmount,
+                paidPayment : vm.paidPayment,
+                penalty : null,
+                isToCharge : vm.ratePlan.isToCharge
+            },
+            newAmount = vm.getAmount(),
+            maxIntegral = vm_guests.member.integral
+
+        if (newAmount.integralCount > maxIntegral) throw '已超出可使用积分（' + maxIntegral / 100 + '元），请重新输入';
+
+        ret.paidAmount += newAmount.paidAmount
+        ret.paidPayment += newAmount.paidPayment
+        // 未到/取消需要重新计算总费用（没有实时计算）
+        if (vm.$g_status === CONST.G_BOOK_CANCLEING) {
+            backs.forEach(function (el, i) {
+                if (el.amount === '' || el.amount == 0) return;
+                var amount = el.amount * financeEnum[el.financeId].value
+
+                if (i === 0) {
+                    ret.paidAmount += amount
+                } else {
+                    ret.paidPayment += amount
+                }
+            })
+        }
+
+        collect = collect.concat(backs)
+        collect.forEach(function (el) {
+            if (!el.alive || el.amount === '' || el.amount == 0) return;
+            var payChannel = {id : el.payId},
+                payStatus = el.payStatus,
+                canModify = el.canModify
+
+
+            // 收银台 记录都改为不能修改/都有状态
+            if (el.payId == _KUAIJIE_ID_ || el.payId == _SAOMA_ID_) {
+                payStatus = payStatus || '0';
+                canModify = false;
+            }
+
+            // 抵扣积分的支付方式默认为积分
+            if (el.financeId == 11) {
+                payChannel = _JI_FEN_PAY_
+                canModify = false
+            }
+
+            ret.financeRecords.push({
+                id : el.id,
+                item : el.financeId,
+                price : el.amount,
+                canModify : canModify ? '1' : '0',
+                payStatus : payStatus,
+                payChannel : payChannel
+            })
+        })
+        if (penalty) {
+            ret.penalty = penalty
+        }
+
+        // 退房时的信用住杂费
+        if (vm.$g_status === CONST.G_RATEPLAN_OUTING && vm_orders.isRatePlan) {
+            var incidentals = tmsky.number.filt(vm.ratePlan.incidentals);
+            ret.financeRecords.push({
+                item : 9,
+                price : incidentals ? incidentals : 0,
+                rmk : vm.ratePlan.incidentalDetail,
+                canModify : '0',
+                payChannel : {id : _RETAPLAN_PAY_ID_}
+            })
+            ret.financeRecords.push({
+                item : 2,
+                price : vm.roomFee ? vm.roomFee : 0,
+                canModify : '0',
+                payChannel : {id : _RETAPLAN_PAY_ID_}
+            })
+            ret.paidAmount += incidentals ? Number(incidentals) : 0
+            ret.paidAmount += vm.roomFee ? Number(vm.roomFee) : 0
+        }
+
+        //小数保留两位
+        ret.paidAmount = tmsky.number.fixFloat(ret.paidAmount, 2)
+        ret.paidPayment = tmsky.number.fixFloat(ret.paidPayment, 2)
+        ret.penalty = tmsky.number.fixFloat(ret.penalty, 2)
+
+        return ret
+    },
+    toggleFinance : function (isHide) {
+        var vm = vm_finances
+        var datas = vm_finances.datas
+        // 积分项目是否显示
+        vm.financeEnum[11].isHide = isHide
+        // 如果不显示，则已选择的积分项目要清除
+        if (isHide) {
+            for (var i = datas.length - 1; i >= 0; i--) {
+                var el = datas[i]
+                if (el.financeId == 11) {
+                    datas.removeAt(i)
+                }
+            }
+        }
+    },
+    isCharge : function (flag) {
+        vm_finances.nopayToggle = false
+        vm_finances.payToggle = false
+        vm_finances[flag] = true
+        if ('nopayToggle' == flag) {
+            vm_finances.ratePlan.isToCharge = 1
+            // 更新实住以及房费为0
+            //vm_orders.orders.forEach(function (el) {
+            //    el.days = 0
+            //    el.sum = 0
+            //})
+            //vm_orders._updateTotalInfo()
+        } else {
+            vm_finances.ratePlan.isToCharge = 2
+            // 还原订单信息
+            //vm_orders.flushMainOrder(vm_orders.$g_mainOrder)
+        }
+    },
+    clearCharge : function () {
+        vm_finances.ratePlan.isToCharge = null
+        vm_finances.nopayToggle = false
+        vm_finances.payToggle = false
+        // 还原订单信息
+        vm_orders.flushMainOrder(vm_orders.$g_mainOrder)
+    },
+    addNewShop : function () {
+        var id = avalon.vmodels.vm_orders.$g_mainOrder.id
+        avalon.vmodels.vm_shopcost.openShopCost(id)
+    }
+})
+
+// vm_finances.datas.$watch("length", function(val) {
+// // vm_finances.updateAmount()
+// })
+
+vm_finances.$watch("totalAmount", function (val) {
+    vm_finances.overage = (vm_finances.totalAmount - vm_finances.paidAmount - vm_finances.discountAmount).toFixed(2) * 1
+})
+
+vm_finances.$watch("paidAmount", function (val) {
+    vm_finances.overage = (vm_finances.totalAmount - vm_finances.paidAmount - vm_finances.discountAmount).toFixed(2) * 1
+})
+vm_finances.$watch("discountAmount", function (val) {
+    vm_finances.overage = (vm_finances.totalAmount - vm_finances.paidAmount - vm_finances.discountAmount).toFixed(2) * 1
+})
+vm_finances.$watch("penalty", function (val) {
+    vm_orders._updateTotalInfo()
+})

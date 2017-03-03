@@ -1,0 +1,55 @@
+var vm_remark =  avalon.define({
+	$id: 'vm_remark',
+	inputView: false,
+	infoView: false,
+	
+	orderIconEnum: {0: '--订单标示--',1: '接机',2: '用车',3: '重要订单',4: '信用住订单', 7:'担保订单'},
+	icon: 0,
+	remindTime: '',
+	content: '',
+	remindId: null,
+
+	reset: function() {
+		var vm = vm_remark
+
+		vm.inputView = false
+		vm.infoView = false
+		vm.icon = 0
+		vm.remindTime = ''
+		vm.content = ''
+		vm.remindId = null
+
+	},
+	flushMainOrder: function(g_mainOrder) {
+		var vm = vm_remark,
+			list = g_mainOrder.reminds
+
+		vm.icon = g_mainOrder.icon
+		if (list.length > 0) {
+			var item = list[0]
+			vm.remindId = item.id
+			vm.remindTime = item.remindTime
+			vm.content = item.content
+		} else {
+			vm.remindId = null
+			vm.remindTime = ''
+			vm.content = ''
+		}
+	},
+	convertData: function() {
+		var model = vm_remark.$model
+			ret = {
+				icon: Number(model.icon),
+				reminds: []
+			}
+
+		if (model.content) {
+			ret.reminds.push({
+				id: model.remindId,
+				remindTime: model.remindTime,
+				content: model.content
+			})
+		}
+		return ret;
+	}
+})

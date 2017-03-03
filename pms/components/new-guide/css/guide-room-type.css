@@ -1,0 +1,310 @@
+.guide-hotel {
+    background: #ffffff;
+    box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.17);
+    border-radius: 12px;
+    padding: 30px 40px;
+    width: 720px;
+    height: 370px;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    margin-top: -215px;
+    margin-left: -400px;
+    text-align: center;
+    z-index: 2;
+}
+
+.guide-cover-white {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    opacity: .65;
+    filter: Alpha(opacity=65);
+    z-index: 1;
+}
+
+.guide-hotel-title {
+    font-size: 22px;
+    color: #4a4a4a;
+    padding-bottom: 10px;
+}
+
+.guide-hotel-des {
+    font-size: 16px;
+    color: #6f6f6f;
+}
+
+.guide-hotel-list {
+    margin: 50px auto;
+    width: 100%;
+    height: 153px;
+}
+
+.guide-hotel-list li {
+    background: #ffffff;
+    border: 1px solid #d7d7d7;
+    width: 160px;
+    height: 153px;
+    float: left;
+    margin-right: 23px;
+    font-size: 18px;
+    color: #a8a8a8;
+    cursor: pointer;
+}
+
+.guide-hotel-list li:hover {
+    background: #ffffff;
+    border: 1px solid #f5a623;
+    box-shadow: 0px 1px 5px 1px #f5a623;
+    color: #e5930c;
+}
+
+.guide-hotel-list li.on {
+    background: #ffd898;
+    border: 1px solid #f5a623;
+    box-shadow: 0px 1px 5px 1px #f5a623;
+    color: #714702;
+}
+
+.guide-hotel-list li.guide-hotel-list-4 {
+    margin-right: 0;
+}
+
+.guide-hotel-list li i {
+    display: block;
+    width: 78px;
+    height: 78px;
+    margin: 20px auto 15px;
+}
+
+.guide-hotel-list-1 i {
+    background: url('../images/hotel-type-1.png') no-repeat center;
+}
+
+.guide-hotel-list-1:hover i {
+    background: url('../images/hotel-type-1-hover.png') no-repeat center;
+}
+
+.guide-hotel-list-1.on i {
+    background: url('../images/hotel-type-1-on.png') no-repeat center;
+}
+
+.guide-hotel-list-2 i {
+    background: url('../images/hotel-type-2.png') no-repeat center;
+}
+
+.guide-hotel-list-2:hover i {
+    background: url('../images/hotel-type-2-hover.png') no-repeat center;
+}
+
+.guide-hotel-list-2.on i {
+    background: url('../images/hotel-type-2-on.png') no-repeat center;
+}
+
+.guide-hotel-list-3 i {
+    background: url('../images/hotel-type-3.png') no-repeat center;
+}
+
+.guide-hotel-list-3:hover i {
+    background: url('../images/hotel-type-3-hover.png') no-repeat center;
+}
+
+.guide-hotel-list-3.on i {
+    background: url('../images/hotel-type-3-on.png') no-repeat center;
+}
+
+.guide-hotel-list-4 i {
+    background: url('../images/hotel-type-4.png') no-repeat center;
+}
+
+.guide-hotel-list-4:hover i {
+    background: url('../images/hotel-type-4-hover.png') no-repeat center;
+}
+
+.guide-hotel-list-4.on i {
+    background: url('../images/hotel-type-4-on.png') no-repeat center;
+}
+
+/*房型管理引导*/
+.new-guide-room-add {
+    width: 98px;
+    height: 42px;
+    position: fixed;
+    top: 56px;
+    right: 143px;
+    cursor: pointer;
+}
+
+.guide-h3 {
+    font-size: 16px;
+    color: #413b35;
+    line-height: 24px;
+    text-align: center;
+}
+
+.triangle-room-1 {
+    left: 210px;
+    top: -18px;
+}
+
+.triangle-white-room-1 {
+    left: 212px;
+    top: -13px;
+}
+
+.guide-room-tips1 {
+    border-radius: 10px;
+    width: 260px;
+    top: 131px;
+    right: 102px;
+}
+
+.guide-room-tips2 {
+    border-radius: 10px;
+    width: 328px;
+    height: 154px;
+    top: 50%;
+    left: 50%;
+    margin-left: -620px;
+    margin-top: -163px;
+    position: fixed;
+    z-index: 1000;
+}
+
+.triangle-room-2 {
+    right: -20px;
+    top: 31px;
+}
+
+.triangle-white-room-2 {
+    right: -16px;
+    top: 33px;
+}
+
+.guide-room-tips3 {
+    border-radius: 10px;
+    width: 277px;
+    top: 199px;
+    right: 50px;
+    position: absolute;
+}
+
+.triangle-room-3 {
+    left: 240px;
+    top: -18px;
+}
+
+.triangle-white-room-3 {
+    left: 242px;
+    top: -13px;
+}
+
+.guide-room-tips4 {
+    top: 42px;
+    right: 159px;
+    position: absolute;
+    width: 100px;
+    display: inline-block;
+    white-space: nowrap;
+    border: 0;
+    padding: 0 18px 0 10px;
+    box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    z-index: 1000;
+}
+
+.guide-room-tips4 .guide-room-menu {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    min-width: 84px;
+    margin: -1px 0 0 -1px;
+    text-align: left;
+    padding-right: 1px;
+    list-style: none;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    z-index: 100;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    width: 100px;
+}
+
+.guide-room-menu a {
+    display: block;
+    position: relative;
+    font-weight: 400;
+    height: 30px;
+    line-height: 30px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 16px;
+    border-top: 1px solid #d4d9df;
+}
+
+.guide-room-menu a:hover {
+    color: #b4b4b4;
+}
+
+.guide-room-menu > a:first-child {
+    border-top: 0;
+}
+
+.guide-room-un-click {
+    color: #b4b4b4;
+    cursor: default;
+
+}
+
+.guide-room-click {
+    cursor: pointer;
+}
+
+.new-guide-room-func {
+    width: 110px;
+    height: 34px;
+    position: absolute;
+    top: 55px;
+    left: -10px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.guide-room-tips4-1 {
+    border-radius: 10px;
+    width: 280px;
+    height: 54px;
+    position: absolute;
+    z-index: 1000;
+    top: 66px;
+    right: 293px;
+}
+.triangle-room-4 {
+    right: -18px;
+    top: 18px;
+}
+
+.triangle-white-room-4 {
+    right: -14px;
+    top: 20px;
+}
+.new-guide-room-add.border-orange{
+    position: absolute;
+}

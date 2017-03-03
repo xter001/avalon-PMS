@@ -1,0 +1,141 @@
+<div ms-controller="vm_room_type" class="ms-controller">
+    <div class="room-manage-nav">
+        <ul>
+            <li class="sort" ms-class-selected="room.roomManageNav[0]" ms-click="room.changeManageType('sort')">排序</li>
+            <li class="close" ms-class-selected="room.roomManageNav[1]" ms-click="room.changeManageType('close')">锁房
+            </li>
+            <li class="edit" ms-class-selected="room.roomManageNav[2]" ms-click="room.changeManageType('edit')">修改房间归属
+            </li>
+        </ul>
+    </div>
+    <!--排序-->
+    <div class="room-manage-sort" ms-visible="room.roomManageNav[0]">
+        <!--<div class="tips">-->
+            <!--<p ms-if="!room.hasFoldPlug">点击开启折叠房型，拖动房间块可调整房态页房间展示顺序<em class="fold-room-type-close"></em></p>-->
+            <!--<p ms-if="room.hasFoldPlug">点击关闭折叠房型，拖动房间块可调整房态页房间展示顺序<em class="fold-room-type-open"></em></p>-->
+        <!--</div>-->
+        <ul id="room-manage-sort">
+            <li ms-repeat="rooms" class="sort-room-wrap ui-state-default" ms-class-fold="hasFoldFun"
+                ms-attr-serialNo="el.serialNo" ms-attr-roomId="el.id">
+                <div class="sort-room-head">
+                    <p>{{el.name}}</p>
+                    <em ms-if="!hasFoldFun"></em>
+                </div>
+                <div class="sort-room-body" ms-if="!hasFoldFun">
+                    <p>{{el.roomType.name}}</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <!--锁房-->
+    <div class="room-manage-close" ms-visible="room.roomManageNav[1]">
+        <div class="room-tishi">
+            <span class="triangle-upL"></span>
+            <span class="triangle-upR"></span>
+            锁房后，所选房间在指定时间段内不能办理订单。
+        </div>
+
+        <!--锁房记录列表-->
+        <div class="record-group" ms-repeat-el="room.roomCloseList">
+            <div class="tomasky-ui-dropdown add-lock-check">
+                <a href="javascript:void (0);">
+                    <input type="text" placeholder="请选择房型" ms-attr-value="{{el.$model.roomTypeValue}}"
+                           ms-click="room.getRoomType"
+                           readonly disabled>
+                </a>
+            </div>
+
+            <div class="tomasky-ui-dropdown add-lock-check">
+                <a href="javascript:void (0);">
+                    <input type="text" placeholder="请选择房号" ms-attr-value="el.$model.roomNumValue" ms-click=""
+                           readonly disabled>
+                </a>
+            </div>
+            <div class="tomasky-ui-dropdown add-lock-time">
+                <input type="text" class="time-start"
+                       placeholder="锁房开始时间"
+                       ms-change="room.msgChange"
+                       ms-attr-name="el.$model.startDate"
+                       ms-duplex="el.$model.ustartDate"
+                       readonly disabled>
+                <input type="text" class="time-end"
+                       placeholder="锁房结束时间"
+                       ms-change="room-msgChange"
+                       ms-attr-name="el.$model.endDate"
+                       ms-duplex="el.$model.uendDate"
+                       readonly disabled>
+            </div>
+            <div class="tomasky-ui-dropdown add-lock-msg">
+                <a href="javascript:void (0);">
+                    <input type="text" placeholder="备注"
+                           ms-attr-name="el.$model.note"
+                           ms-duplex="el.$model.uNote"
+                           disabled="true"
+                    >
+                </a>
+            </div>
+            <button class="btn-lockRoom bg-write" ms-click="room.updateRoomClose(el,$index)">
+                修改
+            </button>
+            <button class="btn-lockRoom bg-red" ms-click="room.deleteRoomClose(el,$index)">
+                删除
+            </button>
+        </div>
+        <div class="record-group" ms-visible="room.isAddClose">
+            <div class="tomasky-ui-dropdown add-lock-check">
+                <a href="javascript:void (0);" ms-click="room.getRoomType">
+                    <input type="text" placeholder="请选择房型" ms-attr-value="room.roomClose.roomTypeValue" readonly>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list" ms-class-listdown="room.isRoomType">
+                    <a href="javascript:;" ms-repeat-el="roomTypeList.$model" ms-click="room.getTypeName($index)">{{el.name}}</a>
+                </div>
+            </div>
+            <div class="tomasky-ui-dropdown add-lock-check">
+                <a href="javascript:void (0);" ms-click="room.getRoomAllNum">
+                    <input type="text" placeholder="请选择房号" ms-attr-value="room.roomClose.roomNumValue" readonly>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list" ms-class-listdown="room.isRoomNum">
+                    <a href="javascript:;" ms-repeat-el="room.roomList"
+                       ms-click="room.getRoomNum($index)">{{el.name}}</a>
+                </div>
+            </div>
+            <div class="tomasky-ui-dropdown add-lock-time">
+                <input type="text" class="time-start" placeholder="锁房开始时间" ms-duplex="room.roomClose.startDate"
+                       readonly>
+                <input type="text" class="time-end" placeholder="锁房结束时间" ms-duplex="room.roomClose.endDate" readonly>
+            </div>
+            <div class="tomasky-ui-dropdown add-lock-msg">
+                <a href="javascript:void (0);">
+                    <input type="text" placeholder="备注" ms-duplex="room.roomClose.note">
+                </a>
+            </div>
+            <button class="btn-lockRoom bg-red" ms-click="room.addRoomCloses">锁房</button>
+            <div class="room-close-error" ms-visible="room.errorstate">
+                <span>{{room.errorMsg}}</span>
+            </div>
+        </div>
+        <button class="btn-add-record" ms-click="room.addRoomClose"><i class="iconfont icon-plus"></i>添加锁房记录</button>
+    </div>
+    <!--修改房间归属-->
+    <div class="room-manage-edit" ms-visible="room.roomManageNav[2]">
+        <div class="room-tishi">
+            <span class="triangle-upL"></span>
+            <span class="triangle-upR"></span>
+            1.房间归属修改会影响数据统计，请谨慎操作。</br>
+            2.修改归属后，房间的已有订单不受影响，新增订单房价以新房型为准。
+        </div>
+        <div class="room-manage-list">
+            <div class="list-item " ms-repeat-el="roomTypeList.$model">
+                <div class="room-type">{{el.name}}</div>
+                <div class="room-numList sortable connectedSortable" ms-attr-id="el.id">
+                    <div class="btn room-hover1" ms-attr-id="num.id" ms-repeat-num="el.rooms">
+                        {{num.name}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

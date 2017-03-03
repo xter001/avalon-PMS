@@ -1,0 +1,339 @@
+var CommonUtil = require('../../../js/utils/common-util.js');
+var COMMON_CONST = require('../../../js/const.js')
+var Plug = require('../../../../header/plug.js');
+var Controller = require('../../../../house/js/control.js')
+var Access = require('../../../../header/access.js'),
+    GUIDE_CONST = require('../../../../new-guide/js/guide_const.js')
+var vm_shopcost = avalon.define({
+    $id : 'vm_shopcost',
+    costShow : false,
+    init : function () {
+        vm_shopcost.initNowTime()
+        vm_shopcost.initDate()
+        avalon.vmodels.vm_shop.init()
+
+        setTimeout(function () {
+            vm_shopcost.hasDonedAllGuides('', vm_shopcost.initGuideParam)
+        }, 2000)
+
+    },
+    access : {
+        out : false,
+        in : false,
+        shop : false
+    },
+    //tab切换
+    tabIndex : 0,
+    changeTabIndex : function (index) {
+        vm_shopcost.tabIndex = index
+        vm_shopcost.initNowTime();
+        if (index != 0) {
+            avalon.vmodels.vm_spent.init()
+        }
+    },
+    InOutGuide : -1,
+    guideId : '',
+    initGuideParam : function () {
+        if (window.localStorage) {
+            var param = window.localStorage.getItem('in-out-guide')
+            if (param) {
+                //存在缓存，则记一笔引导已完成
+                return false
+            }
+        }
+        //缓存没有则请求
+        var data = {
+            guideTag : 'SHOPCOST_GUIDE',
+            systemTag : 'PMS',
+            innId : CommonCacheUtil.innBaseInfo.user.innId,
+            userCode : CommonCacheUtil.innBaseInfo.user.code,
+            version : '2017-01-05'
+        }
+        $.get('/guide/getInnGuide', data, {
+            t : new Date().valueOf()
+        }).done(function (rs) {
+            if (rs.status == 200) {
+                vm_shopcost.InOutGuide = rs.guide.status == 0 ? 0 : -1
+                vm_shopcost.guideId = rs.guide.id
+                if (rs.guide.status == 1) {
+                    if (window.localStorage) {
+                        window.localStorage.setItem('in-out-guide', 1)
+                    }
+                }
+            }
+        })
+    },
+    changeGuide : function (index) {
+        vm_shopcost.InOutGuide = index
+        if (index == -1) {
+            //最后一步
+            vm_shopcost.InOutGuide = -1
+            vm_shopcost.cancelShopCost()
+            var data = {
+                id : vm_shopcost.guideId
+            }
+            $.get(' /guide/finishGuide', data, {
+                t : new Date().valueOf()
+            }).done(function (rs) {
+                if (window.localStorage) {
+                    window.localStorage.setItem('in-out-guide', 1)
+                }
+            })
+        } else if (index == 1) {
+            vm_shopcost.openShopCost()
+        } else if (index == 2) {
+            vm_shopcost.changeTabIndex(2)
+        }
+    },
+    //消费时间
+    costDate : '',
+    //支付方式
+    costPayList : [],
+    getPayIndex : function (id) {
+        var name = ''
+        vm_shopcost.costPayList.forEach(function (item, i) {
+            if (item.id == id) {
+                name = i
+            }
+        })
+        return name
+    },
+    initPCandGS : function (callback) {
+        var vm_shop = avalon.vmodels.vm_shop
+        if (vm_shop.shopsList.length == 0 && vm_shopcost.costPayList.length == 0) {
+            tmsky.ui.dialog.loading()
+            $.get('/inn/info/base/' + Plug.QF_SPEND + ',' + Plug.QF_PAY + ',AC', {
+                t : new Date().valueOf()
+            }).done(function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    rs = rs.result
+                    vm_shopcost.getGsList(rs[Plug.QF_SPEND], rs[Plug.QF_PAY], rs['AC'])
+                    vm_shopcost.costShow = true
+                    if (typeof callback === "function") {
+                        callback()
+                    }
+                }
+            })
+        } else {
+            vm_shopcost.costShow = true
+            if (typeof callback === "function") {
+                callback()
+            }
+        }
+    },
+    //获取当前客栈所有项目列表
+    getGsList : function (GS, PC, AC) {
+        var vm_shop = avalon.vmodels.vm_shop
+        //GS
+        var newArr = GS
+        var arr0 = [
+            {
+                shopNo : 0,
+                price : '',
+                name : '商品销售项目'
+            }
+        ]
+        newArr.forEach(function (el, i) {
+            arr0.push(el)
+        })
+        vm_shop.shopsList = arr0
+        //PC
+        var newPc = []
+        PC.forEach(function (el, i) {
+            if (el.id != 67264) {
+                newPc.push(el)
+            }
+        })
+        vm_shopcost.costPayList = newPc
+        if (newPc.length >= 4) {
+            $('.payList').css('top', '-120px')
+        } else {
+            $('.payList').css('top', (newPc.length) * (-30))
+        }
+        //AC
+        avalon.vmodels.vm_spent.acs = AC
+    },
+    initNowTime : function () {
+        vm_shopcost.costDate = tmsky.date.format(new Date(), 'yyyy-MM-dd hh:mm');
+    },
+    //配置调用日期
+    initDate : function () {
+        //选择时间范围配置
+
+        $("#cost-time").datetimepicker({
+            onSelect : function (selectedDate) {
+                $("#cost-time").datetimepicker("option", "", selectedDate);
+                vm_shopcost.costDate = selectedDate
+            }
+        })
+
+    },
+    //取整有效正数字
+    checkNumber : function (el) {
+        var val = parseInt(el.shopNo)
+        if (isNaN(val) || val < 0 || !vm_shopcost.checkZero(el.shopNo) || val == '') {
+            el.shopNo = ''
+        } else {
+            el.shopNo = val
+        }
+    },
+    //小数点只能有一个、小数最多两位、不支持00开头的数字、
+    checkPrice : function (el, num) {
+        var val = Number(el[num])
+        if (isNaN(val) || val < 0 || !vm_shopcost.checkPoint(val) || !vm_shopcost.checkZero(el[num]) || !vm_shopcost.checkPointNumTwo(el[num])) {
+            el[num] = ''
+        }
+    },
+    //数字取有效相等数字 如0.00取为0
+    getEffectNum : function (el, num) {
+        el[num] = Number(el[num])
+    },
+    //小数点只能在一位
+    checkPoint : function (str) {
+        str = tmsky.toString(str)
+        if (str == '')return
+        str = str.split('');
+        var newStr = [];
+        var pointN = 0;
+        str.forEach(function (e, i) {
+            if (e == '.') {
+                pointN++
+            }
+        })
+        if (pointN > 1)return false;
+        return true
+    },
+    checkPointNumTwo : function (str) {
+        if (str.length > 3) {
+            var dot = str.indexOf(".");
+            if (dot != -1) {
+                var dotCnt = str.substring(dot + 1, str.length);
+                if (dotCnt.length > 2) {
+                    return false
+                } else {
+                    return true
+                }
+            } else {
+                return true
+            }
+        } else {
+            return true
+        }
+    },
+    checkZero : function (str) {
+        if (str.length > 1) {
+            var strOld = str;
+            str = str.split('')
+            if (str[0] == 0 && str[1] == 0) {
+                return false
+            } else if (str[0] == 0 && str.length > 4 && Number(strOld) == 0) {
+                return false
+            } else {
+                return true
+            }
+        } else {
+            return true
+        }
+    },
+    cancelShopCost : function () {
+        vm_shopcost.costShow = false
+        vm_shopcost.reset()
+    },
+    editTabIndex : -1,
+    openShopCost : function (id, callback, showTabIndex) {
+        if (Access.access(Access.AC_BOOK)) {
+            vm_shopcost.access.shop = true
+        }
+        if (Access.access(Access.AC_ACC_OUT)) {
+            vm_shopcost.access.out = true
+        }
+        if (Access.access(Access.AC_ACC_IN)) {
+            vm_shopcost.access.in = true
+        }
+        var vm_shop = avalon.vmodels.vm_shop
+        //vm_shopcost.costShow = true
+        if (id != '' && id != undefined) {
+            vm_shop.orderId = id
+            vm_shop.settleType = 1
+        } else {
+            vm_shop.settleType = 2
+            vm_shopcost.initNowTime();
+        }
+        //vm_shopcost.isNewUserFun()
+        vm_shopcost.initPCandGS(callback)
+
+        //编辑时隐藏菜单
+        if (showTabIndex != undefined) {
+            vm_shopcost.editTabIndex = showTabIndex
+        } else {
+            vm_shopcost.editTabIndex = -1
+        }
+    },
+    //通过总标识判断是否完成过至少一次新手引导整体流程
+    hasDonedAllGuides : function (noFinishedBack, finishedBack) {
+        var isNeedAjax = false;
+        if (window.localStorage) {
+            var param = window.localStorage.getItem(GUIDE_CONST.GUIDES.GUIDE_DONE);
+            if (param == 'undefined' || param == null) {
+                //缓存不存在值，则需ajax请求最新GUIDE_NONE
+                isNeedAjax = true
+            } else if (param == 1) {
+                //缓存存在值，全部引导完成
+                if (finishedBack) {
+                    finishedBack()
+                }
+            } else if (param == 0) {
+                //缓存存在值,引导没有完成过，跳转到对应界面
+                if (noFinishedBack) {
+                    noFinishedBack()
+                }
+            }
+        } else {
+            //不支持localStorage，则需ajax请求GUIDE_NONE
+            isNeedAjax = true
+        }
+        if (isNeedAjax) {
+            var data = {
+                guideTag : GUIDE_CONST.GUIDES.GUIDE_DONE,
+                systemTag : 'PMS',
+                innId : CommonCacheUtil.innBaseInfo.user.innId,
+                userCode : CommonCacheUtil.innBaseInfo.user.code,
+                version : '2017-01-16'
+            };
+            $.get('/guide/getInnGuide', data, {
+                t : new Date().valueOf()
+            }).done(function (rs) {
+                if (rs.status == 200) {
+                    if (window.localStorage) {
+                        window.localStorage.setItem(GUIDE_CONST.GUIDES.GUIDE_DONE, rs.guide.status);
+                        window.localStorage.setItem('new_guide_done_id', rs.guide.id);
+                    }
+                    if (rs.guide.status == 0) {
+                        //引导没有完成过
+                        if (noFinishedBack) {
+                            noFinishedBack()
+                        }
+                    } else {
+                        if (finishedBack) {
+                            finishedBack()
+                        }
+                    }
+                }
+            })
+        }
+    },
+    reset : function () {
+        var vm_shop = avalon.vmodels.vm_shop,
+            vm_spent = avalon.vmodels.vm_spent
+        vm_shopcost.tabIndex = 0
+        vm_shopcost.editTabIndex = -1
+        vm_shop.reset()
+        vm_spent.reset()
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('shopCost'))
+        return this
+    }
+})
+

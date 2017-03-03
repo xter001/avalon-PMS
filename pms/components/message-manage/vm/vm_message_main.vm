@@ -1,0 +1,214 @@
+var vm_message_main = avalon.define({
+    $id : 'vm_message_main',
+    page : {pageNo : 1, pageSize : 10, totalPages : -1, totalCount : -1},
+    data : {from : '', to : ''},
+    urls : {
+        baseInfo : '/inn/info/base/PC,AC,FI,FIM,AD'
+    },
+    tabShow : {
+        orderMessage : true,
+        clockTips : false,
+        accountNotice : false
+    },
+    messageShow : -1,   //顯示更多消息
+    messageTipsShow : false,
+    innId : 0,
+    messageCont : [],
+    initPage : function (id, page, callback) {
+        var list = [];
+        tmsky.ui.page.render({
+            id : id,
+            callbackParams : list,
+            callback : callback, // 或click : click
+            pages : page.totalPages,
+            pageNo : page.pageNo,
+            skin : 'red',
+            align : 'center',
+            totalCount : page.totalCount
+        })
+    },
+    messageClick : function (i) {
+        if ($(this).find('.message-con-sl').html().indexOf('查看全部消息') < 0) {
+            return false
+        }
+        vm_message_main.messageShow = i;
+
+    },   //点击显示更多
+    init : function () {
+
+
+        //默认显示第一页
+        vm_message_main.changeTabs('orderMessage')
+
+
+        //选择时间范围配置
+        vm_message_main.data.from = tmsky.date.addDays(new Date(), -6, 'yyyy-MM-dd') + ' 00:00'
+        vm_message_main.data.to = tmsky.date.addDays(new Date(), +1, 'yyyy-MM-dd') + ' 00:00'
+        vm_message_main.data.sortType = 'accountTime desc,id desc'
+        $("#account_from").datetimepicker({
+            maxDate : $("#account_to").val(),
+            onSelect : function (selectedDate) {
+                $("#account_to").datetimepicker("option", "minDate", selectedDate);
+                vm_message_main.data.from = selectedDate;
+                vm_message_main.GetInnId(vm_message_main.getType());
+
+            }
+        })
+        $("#account_to").datetimepicker({
+            minDate : $("#account_from").val(),
+            onSelect : function (selectedDate) {
+                $("#account_from").datetimepicker("option", "maxDate", selectedDate);
+                vm_message_main.data.to = selectedDate;
+                vm_message_main.GetInnId(vm_message_main.getType());
+            }
+        })
+        return this
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+    getType : function () {
+        for (var key in vm_message_main.tabShow) {
+            if (vm_message_main.tabShow[key] == true) {
+                if (key == 'clockTips') {
+                    return 'remind_alert';
+                }
+                else if (key == 'orderMessage') {
+                    return 'receive_oms_order,deal_oms_order_result';
+                }
+                else if (key == 'clockTips') {
+                    return '';
+                }
+                break;
+            }
+        }
+    },
+    //获取消息
+    AjaxSysMessage : function (innId, type) {
+
+        //闹钟提醒
+        $.post('/message/getSysMsg', {
+                'innId' : innId,
+                'msgCodes' : type,
+                "pageNo" : vm_message_main.page.pageNo,
+                "pageSize" : vm_message_main.page.pageSize,
+            })
+            .done(function (data) {
+                tmsky.ui.dialog.loading.close()
+                if (data.status === 200) {
+
+
+                    //page
+                    vm_message_main.page.totalPages = data.page.totals;  //一共多少页
+
+                    tmsky.getVm('vm_message_main').initPage('account_book_page', vm_message_main.page, function () {
+                        var pageInfo = tmsky.ui.page.getParams("account_book_page");
+                        vm_message_main.page.pageNo = pageInfo.pageNo;
+                        vm_message_main.GetInnId(vm_message_main.getType());
+                    });
+                    //消息数据
+
+                    var arr = [];
+
+                    for (var i = 0; i < data.page.datas.length; i++) {
+
+                        var Info = {};
+                        if (type == 'remind_alert') {
+                            var dateNo = data.page.datas[i]['alertTime']
+                        } else if (type == 'receive_oms_order,deal_oms_order_result') {
+                            var dateNo = data.page.datas[i]['sendTime']
+                        }
+
+
+                        var dateFrom = tmsky.date.parse(vm_message_main.data.from).getTime();
+                        var dateTo = tmsky.date.parse(vm_message_main.data.to).getTime();
+
+                        if (dateNo >= dateFrom && dateNo <= dateTo) {
+                            Info['date'] = tmsky.date.format(dateNo, 'yyyy-MM-dd hh:mm');
+                            Info['content'] = data.page.datas[i]['content'];
+                            Info['title'] = data.page.datas[i]['title'];
+                            Info['hasRead'] = data.page.datas[i]['hasRead'];
+                            arr.push(Info);
+
+                        }
+
+                    }
+
+                    if (arr.length == 0) {
+                        vm_message_main.messageTipsShow = true
+                        $('#messageTips').html('暂无相关消息')
+                    } else {
+                        vm_message_main.messageTipsShow = false
+                        $('#messageTips').html('')
+                    }
+                    vm_message_main.messageCont = arr;
+
+                } else {
+                    tmsky.ui.dialog.tips('获取失败 ')
+                }
+
+
+            })
+            .error(function () {
+                tmsky.ui.dialog.alert('设置失败，请检查网络情况！');
+            })
+    },
+
+    //获取客栈ID
+    GetInnId : function (type) {
+        tmsky.ui.dialog.loading()
+        if (vm_message_main.innId != 0) {
+            vm_message_main.AjaxSysMessage(vm_message_main.innId, type)
+        } else {
+            $.get('/inn/info/base', {"t" : new Date().valueOf()})
+                .done(function (rs) {
+                    if (rs.status == 200) {
+                        rs = rs.result;
+                        var id = rs.currentInn.id;
+                        vm_message_main.innId = id;
+                        //闹钟提醒
+                        vm_message_main.AjaxSysMessage(id, type)
+
+                    } else {
+                        alert(rs.message)
+                    }
+                })
+        }
+
+    },
+    //切换选项卡，目前只做闹钟提醒一块，功能保留
+    changeTabs : function (type) {
+        var map = {orderMessage : false, clockTips : false, accountNotice : false};
+        for (var key in map) {
+            if (key == type) {
+                map[key] = true;
+                break;
+            }
+        }
+        switch (type) {
+            case 'orderMessage':
+
+                vm_message_main.GetInnId('receive_oms_order,deal_oms_order_result');
+                break;
+            case 'clockTips':
+                //获取消息数据
+                vm_message_main.GetInnId('remind_alert');
+                break;
+            case 'accountNotice':
+                vm_message_main.messageCont = []
+                vm_message_main.messageTipsShow = true
+                $('#messageTips').html('暂无相关消息')
+                break;
+            default :
+
+                map = {orderMessage : true, clockTips : false, accountNotice : false};
+
+                break;
+        }
+        vm_message_main.tabShow = map;
+    }
+
+
+})
+

@@ -1,0 +1,100 @@
+var COMMON = require('../../common/js/const.js'),
+    GUIDE_CONST = require('../js/guide_const.js')
+var vm_guide_roomtype = avalon.define({
+    $id : 'vm_guide_roomtype',
+    init : function (guide) {
+        var GUIDES = $.extend(true, {}, GUIDE_CONST.GUIDES)
+        avalon.vmodels.vm_room_type.hasNewGuide = true
+        vm_guide_roomtype.guideRoomStep = avalon.vmodels.vm_new_guide.step[guide].step
+        vm_guide_roomtype.bool.hotel = guide == GUIDE_CONST.GUIDES.HOTEL ? true : false
+        vm_guide_roomtype.innName = CommonCacheUtil.innBaseInfo.user.innName
+        switch (guide) {
+            case GUIDES.HOTEL:
+                //引入店铺类型
+                vm_guide_roomtype.hotelTypeActive = CommonCacheUtil.innBaseInfo.user.innType - 1 < 0 ? 0 : CommonCacheUtil.innBaseInfo.user.innType - 1
+                break;
+            case GUIDES.ROOM:
+                //引入房型指引
+                vm_guide_roomtype.guideRoomFunByStep(vm_guide_roomtype.guideRoomStep)
+                break;
+        }
+    },
+    innName : '',
+    guideRoomStep : 0, //房型引导模块 3步 123
+    hotelTypeActive : 0,//店铺类型模块 四个类型
+    changeHotelType : function (index) {
+        vm_guide_roomtype.hotelTypeActive = index
+    },
+    bool : {
+        hotel : false
+    },
+    ajaxHotelType : function () {
+        tmsky.ui.dialog.loading()
+        // 客栈类别（1:青旅 2：客栈/名宿 3：公寓 4：酒店）
+        var type = vm_guide_roomtype.hotelTypeActive + 1
+        $.ajax({
+            type : "GET",
+            url : '/inn/saveType/' + type + "?tmp=" + new Date().getMilliseconds(),
+            dataType : 'json',
+            success : function (data) {
+                tmsky.ui.dialog.loading.close()
+                if (data.status == 200) {
+                    tmsky.ui.dialog.tips('保存店铺类型成功！', 'success')
+                    var step = avalon.vmodels.vm_new_guide.step.$model
+                    step[GUIDE_CONST.GUIDES.HOTEL].finished = true
+                    avalon.vmodels.vm_new_guide.step = step
+                    avalon.vmodels.vm_new_guide.ajaxSaveGuide(GUIDE_CONST.GUIDES.HOTEL)
+                } else {
+                    tmsky.ui.dialog.alert(data.message || '保存失败！')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert('保存店铺类型失败！')
+            }
+        })
+    },
+    //房型引导总处理函数
+    guideRoomFunByStep : function (index) {
+        switch (index) {
+            case 2:
+                vm_guide_roomtype.guideOpenAddRoom()
+                break;
+            case 3:
+                vm_guide_roomtype.guideEditDeleteRoom()
+                break;
+            case 4:
+                vm_guide_roomtype.guideOpenFuncPlug()
+                break;
+        }
+    },
+    //引导第2步 新增房型
+    guideOpenAddRoom : function () {
+        vm_guide_roomtype.guideRoomStep = 2
+        vm_guide_roomtype.editStepFromStorage(GUIDE_CONST.GUIDES.ROOM, vm_guide_roomtype.guideRoomStep)
+        avalon.vmodels.vm_room_type.button.addNewRoomtype()
+    },
+    //引导第3步 编辑删除
+    guideEditDeleteRoom : function () {
+        vm_guide_roomtype.guideRoomStep = 3
+        vm_guide_roomtype.editStepFromStorage(GUIDE_CONST.GUIDES.ROOM, vm_guide_roomtype.guideRoomStep)
+    },
+    //引导第4步 功能库
+    guideOpenFuncPlug : function () {
+        vm_guide_roomtype.guideRoomStep = 4
+        vm_guide_roomtype.editStepFromStorage(GUIDE_CONST.GUIDES.ROOM, vm_guide_roomtype.guideRoomStep)
+    },
+    //引导结束
+    guideRoomToFuncPlug : function () {
+        avalon.vmodels.vm_new_guide.ajaxSaveGuide(GUIDE_CONST.GUIDES.ROOM)
+    },
+    //存入小步骤到缓存
+    editStepFromStorage : function (guideTag, index) {
+        var vm_new_guide = avalon.vmodels.vm_new_guide
+        var step = vm_new_guide.step.$model
+        step[guideTag].step = index
+        vm_new_guide.step = step
+        vm_new_guide.saveStorage()
+    }
+})
+

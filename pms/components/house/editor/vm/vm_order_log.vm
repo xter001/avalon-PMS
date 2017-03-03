@@ -1,0 +1,41 @@
+var vm_order_log = avalon.define({
+	$id : 'vm_order_log',
+	$orderFromEnum : {
+		'-1' : 'WEB',
+		'-2' : 'IOS',
+		'-3' : 'ANDROID',
+		'-4' : 'CLIENT',
+		'-5' : 'IOS',
+		'-6' : 'WEB'
+	},
+	datas : [],
+	// 刷新数据
+	flushData : function(mainOrderId) {
+		var tempArr = [], vm = vm_order_log, orderFromEnum = vm.$orderFromEnum, logArr
+		tmsky.ui.dialog.loading()
+		$.get('/order/log/' + mainOrderId + '/1', {
+			't' : new Date().getMilliseconds()
+		}).done(function(rs) {
+			if (rs.status == 200) {
+				var logPageResult = rs.result || []
+				logArr = logPageResult.result || []
+				logArr.forEach(function(log) {
+					var data = log.data
+					if(data){
+						tempArr.push({
+							from : orderFromEnum[data.logFrom],
+							content : data.content,
+							userName : data.userName,
+							operateTime : tmsky.date.format(data.operateTime, "yyyy-MM-dd hh:mm")
+						})
+					}
+				})
+				vm.datas = tempArr
+				$('#order_log_popups').popups('justshow')
+			} else {
+				tmsky.ui.dialog.tips(rs.message + '', 'error')
+			}
+		}).always(tmsky.ui.dialog.loading.close)
+	}
+
+})

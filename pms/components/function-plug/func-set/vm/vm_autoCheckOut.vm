@@ -1,0 +1,45 @@
+var vm_autoCheckOut = avalon.define({
+    $id : 'vm_autoCheckOut',
+    timeList : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+    disabled : true,
+    operaTxt : '修改',
+    time : '14',
+
+    init : function () {
+        var vm = vm_autoCheckOut
+        vm.getTime()
+    },
+    btnModify : function () {
+        var vm = vm_autoCheckOut
+        if (vm.operaTxt == '修改') {
+            vm.operaTxt = '保存'
+            vm.disabled = false
+        } else {
+            vm.operaTxt = '修改'
+            vm.disabled = true
+            vm.save()
+        }
+    },
+    getTime : function () {
+        var vm = vm_autoCheckOut
+        $.get('/inns/plug/autoCheckOutJson').done(function (rs) {
+            if (rs.status == 200) {
+                vm.time = rs.autoTime
+            }else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    save : function () {
+        var vm = vm_autoCheckOut,
+            datas = {
+                autoTime : vm.time
+            };
+        $.post('/inns/plug/saveAutoCheckOut?t=' + new Date().getTime(), $.param(datas, true)).done(function (rs) {
+            if (rs.status != 200) {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+
+    },
+})

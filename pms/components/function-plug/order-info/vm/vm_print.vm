@@ -1,0 +1,188 @@
+var vm_print = avalon.define({
+    $id : 'vm_print',
+    init : function () {
+        vm_print.getPrintTem()
+    },
+    //打印
+    printTem : [{
+        text : '小票（57mm宽）',
+        select : true,
+        id : 1
+    }, {
+        text : '小票（80mm宽）',
+        select : false,
+        id : 3
+    }, {
+        text : 'A4纸',
+        select : false,
+        id : 2
+    }, {
+        text : '1/3A4纸',
+        select : false,
+        id : 4
+    }],
+    //打印票连
+    printNumEnum : {
+        1 : {id : 1, text : '单联'},
+        2 : {id : 2, text : '双联'}
+    },
+    printTemChange : function (value) {
+        var arr = vm_print.printTem;
+        arr.forEach(function (el, i) {
+            el.select = false
+            if (el.id == value) {
+                el.select = true
+            }
+        })
+        var brr = [1, 3, 2, 4]
+        brr.forEach(function (el, i) {
+            if (el == Number(value)) {
+                vm_print.printTemOn = i
+            }
+        })
+        vm_print.printTem = arr
+    },
+    getSelectTem : function () {
+        var arr = vm_print.printTem;
+        var value = 1;
+        arr.forEach(function (el, i) {
+            if (el.select) {
+                value = (i + 1)
+            }
+        })
+        return value
+    },
+    savePrintTemplate : function () {
+        tmsky.ui.dialog.loading()
+        var json = []
+        var paperId = [1, 3, 2, 4]
+        var type3 = '', type4 = '';
+        $('.print-no-circle').each(function (index) {
+            var arr = []
+            $(this).find('.ui_select_toggle.on').each(function () {
+                arr.push($(this).attr('data-id'))
+            })
+            if (index == 0) {
+                type3 = arr.join(',')
+            } else {
+                type4 = arr.join(',')
+            }
+        })
+        vm_print.printTemplate.$model.forEach(function (el, i) {
+            var arr = {
+                id : el.id,
+                printContent : el.printContent.replace("%", ""),
+                printItem : '',
+                printPaper : paperId[vm_print.printTemOn],
+                printNum : vm_print.printNumOn,
+                printTitle : el.printTitle,
+                printType : el.printType
+            }
+            if (el.printType == 3) {
+                arr.printItem = type3
+            } else {
+                arr.printItem = type4
+            }
+            json.push(arr)
+        })
+
+        json = tmsky.json.toForm({templates : json})
+        $.ajax({
+            type : "POST",
+            url : '/inns/ajaxSavePrintTemplate',
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips("保存成功！", 'success');
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    printTemplate : [],//打印模板
+    printTemOn : 0,
+    printNumOn : 1,
+    //获取打印模板
+    getPrintTem : function () {
+        $.ajax({
+            type : 'GET',
+            url : '/inns/plug/getPrintTemplate/-1',
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    //3：入住凭证 4：结账单
+                    var prints = [{
+                        "id" : '',
+                        "printPaper" : "1",
+                        "printType" : "3",
+                        "printTitle" : "客栈入住凭据",
+                        "printContent" : "联系电话：WIFI密码：导航地址：凭证说明：退还押金的唯一凭证，请妥善保管",
+                        "printItem" : "",
+                    }, {
+                        "id" : '',
+                        "printPaper" : "1",
+                        "printType" : "4",
+                        "printTitle" : "客栈结账单",
+                        "printContent" : "联系电话：WIFI密码：导航地址：凭证说明：退还押金的唯一凭证，请妥善保管",
+                        "printItem" : "",
+                    }]
+                    if (tmsky.isEmpty(rs.printTemplate) || rs.printTemplate.length == 0) {
+                        vm_print.printTemplate = prints
+                        return
+                    }
+                    var newPrint = $.extend([], prints)
+                    prints.forEach(function (el, i) {
+                        rs.printTemplate.forEach(function (el2, i2) {
+                            if (el.printType == el2.printType) {
+                                el.printType == 3 ? newPrint[0] = $.extend({}, el, el2) : newPrint[1] = $.extend({}, el, el2)
+                            }
+                        })
+                    })
+                    vm_print.printTemplate = newPrint
+                    //定位
+                    var value = rs.printTemplate[0].printPaper
+                    vm_print.printTemChange(value)
+                    var arr = [1, 3, 2, 4]
+                    arr.forEach(function (el, i) {
+                        if (el == Number(value)) {
+                            vm_print.printTemOn = i
+                        }
+                    })
+                    var printNum = rs.printTemplate[0].printNum
+                    vm_print.printNumOn = printNum
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            }
+
+        })
+    },
+    isContains : function (type, sing, all) {
+        if (tmsky.isEmpty(all))return false;
+        if (type == 's') {
+            //字符串
+            var arr = all.split(',')
+            var count = 0;
+            arr.forEach(function (el, i) {
+                if (el == sing) {
+                    count++
+                }
+            })
+            if (count != 0) {
+                return true
+            } else {
+                return false
+            }
+        }
+    },
+})
+

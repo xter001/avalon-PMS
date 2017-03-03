@@ -1,0 +1,56 @@
+/************************************** 房型筛选  *****************************************/
+.filter-panel {
+	cursor: pointer;
+	background-color: #f6f6f6;
+	color: #625b5b;
+}
+
+.filter-panel-head>.iconfont {
+	font-size: 12px;
+}
+
+.filter-panel-main {
+	display: none;
+	position: relative;
+	z-index: 100;
+	left: 10px;
+	width: 130px;
+	padding: 10px;
+	color: #606060;
+	border: 1px solid #d4d9df;
+	border-top: 3px solid #a9221c;
+	border-radius: 5px 5px 0 0;
+	background-color: #fff;
+}
+
+.open>.filter-panel-main {
+	display: block;
+}
+
+.filter-panel-main ul {
+	max-height: 193px;
+	overflow-y: auto;
+	margin-bottom: 10px;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+
+.filter-panel-main li {
+	margin: 0;
+	padding: 0;
+	cursor: pointer;
+	text-align: left;
+}
+
+.filter-panel-main label {
+	cursor: pointer;
+}
+
+.filter-panel-main .iconfont {
+	margin-right: 10px;
+}
+
+.filter-panel-main .btn {
+	padding: 2px 16px;
+}

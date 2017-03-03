@@ -1,0 +1,93 @@
+<!-- 申请开通正式版账号 -->
+<div ms-controller="vm_apply" class="tomasky-ui-popups" id="apply_popups">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">申请使用完整版番茄来了</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x">
+            <div class="container" style="padding: 0 20px">
+                <div class="apply-item">
+                    <h1 class="title" style="padding-top: 0">更多专业性功能完全免费</h1>
+                    <ul>
+                        <li>
+                            <span class="u-border-radius">新手版</span>客人来源&nbsp;|&nbsp;支付方式&nbsp;|&nbsp;客栈账本&nbsp;|&nbsp;房型折叠&nbsp;|&nbsp;商品销售
+                        </li>
+                        <li>
+                            <span class="u-border-radius">完整版</span>打印&nbsp;|&nbsp;智能短信&nbsp;|&nbsp;多人登记&nbsp;|&nbsp;身份证记录&nbsp;|&nbsp;自动退房&nbsp;|&nbsp;交接班
+                        </li>
+                    </ul>
+                </div>
+                <div class="apply-item">
+                    <h1 class="title">只是管理？当然不够！番茄来了还提供：</h1>
+                    <ul>
+                        <li>
+                            <span class="u-border-radius">番茄代销</span>覆盖美团、携程、阿里旅行、去哪儿、同程等多家主流旅行网站，为您带来更多订单！
+                        </li>
+                        <li>
+                            <span class="u-border-radius">渠道对接</span>多渠道对接，一键直连，实时同步房态。（目前可对接去哪儿、携程。）
+                        </li>
+                        <li>
+                            <span class="u-border-radius">微信店铺</span>上传资料即可建立专属微店，开启客栈自营销新时代!
+                        </li>
+                    </ul>
+                </div>
+                <div class="apply-item" ms-visible="newUser">
+                    <h1 class="title">您只需填写以下资料，并接听我们的来电，即可开通完整版番茄来了！</h1>
+                    <ul>
+                        <li style="padding: 0">
+                            <label class="u-width-60">客栈名称：</label>
+                            <span id="apply_innName" class="ft-14" style="color: #000">{{innName}}</span>
+                        </li>
+                        <li>
+                            <label class="u-width-60">客栈位置：</label>
+                            <label class="icon-radio" ms-class-icon-radio-check="area.regInland"
+                                   ms-click="regCheckArea('regInland')">
+                                <i></i>中国
+                            </label>
+                            <label class="icon-radio" ms-class-icon-radio-check="area.regOverseas"
+                                   ms-click="regCheckArea('regOverseas')">
+                                <i></i>海外
+                            </label>
+                        </li>
+                        <li ms-visible="area.regInland">
+                            <label class="u-width-60" style="position: absolute">目的地：</label>
+                            <div class="tomasky-ui-dropdown oo-dropdown-width-channel" data-ui="dropdown"
+                                 style="left:60px;width: 235px">
+                                <input type="hidden" ms-duplex="applyInfo.regionId" ms-change="isToApply">
+                                <a href="javascript:void(0);" style="line-height: 30px">
+                                    <span data-role="value" ms-duplex="applyInfo.regionId">请选择客栈所在地区</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                                    <em class="tomasky-ui-dropdown-search-in">
+                                        <input old-value="" placeholder="搜索.." data-role="search"
+                                               class="tomasky-ui-dropdown-search-input-in">
+                                    </em>
+                                    <a href="javascript:;" ms-repeat="areaList" ms-data-value="el.id" data-role="item">{{el.name}}</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <label class="u-width-60">详细地址：</label><input ms-duplex="applyInfo.address"
+                                                                          ms-keyup="isToApply" type="text"
+                                                                          class="u-input-add">
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <h1 class="applying" ms-visible="applying">您的申请正在审核中，请耐心等候</h1>
+            <button class="btn app-btn-red" data-dismiss="popups" ms-visible="applying" style="width:300px">确定</button>
+            <button class="btn apply-def-btn" ms-visible="newUser" ms-class-app-btn-red="isApply" ms-click="sendApply()"
+                    data-ui="popups"
+                    style="width:300px" callback="ok">申请开通
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<link rel="import" href="./menu-apply-popups.html?__inline">
+<link rel="import" href="./apply-success-popups.html?__inline">

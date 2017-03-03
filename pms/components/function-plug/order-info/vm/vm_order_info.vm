@@ -1,0 +1,821 @@
+require('../css/order-info.css')
+var vm_order_info = avalon.define({
+    $id : 'vm_order_info',
+    psbStatus : false,
+    psbDisabled: true,
+    psbType : {},
+    init : function () {
+        vm_order_info.bind()
+        $('.addNewQd').show()
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+    resetWindow : function () {
+        vm_order_info.bool = {
+            yj : false,
+            addQd : false,
+            deleteNo : false,
+        }
+        $('.qd_part .qd_delete').find('.qd_name').show()
+        $('.qd_part .qd_delete').find('.ui_inblock_add').hide()
+        $('.qd_part .qd_delete').children('a').show()
+    },
+    yjCheck : [true, false],
+    changeYjType : function (index) {
+        var arr = [false, false]
+        arr[index] = true
+        vm_order_info.yjCheck = arr
+    },
+    bool : {
+        yj : false,
+        addQd : false,
+        deleteNo : false,
+    },
+    toggleYj : function (bool) {
+        vm_order_info.bool.yj = bool
+    },
+    oldType : 1,
+    //获取所有房型
+    getRoomType : function (json) {
+        $.get('/room/roomTypes')
+            .done(function (data) {
+                tmsky.ui.dialog.loading.close()
+                if (data.status === 200) {
+                    data = data.result;
+                    //排序  房间号为空的房型排最下面  时间最新的顺序
+                    var arr = []
+                    if (data.length == 0 || data == '')return
+                    data.forEach(function (el) {
+                        arr.push({
+                            id : el.id,
+                            name : el.name,
+                        })
+                    })
+                    vm_order_info.roomTypeList = arr
+                    vm_order_info.openYjAjax(json)
+                }
+            })
+            .error(function () {
+                tmsky.ui.dialog.alert('设置失败，请检查网络情况！');
+            })
+    },
+    roomTypeList : [],
+    oldYjType1 : {},
+    oldYjType2 : [],
+    yjInfoType1 : {
+        commissionValue : ''
+    },
+    yjType2 : [],
+    resetYjData : function () {
+        var roomType = $.extend(true, [], vm_order_info.roomTypeList.$model)
+        roomType.forEach(function (el, i) {
+            el.yj = ''
+        })
+        vm_order_info.yjType2 = $.extend(true, [], roomType)
+        vm_order_info.oldYjType2 = $.extend(true, [], roomType)
+        vm_order_info.oldYjType1 = {}
+        vm_order_info.yjInfoType1 = {
+            commissionValue : ''
+        }
+        vm_order_info.yjCheck = [true, false]
+        vm_order_info.channelId = ''
+    },
+    channelId : '',
+    //查询佣金设置
+    openYjSet : function () {
+        var id = $(this).parent().attr('fromid') || $(this).parents('.qd_delete').attr('fromid')
+        var json = {
+            channelId : id,
+        }
+        vm_order_info.getRoomType(json)
+    },
+    openYjAjax : function (data) {
+        tmsky.ui.dialog.loading()
+        $.ajax({
+            type : "POST",
+            url : '/plug/origin/commission/load',
+            dataType : 'json',
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    vm_order_info.toggleYj(true)
+                    vm_order_info.resetYjData()
+
+                    vm_order_info.channelId = data.channelId
+                    var json = []
+                    if (tmsky.isEmpty(rs.commissions))return
+                    if (tmsky.isArray(rs.commissions)) {
+                        var type = 2
+                        json = rs.commissions
+                    } else if (tmsky.isObject(rs.commissions)) {
+                        var type = rs.commissions.commissionType
+                        var arr = []
+                        arr.push(rs.commissions)
+                        json = type == 1 ? rs.commissions : arr
+                    }
+
+                    if (type == 2) {
+                        var roomType = $.extend(true, [], vm_order_info.roomTypeList.$model)
+                        roomType.forEach(function (el, i) {
+                            json.forEach(function (el2) {
+                                if (el.id == el2.roomTypeId) {
+                                    el.yj = el2.commissionValue
+                                }
+                            })
+                        })
+                        vm_order_info.yjType2 = $.extend(true, [], roomType)
+                        vm_order_info.oldYjType2 = $.extend(true, [], roomType)
+                    }
+                    if (type == 1) {
+                        vm_order_info.yjInfoType1 = json
+                        vm_order_info.oldYjType1 = json
+                    }
+                    vm_order_info.oldType = type
+                    vm_order_info.changeYjType(type - 1)
+
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips('查询佣金设置失败', 'error')
+            }
+        })
+    },
+    //保存佣金  type=1保存佣金有三个接口  Type=2保存佣金只有一个接口
+    saveYj : function () {
+        if (!vm_order_info.limitYj())return
+
+        if (vm_order_info.yjCheck[0]) {
+            //type=1
+            var nowYj = vm_order_info.yjInfoType1
+            var oldYj = vm_order_info.oldYjType1
+            if (nowYj.commissionValue == oldYj.commissionValue) {
+                vm_order_info.toggleYj(false)
+                tmsky.ui.dialog.tips('设置佣金操作成功！', 'success')
+                return false
+            }
+
+            if (tmsky.isEmptyObject(oldYj) && !vm_order_info.isEmptyData(nowYj)) {
+                //新增
+                vm_order_info.saveFunYj1(nowYj, oldYj)
+            } else if (tmsky.isEmptyObject(nowYj) || vm_order_info.isEmptyData(nowYj)) {
+                //删除
+                vm_order_info.deleteFunYj1(nowYj, oldYj)
+            } else if (!tmsky.isEmptyObject(oldYj) && !tmsky.isEmptyObject(nowYj) && !vm_order_info.isEmptyData(nowYj)) {
+                //修改
+                vm_order_info.updateFunYj1(nowYj, oldYj)
+            } else {
+                vm_order_info.toggleYj(false)
+            }
+        } else {
+            //type=2
+
+            var nowYj = vm_order_info.yjType2
+            var oldYj = vm_order_info.oldYjType2
+            vm_order_info.saveFunYj2(nowYj, oldYj)
+        }
+    },
+    saveFunYj2 : function (data, oldYj) {
+        tmsky.ui.dialog.loading()
+        var json = vm_order_info.convertData(2, data, oldYj)
+        $.ajax({
+            type : "POST",
+            url : '/plug/origin/commission/save',
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_order_info.toggleYj(false)
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('设置佣金操作成功！', 'success')
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips('保存佣金设置失败', 'error')
+            }
+        })
+    },
+    saveFunYj1 : function (data, oldYj) {
+        tmsky.ui.dialog.loading()
+        var json = vm_order_info.convertData(1, data, oldYj)
+        $.ajax({
+            type : "POST",
+            url : '/plug/origin/commission/save',
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_order_info.toggleYj(false)
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('设置佣金操作成功！', 'success')
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips('保存佣金设置失败', 'error')
+            }
+        })
+    },
+    updateFunYj1 : function (data, oldYj) {
+        tmsky.ui.dialog.loading()
+        var json = vm_order_info.convertData(1, data, oldYj)
+        var url = '/plug/origin/commission/update'
+        $.ajax({
+            type : "POST",
+            url : url,
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_order_info.toggleYj(false)
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('设置佣金操作成功！', 'success')
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips('保存佣金设置失败', 'error')
+            }
+        })
+    },
+    deleteFunYj1 : function (data, oldYj) {
+        tmsky.ui.dialog.loading()
+        var json = vm_order_info.convertData(1, data, oldYj)
+        var url = '/plug/origin/commission/delete'
+        $.ajax({
+            type : "POST",
+            url : url,
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_order_info.toggleYj(false)
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('设置佣金操作成功！', 'success')
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips('保存佣金设置失败', 'error')
+            }
+        })
+    },
+    convertData : function (type, data, oldYj) {
+        var json = {
+            channelId : vm_order_info.channelId,
+            commissionType : type
+        }
+        if (type == 1) {
+            //type为1
+            json.commissionValue = vm_order_info.isEmptyData(data) ? '' : data.commissionValue
+        } else {
+            //type为2
+            var addData = '', updData = '', delData = '',
+                addArr = [], updArr = [], delArr = [];
+            data.forEach(function (el, i) {
+                if (vm_order_info.isEmptyType1(vm_order_info.yjInfoType1) && vm_order_info.isEmptyData(oldYj) && !tmsky.isEmpty(el.yj) && (el.yj != 0 && el.yj != oldYj[i].yj)) {
+                    //新增
+                    addData = el.id + '-' + el.yj
+                    addArr.push(addData)
+                }
+                if (!(vm_order_info.isEmptyType1(vm_order_info.yjInfoType1) && vm_order_info.isEmptyData(oldYj)) && !tmsky.isEmpty(el.yj) && (el.yj != 0 && el.yj != oldYj[i].yj)) {
+                    //修改
+                    updData = el.id + '-' + el.yj
+                    updArr.push(updData)
+                }
+                if (!vm_order_info.isEmptyData(oldYj) && tmsky.isEmpty(el.yj) && el.yj != oldYj[i].yj) {
+                    //删除
+                    delData = el.id + '-' + el.yj
+                    delArr.push(delData)
+                }
+            })
+
+            if (addData != '') {
+                json.addData = addArr.join(',')
+            }
+            if (updData != '') {
+                json.updData = updArr.join(',')
+            }
+            if (delData != '') {
+                json.delData = delArr.join(',')
+            }
+        }
+        if (vm_order_info.oldType != type) {
+            json.typeCg = true
+        }
+        return json
+    },
+    cf_z : [],//自定义渠道
+    cf_origin : [],//默认渠道
+    addQdInfo : {
+        name : '',
+        colorValue : "#9E9E9E"
+    },
+    allCF : [],//所有渠道
+    dragEnd : function () {
+        var cf_z = vm_order_info.cf_z.$model, ajaxList = []
+        $('#origin_head_iol li.qd_delete').each(function (i) {
+            var index = $(this).attr('index'),
+                id = $(this).attr('fromid')
+            ajaxList.push(id + ':' + i)
+        })
+
+        $.ajax({
+            type : "POST",
+            async : true,
+            cache : false,
+            url : "/inns/ajaxSortCusFrom",
+            data : {
+                "sortData" : ajaxList.toString()
+            },
+            success : function (json) {
+                if (json.status != 200) {
+                    tmsky.ui.dialog.tips('排序失败！', 'error');
+                    document.location.reload();
+                }
+            }
+        });
+    },
+    getALLCF : function (CF) {
+        vm_order_info.allCF = CF
+        //获取渠道，innId&&pid=null为系统渠道
+        var cf = [], cf_origin = []
+        CF.forEach(function (el, i) {
+            if (el.innId == null) {
+                if (el.pid == null)
+                    cf_origin.push(el)
+            } else {
+                cf.push({
+                    id : el.id,
+                    name : el.name,
+                    colorValue : el.colorValue,
+                    serialNo : el.serialNo
+                })
+            }
+        })
+        vm_order_info.cf_z = cf
+        vm_order_info.cf_origin = cf_origin
+        $("#origin_head_iol").dragsort({
+            dragSelector : ".qd_delete",
+            dragBetween : false,
+            dragEnd : vm_order_info.dragEnd,
+            placeHolderTemplate : "<li class='qd_delete'></li>"
+        })
+    },
+    addQd : function (bool) {
+        vm_order_info.bool.addQd = bool
+        $('.addNewQd').hide()
+        $(this).prev().find('input').focus()
+        if (bool) {
+            vm_order_info.addQdInfo = {
+                name : '',
+                colorValue : "#9E9E9E"
+            }
+        }
+    },
+    canDelete : function (el, $index) {
+        $('.deleteId').val('')
+        $.ajax({
+            type : 'GET',
+            url : '/plug/origin/' + el.id + '/isUsedByOrder',
+            dataType : 'json',
+            error : function (rs) {
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    if (rs.result) {
+                        //已经被使用
+                        vm_order_info.bool.deleteNo = true
+                        $('#oper-name').html(el.name)
+                        $('.qdNoSelect').html('请选择渠道')
+                        var list = vm_order_info.allCF;
+                        var way = []
+                        list.forEach(function (el2, i) {
+                            if (el2.id != el.id) {
+                                way.push(el2)
+                            }
+                        })
+                        vm_order_info.allCF = way
+                        vm_order_info.deleteActive = {
+                            id : el.id,
+                            index : $index
+                        }
+                    } else {
+                        vm_order_info.deleteAjaxQd(el.id, $index)
+                    }
+                }
+
+            }
+        })
+    },
+    addAjaxQd : function () {
+        tmsky.ui.dialog.loading()
+        if (vm_order_info.addQdInfo.name == '') {
+            tmsky.ui.dialog.tips('请填写渠道名称！', 'error')
+            tmsky.ui.dialog.loading.close()
+            return false
+        }
+        var json = {
+            colorValue : vm_order_info.addQdInfo.colorValue,
+            id : '',
+            name : vm_order_info.addQdInfo.name
+        }
+        $.ajax({
+            type : "POST",
+            url : '/plug/origin/ajaxSave',
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_order_info.addQd(false)
+                if (rs.status == 200) {
+                    $('.addNewQd').show()
+                    tmsky.ui.dialog.tips("保存成功！", 'success');
+                    json.id = rs.customerFrom.id
+                    json.serialNo = rs.customerFrom.serialNo
+                    vm_order_info.cf_z.push(json)
+                } else {
+                    $('.addNewQd').show()
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            },
+            error : function (rs) {
+                vm_order_info.addQd(false)
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    deleteActive : {},
+    deleteCF : function () {
+        var json = {
+            id : vm_order_info.deleteActive.id,
+            nid : $('.deleteId').val(),
+            toUpdate : true
+        }
+        if(tmsky.isEmpty(json.nid)){
+            tmsky.ui.dialog.tips('请选择渠道！','error')
+            return false
+        }
+        tmsky.ui.dialog.loading()
+        var url = '/plug/origin/deleteAndUpdate'
+        $.ajax({
+            type : "POST",
+            url : url,
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips("删除成功！", 'success');
+                    vm_order_info.closeBool()
+                    setTimeout(function () {
+                        location.reload()
+                    }, 1000)
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips('删除失败', 'error')
+            }
+        })
+    },
+    deleteAjaxQd : function (id, i) {
+        tmsky.ui.dialog.confirm('确定要删除该渠道？', function () {
+            var json = {
+                id : id
+            }
+            tmsky.ui.dialog.loading()
+            var url = '/plug/origin/deleteAndUpdate'
+            $.ajax({
+                type : "POST",
+                url : url,
+                dataType : 'json',
+                data : json,
+                success : function (rs) {
+                    tmsky.ui.dialog.loading.close()
+                    if (rs.status == 200) {
+                        avalon.Array.removeAt(vm_order_info.cf_z, i)
+                        tmsky.ui.dialog.tips("删除成功！", 'success');
+                    } else {
+                        tmsky.ui.dialog.tips(rs.message, 'error')
+                    }
+                },
+                error : function (rs) {
+                    tmsky.ui.dialog.loading.close()
+                    tmsky.ui.dialog.tips('删除失败', 'error')
+                }
+            })
+        })
+    },
+    editQd : function (el) {
+        if (!el.name) {
+            tmsky.ui.dialog.tips('请填写渠道名称！', 'error')
+            return false
+        }
+        var that = $(this)
+        var json = {
+            colorValue : el.colorValue,
+            id : el.id,
+            name : el.name
+        }
+        $.ajax({
+            type : "POST",
+            url : '/plug/origin/ajaxEdit',
+            dataType : 'json',
+            data : json,
+            success : function (rs) {
+                if (rs.status == 200) {
+                    that.parents('li').find('.qd_name').show()
+                    that.parents('li').find('.ui_inblock_add').hide()
+                    that.parents('li').children('a').show()
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            },
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    changeColor : function (el) {
+        var color = $(this).attr('background')
+        el.colorValue = color
+        $(this).parents('.qd_delete').find('.qd_name').css('background', color)
+        vm_order_info.editQd(el)
+    },
+    isEmptyData : function (oldYj) {
+        var bool = vm_order_info.yjCheck[0]
+        var count = 0
+        if (bool) {
+            //type=1
+            return vm_order_info.isEmptyType1(oldYj)
+        } else {
+            if (oldYj.length != 0) {
+                oldYj.forEach(function (el, i) {
+                    if (el.yj != '') {
+                        count++
+                    }
+                })
+            }
+            if (tmsky.isEmpty(oldYj) || oldYj.length == 0 || tmsky.isEmptyObject(oldYj)) {
+                return true
+            } else if (count == 0) {
+                return true
+            } else {
+                return false
+            }
+        }
+    },
+    isEmptyType1 : function (data) {
+        if (tmsky.isEmpty(data) || data.length == 0 || tmsky.isEmptyObject(data) || data.commissionValue == '') {
+            return true
+        } else {
+            return false
+        }
+    },
+    yjType : function () {
+        if (vm_order_info.yjCheck[0]) {
+            var type = 1
+        } else {
+            var type = 2
+        }
+        return type
+    },
+    limitYj : function () {
+        var type = vm_order_info.yjType()
+        if (type == 1) {
+            var value = vm_order_info.yjInfoType1.commissionValue
+            if (!tmsky.isEmpty(value)) {
+                if (String(value).indexOf('.') != -1) {
+                    if (String(value).split('.').length > 2) {
+                        tmsky.ui.dialog.tips("请输入有效数字！", "error")
+                        return false
+                    }
+                }
+                if (value == 0 && value != '') {
+                    tmsky.ui.dialog.tips("佣金比例不能为0！", "error")
+                    return false
+                }
+                if (value > 100 && value != '') {
+                    tmsky.ui.dialog.tips("佣金比例必须小于或等于100！", "error")
+                    return false
+                }
+            }
+
+            return true
+        } else {
+            var count = 0
+            vm_order_info.yjType2.forEach(function (el) {
+                var value = el.yj
+                if (value != '' && value != undefined) {
+                    if (value.split('.').length > 2 || value == 0) {
+                        tmsky.ui.dialog.tips("请输入有效非0数字！", "error")
+                        count++
+                        return false
+                    }
+
+                    if (value.split('.').length == 2) {
+                        if (value.split('.')[1].length > 2) {
+                            count++
+                            tmsky.ui.dialog.tips("最多只能输入两位小数！", "error")
+                            return false
+                        }
+                    }
+                }
+            })
+            if (count == 0) {
+                return true
+            } else {
+                return false
+            }
+        }
+
+    },
+    bind : function () {
+        $(document).on('click', '.qd_delete .qd_name', function (e) {
+            var e = e || window.event;
+            if (e.target.tagName != 'I') {
+
+                $(e.target).closest('.qd_delete').find('.qd_name').hide()
+                $(e.target).closest('.qd_delete').children('a').hide()
+                $(e.target).closest('.qd_delete').find('.ui_inblock_add').show()
+                $(e.target).closest('.qd_delete').find('.ui_inblock_add').find('input').focus()
+            }
+        })
+
+        //$(document).on('click', function (e) {
+        //    var e = e || window.event;
+        //    if ($(e.target).closest('.cancelClick').length == 0) {
+        //        vm_order_info.bool.addQd = false
+        //        $('.addNewQd').show()
+        //
+        //    }
+        //})
+
+        // qd_delete
+        $(document).on('mouseover', '.qd_delete div', function (e) {
+            var e = e || window.event;
+            if ($(e.target).closest('.ui_inblock_add').length != 0)return
+            //  console.log($(e.target).closest('.qd_color').length!=0,$(e.target).closest('.qq_name').length!=0)
+            //    if($(e.target).closest('.qd_color').length!=0||$(e.target).closest('.qq_name').length!=0){
+            $('.qd_color').hide()
+            $(this).find('.qd_color').show()
+            //  }
+        })
+        $(document).on('mouseout', '.qd_delete div', function () {
+            $('.qd_color').hide()
+        })
+        /*判断psb中有哪些是已经开通了的*/
+        vm_order_info.psbType = avalon.vmodels.vm_functions.funcInfo
+        if (vm_order_info.psbType[9].onoff || vm_order_info.psbType[1].onoff || vm_order_info.psbType[20].onoff) {
+            vm_order_info.psbStatus = true
+            vm_order_info.psbDisabled = false
+        }
+    },
+    closeBool : function () {
+        vm_order_info.bool = {
+            yj : false,
+            addQd : false,
+            deleteNo : false,
+        }
+    },
+    setColor : function (index) {
+        $(this).prev().click();
+    },
+    saveColor : function (el) {
+        var vm = vm_order_info
+        el.colorValue = this.value
+        vm.editQd(el)
+    },
+    isMac : function () {
+        return /macintosh|mac os x/i.test(navigator.userAgent);
+    },
+    psbNewSeve : function(nub){
+        if (!!vm_order_info.psbType[31].onoff) {
+            return
+        }
+        var $psbOptions = $('.psb_new_add_label')
+        var dict = {
+            actionName: 'open',
+            status: true
+        }
+        // 第一个卡片按钮的开启/关闭操作
+        /*
+            逻辑：
+            1. 未选中状态下（即：将要开启第一个卡片）
+                a) 判断是否有选中的子选项   是 => next()    否 => 弹框提示  
+                b) 判断是否第二个卡片激活   是 => 清除激活    否 => next()
+                c) 子选项设置激活，启用按钮设置激活
+            2. 已选中状态下（即：将要关闭第一个卡片）
+                a) 子选项取消激活，启用按钮取消激活
+        */
+        if (nub) {
+            var ajaxStatus = false
+            if (!vm_order_info.psbStatus) {
+                if (vm_order_info.psbDisabled) {
+                    return
+                }
+                if (vm_order_info.psbType[30].onoff) {
+                    vm_order_info.psbSever('30', 'close', function () {
+                        vm_order_info.psbType[30].onoff = false
+                    })
+                }
+            } else {
+                dict.actionName = 'close'
+                dict.status = false
+            }
+            $psbOptions.each(function (key, val) {
+                if (val.children[0].checked) {
+                    var funcId = val.children[0].name
+                    vm_order_info.psbSever(funcId, dict.actionName, function () {
+                        vm_order_info.psbType[funcId].onoff = dict.status
+                        if (!ajaxStatus) {
+                            ajaxStatus = true
+                            vm_order_info.psbStatus = dict.status
+                            vm_order_info.psbDisabled = !dict.status
+                        }
+                    })
+                }
+            })
+        } else {
+        // 第二个卡片按钮的开启/关闭操作
+        /*
+            逻辑：
+            1. 判断第一个卡片是否是激活状态  是 => 设置第一卡片子选项取消激活，第一卡片启用按钮取消激活  否 => next()
+            2. 设置第二个卡片启用按钮取消激活
+        */
+            if (vm_order_info.psbStatus) {
+                $psbOptions.each(function (key, val) {
+                    if (val.children[0].checked) {
+                        var optFuncId = val.children[0].name
+                        vm_order_info.psbSever(optFuncId, 'close', function () {
+                            vm_order_info.psbType[optFuncId].onoff = false
+                        })
+                    }
+                })
+                vm_order_info.psbStatus = false
+                vm_order_info.psbDisabled = true
+            }
+            if (!!vm_order_info.psbType[30].onoff) {
+                dict.actionName = 'close'
+                dict.status = false
+            }
+            vm_order_info.psbSever(30, dict.actionName, function () {
+                vm_order_info.psbType[30].onoff = dict.status
+            })
+        }
+    },
+    psbTypeChange : function (funcId){
+        if (!!vm_order_info.psbType[31].onoff) {
+            return
+        }
+        var optCounter = 0
+        $('.psb_new_add_label').each(function (key, val) {
+            val.children[0].checked && optCounter++
+        })
+        vm_order_info.psbDisabled = !optCounter
+        if (vm_order_info.psbStatus) {
+            var isOptChecked = this.checked
+            var actionName = isOptChecked ? 'open' : 'close'
+            vm_order_info.psbSever(funcId, actionName, function () {
+                vm_order_info.psbType[funcId].onoff = isOptChecked
+            })
+            if (!optCounter) {
+                vm_order_info.psbStatus = false
+            }
+        } else {
+            return
+        }
+    },
+    psbSever:function(funcId,status,call){
+        var getUrl = "/inns/" + CommonCacheUtil.innBaseInfo.secure.innId + "/plug/" + funcId + "/" + status + "?temp=" + new Date().getTime();
+        $.get(getUrl, function (json) {
+            if (json.status == 200) {
+                call && call(json)
+                tmsky.ui.dialog.successTips('保存成功！')
+            } else {
+                tmsky.ui.dialog.tips(json.message || '请刷新页面重试', 'error')
+            }
+        }, "json");
+    }
+
+})
+

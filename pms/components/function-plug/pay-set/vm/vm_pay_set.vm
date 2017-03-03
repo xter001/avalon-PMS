@@ -1,0 +1,304 @@
+require('../css/pay-set.css')
+var User = require('../../../header/user.js')
+var vm_pay_set = avalon.define({
+    $id : 'vm_pay_set',
+    init : function () {
+        //vm_pay_set.getBarCodePublicKey()  条码支付，暂时隐藏
+        vm_pay_set.bind()
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+    resetWindow : function () {
+        vm_pay_set.bool = {
+            deleteNo : false
+        }
+        vm_pay_set.addData = []
+        $('.selfPayWay .ui_inblock_grey .hide').hide()
+        $('.selfPayWay .ui_inblock_grey span').show()
+    },
+    allBaseInfo : {},
+    PC_default : [],
+    PC_z : [],
+    deleteToWay : [],
+    bool : {
+        deleteNo : false
+    },
+    addData : [],
+    //获取支付方式
+    getPC : function (rs) {
+        var pc = rs
+        var pc_d = [], pc_z = []
+        pc.ALLPC.forEach(function (el, i) {
+            if (el.innId == null) {
+                pc_d.push(el)
+            } else {
+                pc_z.push(el)
+            }
+        })
+        vm_pay_set.PC_default = pc_d
+        vm_pay_set.PC_z = pc_z
+        $("#payChannelSort").dragsort({
+            dragSelector : ".pc_z",
+            dragBetween : false,
+            dragEnd : vm_pay_set.dragEnd,
+            placeHolderTemplate : "<span class='paysort'></span>"
+        })
+    },
+    dragEnd : function () {
+        var cf_z = vm_pay_set.PC_z.$model, ajaxList = []
+        $('#payChannelSort .pc_z').each(function (i) {
+            var id = $(this).attr('payid')
+            ajaxList.push(id + ':' + i)
+        })
+
+        $.ajax({
+            type : "POST",
+            async : true,
+            cache : false,
+            url : "/inns/ajaxSortPayChannel",
+            data : {
+                "sortData" : ajaxList.toString()
+            },
+            success : function (json) {
+                if (json.status != 200) {
+                    tmsky.ui.dialog.tips('排序失败！', 'error');
+                    document.location.reload();
+                }
+            }
+        });
+    },
+    canDelete : function (el, $index) {
+        $('.deleteIdPay').val('')
+        $.ajax({
+            type : 'GET',
+            url : '/plug/payChannel/' + el.id + '/isUsedByChannelId',
+            dataType : 'json',
+            error : function (rs) {
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    if (rs.result) {
+                        //已经被使用
+                        vm_pay_set.bool.deleteNo = true
+                        $('.payNoSelect').html('请选择支付方式')
+                        var list = vm_pay_set.PC_z;
+                        var way = []
+                        list.forEach(function (el2, i) {
+                            if (el2.id != el.id) {
+                                way.push(el2)
+                            }
+                        })
+                        vm_pay_set.deleteToWay = way
+                        vm_pay_set.deleteActive = {
+                            id : el.id,
+                            index : $index,
+                            name : el.name
+                        }
+                    } else {
+                        tmsky.ui.dialog.confirm('确定要删除该支付方式？', function () {
+                            vm_pay_set.deletePayWay('delete', el, $index)
+                        })
+                    }
+                }
+
+            }
+        })
+    },
+    closeBool : function () {
+        vm_pay_set.bool = {
+            deleteNo : false
+        }
+    },
+    addPayWay : function () {
+        vm_pay_set.addData = [{
+            name : ''
+        }]
+        //$('.addNewQd2').hide()
+        $(this).prev().find('input').focus()
+    },
+    ajaxAddPayWay : function (name) {
+        if (name == '') {
+            tmsky.ui.dialog.tips('请填写支付渠道名称！', 'error')
+            return false
+        }
+        var data = {
+            name : name
+        }
+        $.ajax({
+            type : 'POST',
+            url : '/plug/payChannel/ajaxSavePayChannel',
+            dataType : 'json',
+            data : data,
+            error : function (rs) {
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    vm_pay_set.addData = []
+                    var json = rs.payChannel
+                    var arr = vm_pay_set.PC_z
+                    arr.push(json)
+                    vm_pay_set.PC_z = arr
+                    //$('.addNewQd2').show()
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+
+            }
+        })
+    },
+    deleteActive : {},
+    //删除支付方式
+    deletePayWay : function (type, el, i) {
+        // tmsky.ui.dialog.loading()
+        if (type == 'delete') {
+            var data = {
+                id : el.id
+            }
+        } else {
+            var data = {
+                id : vm_pay_set.deleteActive.id,
+                nid : $('.deleteIdPay').val(),
+                toUpdate : true
+            }
+            if (tmsky.isEmpty(data.nid)) {
+                tmsky.ui.dialog.tips("请选择支付方式", 'error')
+                return false
+            }
+            i = vm_pay_set.deleteActive.index
+        }
+        $.ajax({
+            type : 'POST',
+            url : '/plug/payChannel/deleteAndUpdate?tmp=' + new Date().getMilliseconds(),
+            dataType : 'json',
+            data : data,
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_pay_set.closeBool()
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                vm_pay_set.closeBool()
+                if (rs.status == 200) {
+                    avalon.Array.removeAt(vm_pay_set.PC_z, i)
+                } else {
+                    tmsky.ui.dialog.alert(rs.message || "删除失败")
+                }
+
+            }
+        })
+    },
+    //修改支付方式
+    editPayWay : function (id, name) {
+        if (name == '') {
+            tmsky.ui.dialog.tips('请填写支付渠道名称！', 'error')
+            return false
+        }
+        tmsky.ui.dialog.loading()
+        var data = {
+            id : id,
+            inn : {
+                id : User.getUserInfo().innId
+            },
+            name : name
+        }
+        var that = $(this)
+        $.ajax({
+            type : 'POST',
+            url : '/plug/payChannel/ajaxEditPayChannel',
+            dataType : 'json',
+            data : data,
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    that.parent().hide()
+                    that.parent().prev('span').show()
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+
+            }
+        })
+    },
+    toggleState : function (e) {
+        var e = window.event || e;
+        if (e.target.tagName == 'I')return
+        if ($(this).find('div').css('display') != 'block') {
+            $(this).find('span').hide();
+            $(this).find('div').show()
+            $(this).find('input').focus()
+        }
+
+    },
+    copyStr : function () {
+        var str = $('.tm_textarea').val()
+        tmsky.util.copy2Clipboard(str)
+        tmsky.ui.dialog.tips("复制成功！")
+    },
+    //获取公钥
+    tmInfo : {
+        publicKey : '',
+        alipayAppId : ''
+    },
+    getBarCodePublicKey : function () {
+        $.ajax({
+            type : 'GET',
+            url : '/plug/getBarCodePublicKey',
+            dataType : 'json',
+            error : function (rs) {
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    vm_pay_set.tmInfo.publicKey = rs.publicKey
+                    vm_pay_set.tmInfo.alipayAppId = rs.alipayAppId
+                }
+
+            }
+        })
+    },
+    submitAppiId : function () {
+        var id = vm_pay_set.tmInfo.alipayAppId
+        if (tmsky.isEmpty(id)) {
+            tmsky.ui.dialog.alert('请填写支付宝AppID！')
+            return false
+        }
+        var data = {
+            barCodeAppId : id
+        }
+        $.ajax({
+            type : 'GET',
+            url : '/plug/saveInnAlipyAppId',
+            dataType : 'json',
+            data : data,
+            error : function (rs) {
+                tmsky.ui.dialog.alert('网络错误！')
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.alert('保存成功！')
+                } else {
+                    tmsky.ui.dialog.alert('保存失败！')
+                }
+
+            }
+        })
+    },
+    bind : function () {
+        $(document).on('click', function (e) {
+            var e = e || window.event;
+            if ($(e.target).closest('.cancelClick').length == 0) {
+                vm_pay_set.addData = []
+            }
+        })
+    }
+})
+

@@ -1,0 +1,738 @@
+var User = require('../../../header/user.js')
+var COMMON_CONST = require('../../../common/js/const.js')
+
+var vm_eseMeg = avalon.define({
+    $id : 'vm_eseMeg',
+    msgBaseInfo : {},
+    electMsg : '请选择短信模板',
+    hasMsgTemp:false,
+    tpl : {
+        isMsgTemp : true,
+        isMsgPay : false,
+        isPayRecord : false,
+        isSendRecord : false
+    },
+    charge : {
+        num : '',
+        innName : '',
+        innId : '',
+        payPrice : '',
+        payDesc : '',
+        remark : '',
+        note : '',
+        expire : ''
+    },
+    addTemp : {
+        on : true,
+        off : false,
+        msgTitle : '',
+        msgContent : '',
+        isAddName : ''
+    },
+    payList : [],
+    sendList : [],
+    msgTempList : [],
+    copyList : [],
+    ATList : [],
+    copyAT : [],
+    ALLCFList : [],
+    operateTypeArr : [{
+        id : 2,
+        txt : '为客人办理预定时'
+    }, {
+        id : 3,
+        txt : '为客人办理入住时'
+    }, {
+        id : 4,
+        txt : '客人退房两小时后'
+    }],
+    addAT : {
+        on : true,
+        off : false,
+        customerFromId : '',
+        operateType : '',
+        msgId : ''
+    },
+    sendRange : [{//发送范围
+        id : 2,
+        name : '仅本客栈'
+    }, {
+        id : 1,
+        name : '本客栈+连锁客栈'
+    }],
+    sendCt : [{//发送客人类型
+        id : 10, name : '所有客人'
+    }, {
+        id : 1, name : '预定订单客人'
+    }, {
+        id : 3, name : '今日在住客人'
+    }, {
+        id : 5, name : '今日退房客人'
+    }, {
+        id : 6, name : '无订单客人'
+    }],
+    sendInfo : {
+        cf : '-3',//客人来源渠道ID
+        cfTxt : '所有渠道',
+        ct : '-1',//发送对象
+        ctTxt : '请选择群发对象',
+        range : '2',//客人搜索范围
+        rangeTxt : '仅本客栈',
+        tempId : '',//	短信模板ID
+        tempTxt : '',
+        peopleNum : 0,
+        barNum : 0,
+    },
+    msgPayUrl : '',
+    paySuccessUrl : '',
+
+
+    init : function () {
+        vm_eseMeg.getBaseInfo()
+        vm_eseMeg.charge.innName = User.getCurrentInn().name
+        vm_eseMeg.charge.innId = User.getCurrentInn().id
+        vm_eseMeg.msgPayUrl = COMMON_CONST.DOMAIN.MSGPAY + '/pay/payInfo'
+        vm_eseMeg.paySuccessUrl = COMMON_CONST.DOMAIN.PMS + '/msg/charge/alipayResult'
+    },
+    haveMsgTemp : function () {
+        var vm = vm_eseMeg, arr=[]
+        vm.msgTempList.forEach(function (item) {
+            if (item.status == 2) {
+                arr.push(item)
+            }
+        })
+        if (arr.length > 0) {
+            vm.hasMsgTemp=true
+            vm.electMsg='请选择短信模板'
+            vm.sendInfo.tempTxt='请选择短信模板'
+        }else{
+            vm.hasMsgTemp=false
+            vm.electMsg='当前没有通过审核的短信模板'
+            vm.sendInfo.tempTxt='当前没有通过审核的短信模板'
+        }
+    },
+    //获取短信基本信息
+    getBaseInfo : function () {
+        var vm = vm_eseMeg
+        var url = '/plug/msg/getBaseInfo?t=' + new Date().getTime()
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                vm.msgBaseInfo = rs
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    checkTpl : function (type) {
+        var vm = vm_eseMeg
+        vm.tpl = {
+            isMsgTemp : false,
+            isMsgPay : false,
+            isPayRecord : false,
+            isSendRecord : false
+        }
+        vm.tpl[type] = true
+        if (type == 'isPayRecord') {
+            vm.payRecord(1)
+        } else if (type == 'isSendRecord') {
+            vm.getSendList(1)
+        }
+        if (type == 'successPay') {
+            vm.tpl['isMsgTemp'] = true
+            $('#msg_charge_tip_popups').hide()
+            vm.charge.num = ''
+            vm.getBaseInfo()
+        }
+    },
+//    支付宝支付
+    confirmPay : function () {
+        var message = vm_eseMeg.validPay()
+        if (message) {
+            tmsky.ui.dialog.tips(message, 'error')
+            return
+        }
+        $('#msg_charge_popups').popups()
+    },
+    validPay : function () {
+        var message = ''
+        if (!tmsky.isBigZero(vm_eseMeg.charge.num)) {
+            message = '充值数量必须是正整数'
+        }
+        return message
+    },
+    chargeMsg : function () {
+        vm_eseMeg.charge.payPrice = parseFloat((vm_eseMeg.charge.num || 0) * 0.1).toFixed(1)
+        vm_eseMeg.charge.payDesc = '购买短信' + parseFloat(vm_eseMeg.charge.num).toFixed(1) + '条，0.1元/条。'
+        if (!tmsky.isBigZero(vm_eseMeg.charge.num)) {
+            tmsky.ui.dialog.errorTips('充值数量必须是正整数')
+        }
+    },
+    gotoAlipay : function () {
+        vm_eseMeg.charge.expire = tmsky.date.addMinutes(new Date(), 30, 'yyyy-MM-dd hh:mm:ss')
+        vm_eseMeg.charge.remark = '请在' + tmsky.date.addMinutes(new Date(), 30, 'MM-dd hh:mm') + '前支付该款项，过期交易将关闭。'
+        $('#msg_charge_tip_popups').popups()
+        $('#msg_charge_popups').popups('hide')
+        $('#payForm').submit()
+    },
+//    短信充值记录
+    payRecord : function (pageNo) {
+        var vm = vm_eseMeg
+
+        var url = '/inns/' + vm.charge.innId + '/msg/charge/' + pageNo + '?t=' + new Date().getTime()
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                vm.payList = rs.page.result
+                avalon.nextTick(function () {
+                    vm.renderPage('pay-page-div', rs)
+                })
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    msToTime : function (ms) {
+        return tmsky.date.format(new Date(ms), 'yyyy-MM-dd hh:mm:ss')
+    },
+//    分页
+    renderPage : function (id, rs) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("pay-page-div")
+                vm_eseMeg.payRecord(pageInfo.pageNo)
+            },
+            pageNo : rs.page.pageNo,
+            pageSize : rs.page.pageSize,
+            pages : rs.page.pages,
+            totalCount : rs.page.totalCount,
+            maxPages : 10,//default
+            minPageSize : 10,//default
+            maxPageSize : 100,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+    sendRenderPage : function (id, rs) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("send-page-div")
+                vm_eseMeg.getSendList(pageInfo.pageNo)
+            },
+            pageNo : rs.pageNow,
+            pageSize : 50,
+            pages : rs.size % 50 == 0 ? rs.size / 50 : Math.ceil(rs.size / 50),
+            totalCount : rs.size,
+            maxPages : 10,//default
+            minPageSize : 10,//default
+            maxPageSize : 100,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+//    短信发送记录
+    getSendList : function (pageNo) {
+        var vm = vm_eseMeg
+        var url = '/inns/' + vm.charge.innId + '/msg/allHistory/' + pageNo + '?t=' + new Date().getTime()
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                vm.sendList = rs.list
+                avalon.nextTick(function () {
+                    vm.sendRenderPage('send-page-div', rs)
+                })
+            }
+        })
+    },
+    sendTransform : function (x) {
+        var map = {
+            '1' : '单发',
+            '2' : '群发',
+            '3' : '自动'
+        }
+        return map[x]
+    },
+
+//    短信模板管理（编辑、删除）
+    isAddName : function (el, index) {
+        $(this).toggleClass('selected')
+        var now = 1 - el
+        var copyList = vm_eseMeg.copyList.$model
+        copyList.forEach(function (el, i) {
+            if (i == index) {
+                el.isAddName = now
+            }
+        })
+        vm_eseMeg.copyList = copyList
+    },
+
+    getMT : function (mt) {
+        mt.forEach(function (el, i) {
+            el.edit = false
+        })
+        vm_eseMeg.copyList = $.extend(true, [], mt)
+        vm_eseMeg.msgTempList = mt
+        vm_eseMeg.haveMsgTemp()
+    },
+    msgCheckStatus : function (x) {
+        var map = {
+            '1' : '审核中',
+            '2' : '使用中',
+            '3' : '拒绝'
+        }
+        return map[x]
+    },
+    changeMsgZnFrom : function (arr, id, index) {
+        var name
+        arr.forEach(function (el, i) {
+            if (el.id == id) {
+                name = el.name
+            }
+        })
+        var copyAT = vm_eseMeg.copyAT.$model
+        copyAT.forEach(function (el, i) {
+            if (i == index) {
+                el.customerFromName = name
+            }
+        })
+        vm_eseMeg.copyAT = copyAT
+    },
+    changeMsgZnCondition : function (id, index) {
+        var list = vm_eseMeg.msgTempList
+        var title, content
+        list.forEach(function (el, i) {
+            if (el.id == id) {
+                title = el.msgTitle
+                content = el.msgContent
+            }
+        })
+        var copyAT = vm_eseMeg.copyAT.$model
+        copyAT.forEach(function (el, i) {
+            if (i == index) {
+                el.msgContent = content
+                el.msgTitle = title
+            }
+        })
+        vm_eseMeg.copyAT = copyAT
+    },
+//    删除短信模板
+    delThisMsg : function (id, index) {
+        tmsky.ui.dialog.confirm('确定要删除此短信模板？', function () {
+            tmsky.ui.dialog.loading()
+            var url = '/inns/' + vm_eseMeg.charge.innId + '/' + id + '/plug/deletemsgtemplate'
+            $.get(url).done(function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    avalon.Array.removeAt(vm_eseMeg.msgTempList, index)
+                    avalon.Array.removeAt(vm_eseMeg.copyList, index)
+
+                } else {
+                    tmsky.ui.dialog.errorTips(rs.message)
+                }
+            })
+        })
+    },
+//    编辑短信模板
+    editThisMsg : function (index) {
+        var list = vm_eseMeg.msgTempList
+        var origin = {}
+        list.forEach(function (el, i) {
+            if (i == index) {
+                el.edit = true
+                origin = el.$model
+            }
+        })
+        vm_eseMeg.msgTempList = list
+
+        //打开的时候，将copylist还原到之前
+        var copy = vm_eseMeg.copyList.$model
+        copy.forEach(function (el, i) {
+            if (i == index) {
+                for (var item in origin) {
+                    el[item] = origin[item]
+                }
+            }
+        })
+        vm_eseMeg.copyList = copy
+
+        //avalon支持上的bug问题
+        var $parent = $(this).parents('.ui_msg_box')
+        $parent.find('.msg_temp_on').find('.msg_input_title').val(origin.msgTitle)
+        $parent.find('.msg_temp_on').find('textarea').val(origin.msgContent)
+        if (origin.isAddName == 1) {
+            $parent.find('.msg_temp_on').find('.msg_add_name i').addClass('selected')
+        } else {
+            $parent.find('.msg_temp_on').find('.msg_add_name i').removeClass('selected')
+        }
+    },
+
+    closeEditTemp : function (index) {
+        var list = vm_eseMeg.msgTempList
+        list.forEach(function (el, i) {
+            if (i == index) {
+                el.edit = false
+            }
+        })
+    },
+//    提交
+    editSub : function (el, index) {
+        var $msgStatus = $(this).parent().prev().children().find('#msgStatus')
+
+        var $prev = $(this).prev().children('i'),
+            flag = 0
+        if ($prev.hasClass('selected')) {
+            flag = 1
+        } else {
+            flag = 0
+        }
+        var vm = vm_eseMeg
+        var datas = {
+                id : el.id,
+                isAddName : flag,
+                msgContent : el.msgContent,
+                msgTitle : el.msgTitle
+            },
+            url = '/inns/' + vm.charge.innId + '/plug/updatemsgtemplate?t=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                var list = vm.msgTempList.$model
+                var arr = []
+                list.forEach(function (item, i) {
+                    if (index == i) {
+                        el.status=1
+                        arr.push(el.$model)
+                    } else {
+                        arr.push(item)
+                    }
+                })
+                vm.msgTempList = $.extend(true, [], arr)
+                vm.closeEditTemp(index)
+                vm.haveMsgTemp()
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+//    新增短信模板
+    openAddTemp : function () {
+        vm_eseMeg.addTemp.on = false
+        vm_eseMeg.addTemp.off = true
+
+    },
+    closeAddTemp : function () {
+        vm_eseMeg.addTemp.on = true
+        vm_eseMeg.addTemp.off = false
+    },
+    addMsgTemp : function () {
+        tmsky.ui.dialog.loading()
+        var vm = vm_eseMeg
+        var $prev = $(this).prev().children('i'),
+            flag = 0
+        if ($prev.hasClass('selected')) {
+            flag = 1
+        } else {
+            flag = 0
+        }
+        var datas = {
+                id : 0,
+                isAddName : flag,
+                msgContent : vm.addTemp.msgContent,
+                msgTitle : vm.addTemp.msgTitle
+            },
+            url = '/inns/' + vm.charge.innId + '/plug/updatemsgtemplate';
+        $.post(url, datas).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.closeAddTemp()
+                vm.addTemp.isAddName = 0
+                vm.addTemp.msgContent = ''
+                vm.addTemp.msgTitle = ''
+                rs.newMsg.edit = false
+                var newA = $.extend(true, {}, rs.newMsg)
+                vm.msgTempList.push(newA)
+                vm.copyList.push(rs.newMsg)
+                vm.haveMsgTemp()
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+
+//    智能发送
+    getAT : function (at) {
+        var copyArr = $.extend(true, [], at), list = [], atlist = []
+        copyArr.forEach(function (rs, i) {
+            var item = {
+                id : rs.id,
+                customerFromId : rs.customerFrom == null ? null : rs.customerFrom.id,
+                customerFromName : rs.customerFrom == null ? null : rs.customerFrom.name,
+                operateType : rs.operateType,
+                msgId : rs.innMsgTemplate.id,
+                msgIsAddName : rs.innMsgTemplate.isAddName,
+                msgContent : rs.innMsgTemplate.msgContent,
+                msgTitle : rs.innMsgTemplate.msgTitle,
+                msgStatus : rs.innMsgTemplate.status
+            }
+            list.push(item)
+        })
+        vm_eseMeg.copyAT = list
+
+        at.forEach(function (rs, x) {
+            var one = {
+                id : rs.id,
+                customerFromId : rs.customerFrom == null ? null : rs.customerFrom.id,
+                customerFromName : rs.customerFrom == null ? null : rs.customerFrom.name,
+                operateType : rs.operateType,
+                msgId : rs.innMsgTemplate.id,
+                msgIsAddName : rs.innMsgTemplate.isAddName,
+                msgContent : rs.innMsgTemplate.msgContent,
+                msgTitle : rs.innMsgTemplate.msgTitle,
+                msgStatus : rs.innMsgTemplate.status
+            }
+            atlist.push(one)
+        })
+        vm_eseMeg.ATList = atlist
+    },
+    openEdit : function (index) {
+        var that = $(this)
+        var $editOff = $('.msg_edit_off')
+        var $editOn = $('.msg_edit_on')
+        $editOff.eq(index).hide()
+        $editOn.eq(index).show()
+
+        var copyAt = vm_eseMeg.copyAT.$model
+        copyAt.forEach(function (el, i) {
+            if (i == index && el.new) {
+                var $parent = that.parents('.ui_msg_box');
+                $parent.find('.msg_edit_on .mg-btm-10').eq(0).find('span').html(el.customerFromName)
+                $parent.find('.msg_edit_on .mg-btm-10').eq(1).find('span').html(vm_eseMeg.operateTypeMap(el.operateType))
+                $parent.find('.msg_edit_on .mg-btm-10').eq(2).find('span').html(el.msgTitle)
+            }
+        })
+
+    },
+
+    closeEdit : function (index) {
+        var $editOff = $('.msg_edit_off')
+        var $editOn = $('.msg_edit_on')
+        $editOff.eq(index).show()
+        $editOn.eq(index).hide()
+    },
+//    发送情境
+    operateTypeMap : function (x) {
+        var map = {
+            '2' : '为客人办理预定时',
+            '3' : '为客人办理入住时',
+            '4' : '客人退房两小时后'
+        }
+        return map[x]
+    },
+//    客人来源
+    getALLCF : function (rs) {
+        vm_eseMeg.ALLCFList = rs
+    },
+//删除此智能短信模板
+    delThisAT : function (id, index) {
+        tmsky.ui.dialog.confirm('您确定要删除吗？', function () {
+            var data = {
+                    id : id
+                },
+                url = '/inns/' + vm_eseMeg.charge.innId + '/plug/deletemsgauto'
+            $.post(url, $.param(data, true)).done(function (rs) {
+                if (rs.status == 200) {
+                    avalon.Array.removeAt(vm_eseMeg.ATList, index)
+                    avalon.Array.removeAt(vm_eseMeg.copyAT, index)
+
+                } else {
+                    tmsky.ui.dialog.errorTips(rs.message)
+                }
+            })
+        })
+    },
+//    修改智能短信模板
+    modifyAt : function (index) {
+        var vm = vm_eseMeg, _this = vm_eseMeg.copyAT[index].$model
+        var datas = {
+                'customerFrom.id' : _this.customerFromId=='undefined'?'':_this.customerFromId,
+                'innMsgTemplate.id' : _this.msgId,
+                operateType : _this.operateType,
+                id : _this.id
+            },
+            url = '/inns/' + vm.charge.innId + '/plug/updatemsgauto?t=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                vm.closeEdit(index)
+                var list = vm.ATList.$model
+                var arr = []
+                list.forEach(function (item, i) {
+                    if (index == i) {
+                        arr.push(_this)
+                    } else {
+                        arr.push(item)
+                    }
+                })
+                vm.ATList = arr
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+//    新增智能发送条件
+    openAddAt : function () {
+        vm_eseMeg.addAT.on = false
+        vm_eseMeg.addAT.off = true
+    },
+    closeAddAt : function () {
+        vm_eseMeg.addAT.on = true
+        vm_eseMeg.addAT.off = false
+    },
+    addAt : function () {
+        var vm = vm_eseMeg,
+            $customerFrom = $('#customerFrom'),
+            $operate = $('#operate'),
+            $msgTemp = $('#msgTemp')
+
+        if (vm.addAT.customerFromId == '') {
+            tmsky.ui.dialog.errorTips('请选择客人来源！')
+            return
+        }
+        if (vm.addAT.msgId == '') {
+            tmsky.ui.dialog.errorTips('请选择已审核通过的短信模板！')
+            return
+        }
+        if (vm.addAT.operateType == '') {
+            tmsky.ui.dialog.errorTips('请选择发送情境！')
+            return
+        }
+
+        var datas = {
+                'customerFrom.id' : vm.addAT.customerFromId=='undefined'?'':vm.addAT.customerFromId,
+                'innMsgTemplate.id' : vm.addAT.msgId,
+                operateType : vm.addAT.operateType,
+                id : 0
+            },
+            url = '/inns/' + vm.charge.innId + '/plug/updatemsgauto?t=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                vm.closeAddAt()
+                var msg = vm.mapMT(rs.newMsgAuto.innMsgTemplate.id)
+                var customerFrom = vm.mapCustomerFrom(rs.newMsgAuto.customerFrom.id)
+                var item = {
+                    id : rs.newMsgAuto.id,
+                    customerFromId : rs.newMsgAuto.customerFrom == null ? null : rs.newMsgAuto.customerFrom.id,
+                    customerFromName : rs.newMsgAuto.customerFrom == null ? null : customerFrom.name,
+                    operateType : rs.newMsgAuto.operateType,
+                    msgId : rs.newMsgAuto.innMsgTemplate.id,
+                    msgIsAddName : rs.newMsgAuto.innMsgTemplate.isAddName,
+                    msgContent : msg.msgContent,
+                    msgTitle : msg.msgTitle,
+                    msgStatus : msg.status,
+                    new : true
+                }
+                vm.ATList.push(item)
+                vm.copyAT.push(item)
+                vm.addAT.customerFromId = ''
+                vm.addAT.operateType = ''
+                vm.addAT.msgId = ''
+                $customerFrom.text('请选择客人来源')
+                $operate.text('请选择发送情境')
+                $msgTemp.text('请选择发送短信')
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+
+        })
+
+    },
+    //map短信模板
+    mapMT : function (id) {
+        var vm = vm_eseMeg, msg = {}
+        vm.msgTempList.forEach(function (rs, i) {
+            if (rs.id == id) {
+                msg = rs
+            }
+        })
+        return msg
+    },
+//    客人来源Map
+    mapCustomerFrom : function (id) {
+        var vm = vm_eseMeg, from = {}
+        vm.ALLCFList.forEach(function (rs, i) {
+            if (rs.id == id) {
+                from = rs
+            }
+        })
+        return from
+    },
+//    发送短信
+    clickSend : function () {
+        tmsky.ui.dialog.confirm('您确定要群发此短信吗？', function () {
+            vm_eseMeg.sendMsg()
+        })
+    },
+    sendMsg : function () {
+        var vm = vm_eseMeg
+        if(vm.sendInfo.tempId==''){
+            tmsky.ui.dialog.errorTips('请选择已审核通过的短信模板！')
+            return
+        }
+
+        var datas = {
+                cf : vm.sendInfo.cf=='undefined'?'-3':vm.sendInfo.cf,
+                ct : vm.sendInfo.ct,
+                range : vm.sendInfo.range,
+                tempId : vm.sendInfo.tempId,
+            },
+            url = ' /inns/msg/sendMsgs/' + datas.tempId + '/' + datas.range + '/' + datas.ct + '/' + datas.cf + '?t=' + new Date().getTime()
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                tmsky.ui.dialog.successTips('发送成功！')
+                vm.sendInfo.cf = '-3'
+                vm.sendInfo.ct = '-1'
+                vm.sendInfo.range = '2'
+                vm.sendInfo.tempId = ''
+                vm.sendInfo.peopleNum = 0
+                vm.sendInfo.barNum = 0
+                var $cfTxt = $('#cfTxt')
+                var $ctTxt = $('#ctTxt')
+                var $rangeTxt = $('#rangeTxt')
+                var $tempTxt = $('#tempTxt')
+                $cfTxt.text('所有渠道')
+                $ctTxt.text('请选择群发对象')
+                $rangeTxt.text('仅本客栈')
+
+                if(vm.hasMsgTemp==false){
+                    $tempTxt.text('当前没有通过审核的短信模板')
+                }else {
+                    $tempTxt.text('请选择短信模板')
+                }
+
+            } else {
+                tmsky.ui.dialog.errorTips('发送失败！')
+            }
+        })
+
+    },
+    sendPeopleNum : function () {
+        var datas = {
+                cf : vm_eseMeg.sendInfo.cf=='undefined'?'-3':vm_eseMeg.sendInfo.cf,
+                ct : vm_eseMeg.sendInfo.ct,
+                range : vm_eseMeg.sendInfo.range
+            },
+            url = '/inns/room/getClients/' + datas.range + '/' + datas.ct + '/' + datas.cf
+        $.post(url).done(function (rs) {
+            if (rs.status == 200) {
+                vm_eseMeg.sendInfo.peopleNum = rs.num
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    sendMsgNum : function (id) {
+        var id = vm_eseMeg.sendInfo.tempId
+        var length = vm_eseMeg.mapMT(id).msgContent.length
+        vm_eseMeg.sendInfo.barNum = Math.ceil(length / 63) * vm_eseMeg.sendInfo.peopleNum
+    }
+
+})

@@ -1,0 +1,20 @@
+function () {
+    var result=''
+    var arr = []
+    var hexDigits = "0123456789abcdef";
+    for (var i = 0; i < 30; i++) {
+        var temp = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
+        arr.push(temp)
+    }
+
+    result=arr.join('')+'_'+(new Date()).getTime()
+    return result;
+
+}
+
+/**
+ * Created by xiong bai on 2016/6/13.
+ */
+
+//var UUID =
+//module.exports = UUID;

@@ -1,0 +1,135 @@
+var User = require('../../../header/user.js')
+
+var vm_funcSet = avalon.define({
+    $id : 'vm_funcSet',
+    goodList : [],
+    addData : [],
+
+    init : function () {
+        vm_funcSet.dragGood()
+    },
+    getGS : function (rs) {
+        vm_funcSet.goodList = rs
+    },
+    delGood : function (id, index, name) {
+        tmsky.ui.dialog.confirm('你确定要删除该商品吗？', function () {
+            var data = {
+                    id : id,
+                    name : name
+                },
+                url = '/inns/ajaxDeleteOtherCost?t=' + new Date().getTime()
+            $.post(url, $.param(data, true)).done(function (rs) {
+                if (rs.status == 200) {
+                    avalon.Array.removeAt(vm_funcSet.goodList, index)
+                } else {
+                    tmsky.ui.dialog.errorTips(rs.errors || rs.message)
+                }
+            })
+        })
+
+    },
+    toggleState : function () {
+        var e = e || window.event;
+        if (e.target.tagName == 'I')return
+        if ($(this).find('div').css('display') != 'block') {
+            $(this).find('span').hide();
+            $(this).find('div').show()
+            $(this).find('input').eq(0).focus()
+        }
+    },
+//    更新商品
+    updateGood : function (id, name, price) {
+        if (name == '') {
+            tmsky.ui.dialog.tips('请填写商品名称！', 'error')
+            return false
+        }
+        if (price == '' || isNaN(price)) {
+            tmsky.ui.dialog.tips('请填写商品价格！', 'error')
+            return false
+        }
+        tmsky.ui.dialog.loading()
+        var vm = vm_funcSet
+        var datas = {
+                id : id,
+                'inn.id' : User.getUserInfo().innId,
+                name : name,
+                price : price
+            },
+            url = '/inns/ajaxEditOtherCost?t=' + new Date().getTime(),
+            that = $(this);
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                that.parent().hide()
+                that.parent().prev('span').show()
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message.name)
+            }
+        })
+    },
+//    添加商品
+    addGood : function () {
+        vm_funcSet.addData = [{
+            name : '',
+            price : ''
+        }]
+        $('.addGood').hide()
+        $(this).prev().find('input').eq(0).focus()
+
+    },
+    checkPrice : function (num) {
+        if (isNaN(num)) {
+            $(this).val('')
+        }
+    },
+    ajaxAddGood : function (name, price) {
+        if (name == '') {
+            tmsky.ui.dialog.tips('请填写项目名称！', 'error')
+            return false
+        }
+        if (price == '' || isNaN(price)) {
+            tmsky.ui.dialog.tips('请填写商品价格！', 'error')
+            return false
+        }
+        tmsky.ui.dialog.loading()
+        var vm = vm_funcSet
+        var datas = {
+            name : name,
+            price : price
+        }, url = '/inns/ajaxSaveOtherCost?t=' + new Date().getTime();
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.addData = []
+                vm.goodList.push(rs.good)
+                $('.addGood').show()
+            } else {
+                tmsky.ui.dialog.errorTips(rs.errors || rs.message)
+            }
+        })
+
+
+    },
+    //    拖拽商品
+    dragGood : function () {
+        $('#dragGood').sortable({
+            update : function () {
+                var arr = []
+                $('#dragGood .goodItem').each(function (i) {
+                    var id = $(this).attr('id')
+                    arr.push(id + ':' + i)
+                })
+                var url = '/inns/ajaxSortSpend?t=' + new Date().getTime(),
+                    data = {
+                        'sortData' : arr.toString()
+                    }
+                $.post(url, $.param(data, true)).done(function (rs) {
+                    if (rs.status != 200) {
+                        tmsky.ui.dialog.tips('排序失败！', 'error');
+                        document.location.reload();
+                    }
+                })
+            }
+        })
+    },
+})

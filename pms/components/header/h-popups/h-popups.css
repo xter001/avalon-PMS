@@ -1,0 +1,96 @@
+/* 帮助*/
+.inns-tuli {
+	display: block;
+	width: 244px;
+	height: 307px;
+	margin: 0;
+	background: url(/public/c/views/1/header/h-popups/logo_exp.png?__sprite) no-repeat;
+}
+
+.func-explain-popups>.ui-popups-dialog {
+	height: 99%;
+	width: 80%;
+	max-width: 1366px;
+	max-height: 1056px;
+	background-color: transparent;
+	vertical-align: top;
+}
+
+.func-explain-popups>.tomasky-ui-popups-backdrop {
+	opacity: 1;
+	filter: alpha(opacity = 100);
+	-moz-opacity: 1;
+	background-color: grey;
+}
+
+.func-explain {
+	display: block;
+	height: 100%;
+	width: 100%;
+	margin: 0;
+}
+
+.func-explain>button {
+	position: absolute;
+	top: 50%;
+	left: 44px;
+	font-size: 16px;
+	width: 220px;
+	height: 60px;
+	border-radius: 3px;
+	background-color: #7bb811;
+	color: #fff;
+	cursor: pointer;
+}
+
+.app_qrcode {
+	display: block;
+	width: 300px;
+	height: 300px;
+	margin: 0;
+	background: url(/public/c/views/1/header/h-popups/app_qrcode.png?__sprite) no-repeat;
+}
+
+.app_qrcode_tip {
+	font-size: 16px;
+	padding-top: 10px;
+	text-align: center;
+}
+
+.android_btn,.ios_btn {
+	display: inline-block;
+	height: 35px;
+	width: 122px;
+	color: #fff;
+	line-height: 35px;
+	text-indent: 50px;
+}
+
+.android_btn:hover,.ios_btn:hover {
+	text-decoration: none
+}
+
+.android_btn {
+	background: url(/public/c/views/1/header/h-popups/android_button.png?__sprite) no-repeat;
+}
+
+.ios_btn {
+	color: #333;
+	background: url(/public/c/views/1/header/h-popups/ios_button.png?__sprite) no-repeat;
+}
+
+/* 修改密码*/
+.reset-pwd-dialog .input-group {
+	width: 300px;
+	margin-bottom: 15px;
+}
+
+.pwd-popups-tips {
+	display: none;
+	text-align: left;
+	color: red;
+	line-height: 30px;
+	padding: 0 20px 10px 25px;
+	word-wrap: break-word;
+	word-break: break-all;
+}

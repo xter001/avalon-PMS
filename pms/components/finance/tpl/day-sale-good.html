@@ -1,0 +1,67 @@
+<!--商品日销售表-->
+<div class="" ms-controller="vm_goodSale">
+    <div class="finance-nav-head">
+        <h1>商品日销售表　<span>(商品日销售表记录房间商品收入和非房间商品收入两部分)</span></h1>
+        <div class="time_input f-right">
+            <input id="goodSale_time" ms-duplex="timeData.from" type="text" placeholder="开始时间" class="select-time">
+        </div>
+    </div>
+    <div class="finance-goodSale-content">
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>销售时间</th>
+                <th>渠道订单号</th>
+                <th>房号（房型）</th>
+                <th>入住时间</th>
+                <th>离店时间</th>
+                <th>入住人</th>
+                <th>项目</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>总价</th>
+                <th>支付方式</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-if="goodList.length" ms-repeat-el="goodList">
+                <td>{{el.spendTime}}</td>
+                <td>{{el.orderNo}}<span class="colred" ms-if="el.orderStatus==0">(已取消)</span></td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.roomNo}}</p>
+                </td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.checkin}}</p>
+                </td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.checkout}}</p>
+                </td>
+                <td>{{el.contactUser}}</td>
+                <td>{{el.goods}}</td>
+                <td>￥{{el.realPrice}}</td>
+                <td>{{el.goodNum}}</td>
+                <td>￥{{el.totalPrice}}</td>
+                <td>{{el.payChannel}}</td>
+            </tr>
+            <tr ms-if="!goodList.length">
+                <td colspan="11" style="text-align: center">暂无商品日销售信息</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="table-footer" >
+            <ul>
+                <li>合计</li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li>￥{{totalDatas.totalPrice}}</li>
+                <li></li>
+            </ul>
+        </div>
+    </div>
+</div>

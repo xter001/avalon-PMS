@@ -1,0 +1,137 @@
+<h1 class="pms-logo">
+    <a href="{{houseStatus.href}}" title="{{title}}" style="{{logo}}"></a>
+</h1>
+<div id="top_inns" class="top-inns-list">
+    {{#if level}}
+        <span id="applyLevel" data-ui="popups" data-target="#apply_popups" ms-controller="vm_apply"
+              ms-click="applyPopup()" href="javascript:;" class="acount_reg">{{levelName}}</span>
+    {{else}}
+        <!--<div class="top-fj">-->
+        <!--<a href="{{jfHref.href}}" id="availableIntegral" class="top-jf-btn">番币{{fanbi}}</a>-->
+        <!--</div>-->
+    {{/if}}
+
+    {{#if inns}}
+        <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu" data-ui="dropdown">
+            <a>
+                <span class="header-txt-overflow">{{user.innName}}</span>
+                <i class="iconfont icon-arrowdown christmas-icon-arrowdown"></i>
+            </a>
+            <!--<div>-->
+            <!--<input type="text" class="tomasky-ui-dropdown-search-input" data-role="search">-->
+            <!--<em class="tomasky-ui-dropdown-search iconfont icon-search" data-role="search"></em>-->
+            <!--</div>-->
+            <div class="ui-dropdown-list">
+                <em class="tomasky-ui-dropdown-search-in">
+                    <input old-value="" placeholder="搜索.." data-role="search"
+                           class="tomasky-ui-dropdown-search-input-in">
+                </em>
+                {{#each inns}}
+                    <a class="changeHotelList" innId="{{id}}" data-role="item" title="{{name}}">{{name}}</a>
+                {{/each}}
+                <!--<p href="javascript:void(0)" class="tomasky-ui-dropdown-search-notexist c-red">很遗憾，没有你要找的信息！</p>-->
+            </div>
+        </div>
+    {{else}}
+        <span class="header-txt-overflow">{{user.innName}}</span>
+    {{/if}}
+
+</div>
+
+<ul id="main-nav">
+
+    {{#each mainNavs}}
+        <li {{#if active}}class="active"{{/if}}>
+            <a {{#ifCond permissionLevel "==" 2}} {{#if ../../level}}class="permission-level-menu-2 J_permission-level-2-apply" {{else}} class="{{class}}" href="{{href}}" {{/if}} {{else}} class="{{class}}" href="{{href}}"{{/ifCond}}>{{text}}</a>
+        </li>
+    {{/each}}
+</ul>
+{{#if showNotice}}
+    <a {{#if noticeUrl}}target="_blank" href="{{noticeUrl}}"{{/if}} class="fq-annouce"
+                                        {{#if noticeMsg}}title="{{noticeMsg}}"{{/if}}>{{noticeMsg}}</a>
+{{/if}}
+
+<div class="modify-price-notice">
+    <div class="notice-icon"></div>
+    <a id="Notice" href="{{drMgr.href}}#!/room-price/confirm-hoiliday-price/room-price/">您有{{festivalNumber}}
+        项节日价格尚未确认</a>
+</div>
+
+<div id="top_right_nav" class="sub-nav-wrap">
+
+    <div class="fl" ms-controller="vm_handover" style="position: relative;margin-left: -55px;">
+        <i class="christmas-img-hua"></i>
+        {{#if isAccessShopCost}}
+            <a onclick="avalon.vmodels.vm_handover.headShopClick()" class="shopSellIcon fl">
+                <!--<span>记</br>一</br>笔</span>-->
+            </a>
+        {{/if}}
+        <!--<a href="/public/views/1/message-manage.html" class="message-access message-access-on"><i></i></a>-->
+    </div>
+    <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu fl width160" data-ui="dropdown">
+        <a>
+            <span class="header-txt-overflow-name christmas-col-write">{{user.name}}</span>
+            <i class="iconfont icon-arrowdown christmas-icon-arrowdown"></i>
+        </a>
+        <div class="ui-dropdown-list">
+            <!-- <a id="adviceatag" href="javascript:void(0)">发通知</a> -->
+            <a id="handover_btn" ms-if="plug.hasFunc('handover_func')" ms-controller="vm_handover"
+               ms-click="handovering()" href="javascript:void(0)">交接班</a>
+            <a data-ui="popups" data-target="#pwd_popups" href="javascript:;">修改密码</a>
+            <a data-ui="popups"
+               data-target="#{{#if user.hasBoundWx}}remove_wx_bound_popups{{else}}fanqie_wx_public_no_popups{{/if}}"
+               href="javascript:;">{{#if user.hasBoundWx}}解绑{{else}}绑定{{/if}}微信</a>
+            <a data-ui="popups" data-target="#loginout_popups" href="javascript:;">退出系统</a>
+        </div>
+    </div>
+
+    <ul id="sub-nav">
+
+        <li>
+            <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu" data-ui="dropdown">
+                <a>
+                    <span class="christmas-col-write">客栈管理</span>
+                </a>
+
+                <div class="ui-dropdown-list">
+                    {{#each innsMgr}}
+                        <a {{#ifCond permissionLevel "==" 2}} {{#if ../../level}}class="permission-level-drop-2 J_permission-level-2-apply" {{else}} href="{{href}}" {{/if}} {{else}} href="{{href}}" {{/ifCond}}>{{text}}</a>
+                    {{/each}}
+                </div>
+            </div>
+        </li>
+        {{#if drMgr}}
+            <s></s>
+            <li>
+                <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu">
+                    <a href="{{drMgr.href}}" class="christmas-col-write"><span>{{drMgr.text}}</span></a>
+                </div>
+            </li>
+        {{/if}}
+        {{#if joinFx}}
+            <s></s>
+            <li>
+                <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu">
+                    <a href="{{joinFx.href}}" class="christmas-col-write"><span>{{joinFx.text}}</span></a>
+                </div>
+            </li>
+        {{/if}}
+        <s></s>
+        <li>
+            <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu tomasky-ui-dropdown-right" data-ui="dropdown">
+                <a href="javascript:;" class="christmas-col-write">
+                    <span data-role="value">帮助</span>
+                </a>
+                <div class="ui-dropdown-list">
+                    <a target="_blank" href="http://help.fanqiele.com">操作指南</a>
+                    <a data-ui="popups" data-target="#tuli_popups" href="javascript:;">图例说明</a>
+                    <a href="/updHistory">更新记录</a>
+                    <a data-ui="popups" data-target="#download_popups" href="javascript:;">下载手机App</a>
+                </div>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<div id="comm_popups_div"></div>
+<div id="apply_popups_div"></div>

@@ -1,0 +1,467 @@
+var User = require('../../../header/user.js');
+var vm_customersDatas = avalon.define({
+    $id : 'vm_customersDatas',
+    addDialogVisible : false,
+    modifyDialogVisible : false,
+    allDatas : true,
+    thisDetail : false,
+    totalCount : 0,
+    innId : '',
+    innBase : {},
+    baseDatas : {
+        innType : -1,
+        spendDown : true,
+        outDown : true,
+        searchType : 2,
+        sortWay : '',
+        input : ''
+    },
+    datasList : [],
+    //'全部客人','预订客人','入住客人','退房客人','无订单客人'
+    customerType : [{id : 1, name : '预订客人'}, {id : 3, name : '入住客人'}, {id : 5, name : '退房客人'}, {
+        id : 6,
+        name : '无订单客人'
+    }],
+    addDatas : {
+        name : '',
+        cardType : 1,//证件类型
+        costMoney : '',
+        status : '',
+        lastCheckIn : '',
+        lastCheckOut : '',
+        contact : '',//tel
+        cardNo : '',
+        sex : 1,
+        birthday : '',
+        note : ''
+    },
+    hasUnions : true,//联盟信息
+    modifyDatas : {             //*************************客户管理
+        id : '',
+        name : '',
+        cardType : 1,//证件类型
+        costMoney : '',
+        status : '',
+        lastCheckIn : '',
+        lastCheckOut : '',
+        contact : '',//tel
+        cardNo : '',
+        sex : 1,
+        birthday : '',
+        note : ''
+    },
+
+
+    init : function () {
+        vm_customersDatas.innId = User.getUserInfo().innId
+        vm_customersDatas.innBase.secure = CommonCacheUtil.innBaseInfo.secure
+        vm_customersDatas.getCustomerDatas(1)
+        if (vm_customersDatas.unions == '') {
+            vm_customersDatas.hasUnions = false
+        } else {
+            vm_customersDatas.hasUnions = true
+        }
+    },
+    //新增客户
+    addCustomer : function () {
+        vm_customersDatas.addDialogVisible = true
+    },
+    closeAddCustomerDialog : function () {
+        vm_customersDatas.addDialogVisible = false
+        vm_customersDatas.addDatas = {
+            name : '',
+            cardType : 1,//证件类型
+            costMoney : '',
+            status : '',
+            lastCheckIn : '',
+            lastCheckOut : '',
+            contact : '',//tel
+            cardNo : '',
+            sex : 1,
+            birthday : '',
+            note : ''
+        }
+    },
+
+    getCustomerDatas : function (pageNo, type) {
+        var vm = vm_customersDatas
+        tmsky.ui.dialog.loading()
+        if (type == 'spend') {
+            vm.baseDatas.spendDown = !vm.baseDatas.spendDown
+            vm.baseDatas.sortType = 'monetary'
+            vm.baseDatas.sortWay = vm.baseDatas.spendDown ? 'asc' : 'desc'
+        } else if (type == 'out') {
+            vm.baseDatas.outDown = !vm.baseDatas.outDown
+            vm.baseDatas.sortType = 'checkout'
+            vm.baseDatas.sortWay = vm.baseDatas.outDown ? 'asc' : 'desc'
+        }
+        var datas = {
+                innType : vm.baseDatas.innType,
+                pageNo : pageNo,
+                searchType : vm.baseDatas.searchType,
+                sortType : vm.baseDatas.sortType,
+                sortWay : vm.baseDatas.sortWay,
+                input : vm.baseDatas.input
+            },
+            url = '/inns/customers/search';
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.totalCount = rs.totalCount
+                vm.datasList = rs.customers
+
+                var telList = ''
+                if (rs.customers.length > 0) {
+                    rs.customers.forEach(function (el) {
+                        if (el.contact == null || el.contact == "") {
+                            return
+
+                        } else {
+                            telList = telList + el.contact + ','
+                        }
+                    })
+                    vm.getMemberInfo(telList)
+                }
+                var page = {};
+                page.totalPages = rs.totalPage;
+                page.pageNo = rs.pageNo;
+                page.pageSize = 20;
+                avalon.nextTick(function () {
+                    tmsky.getVm('vm_customers').renderPage('customer_datas_page', page, function () {
+                        var pageInfo = tmsky.ui.page.getParams("customer_datas_page")
+                        vm.getCustomerDatas(pageInfo.pageNo)
+                    })
+                })
+            } else {
+                vm.datasList = []
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    //会员等级
+    unions : tmsky.getVm('vm_customers').unions,
+    memList : [],
+    getMemberInfo : function (telList) {
+        var vm = vm_customersDatas, secure = vm.innBase.secure,
+            datas = {
+                appId : secure.appId,
+                appKey : secure.appKey,
+                innId : secure.innId,
+                mobiles : telList,
+                timestamp : secure.timestamp,
+                token : secure.token,
+                unionCode : vm.unions.uniqueCode,
+                userCode : secure.userCode
+            }
+        if (vm.unions.uniqueCode == null) {
+            return
+        }
+        $.post(COMMON_CONST.DOMAIN.DIS + '/union/getMemberInfo', $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                vm.memList = rs.members
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+
+    getGrade : function (tel) {
+        var vm = vm_customersDatas, grades = vm.unions.grades, rank = ''
+        vm.memList.forEach(function (el) {
+            if (el.mobile == tel) {
+                for (var i = 0; i < grades.length; i++) {
+                    if (el.totalConsume == grades[i].promoteFee) {
+                        rank = grades[i].name
+                    } else if (el.totalConsume > grades[grades.length - 1].promoteFee) {
+                        rank = grades[grades.length - 1].name
+                    } else if (el.totalConsume >= grades[i].promoteFee && el.totalConsume < grades[i + 1].promoteFee) {
+                        rank = grades[i].name
+                    }
+                }
+            }
+        })
+        return rank
+    },
+    getGradeIndex : function (tel) {
+        var vm = vm_customersDatas, grades = vm.unions.grades, index = ''
+        vm.memList.forEach(function (el) {
+            if (el.mobile == tel) {
+                for (var i = 0; i < grades.length; i++) {
+                    if (el.totalConsume == grades[i].promoteFee) {
+                        index = i
+                    } else if (el.totalConsume > grades[grades.length - 1].promoteFee) {
+                        index = grades.length - 1
+                    } else if (el.totalConsume >= grades[i].promoteFee && el.totalConsume < grades[i + 1].promoteFee) {
+                        index = i
+                    }
+                }
+            }
+        })
+        return index
+    },
+    getUnionMoney : function (tel) {
+        var vm = vm_customersDatas, money = 0;
+        vm.memList.forEach(function (el) {
+            if (el.mobile == tel) {
+                money = el.totalConsume
+            }
+        })
+        return money
+    },
+
+    transformInnType : function (type) {
+        var vm = vm_customersDatas, name = ''
+        if (type == -1) {
+            name = '全部客人'
+            return name
+        }
+        vm.customerType.forEach(function (el, i) {
+            if (el.id == type) {
+                name = el.name
+            }
+        })
+        return name
+    },
+    toAddCustomer : function () {
+        var vm = vm_customersDatas
+        if (!vm.checkTel(vm.addDatas.contact)) {
+            tmsky.ui.dialog.errorTips('请输入正确的手机号！')
+            return
+        }
+        tmsky.ui.dialog.loading()
+        $.post('/inns/customers/saveOrUpdate', $.param(vm.addDatas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.addDialogVisible = false
+                vm.addDatas = {
+                    name : '',
+                    cardType : 1,//证件类型
+                    costMoney : '',
+                    status : '',
+                    lastCheckIn : '',
+                    lastCheckOut : '',
+                    contact : '',//tel
+                    cardNo : '',
+                    sex : 1,
+                    birthday : '',
+                    note : ''
+                }
+                vm.datasList.splice(0, 0, rs.result)
+                vm.totalCount = vm.totalCount + 1
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    checkTel : function (tel) {
+        var rule = /^0?1[3|4|5|7|8][0-9]\d{8}$/
+        return rule.test(tel)
+    },
+    //客户管理
+    modifyTelDisable : true,
+    modifyIndex : 0,
+    openModifyDialog : function (el, index) {
+        var vm = vm_customersDatas
+        vm.modifyDialogVisible = true
+        vm.modifyIndex = index
+        vm.modifyDatas = {
+            id : el.id,
+            name : el.name,
+            cardType : el.cardType,//证件类型
+            costMoney : el.costMoney,
+            status : el.status,
+            lastCheckIn : el.lastCheckIn,
+            lastCheckOut : el.lastCheckOut,
+            contact : el.contact,//tel
+            cardNo : el.cardNo,
+            sex : el.sex,
+            birthday : el.birthday,
+            note : el.note
+        }
+        if (vm.modifyDatas.status == 6) {
+            vm.modifyTelDisable = false
+        } else {
+            vm.modifyTelDisable = true
+        }
+    },
+    closeModifyDialog : function () {
+        vm_customersDatas.modifyDialogVisible = false
+        vm_customersDatas.modifyTelDisable = true
+    },
+    tranfCardType : function (id) {
+        var name = ''
+        switch (id) {
+            case 1:
+                name = '身份证'
+                break;
+            case 2:
+                name = '军官证'
+                break;
+            case 3:
+                name = '通行证'
+                break;
+            case 4:
+                name = '护照'
+                break;
+            case 5:
+                name = '其他'
+                break;
+            default:
+                name = '身份证'
+        }
+        return name;
+    },
+    tranfSex : function (id) {
+        var name = ''
+        if (id == null) {
+            return
+        } else if (id == 1) {
+            name = '男'
+        } else if (id == 0) {
+            name = '女'
+        }
+        return name
+    },
+    modifyToSave : function () {
+        var vm = vm_customersDatas,
+            url = '/inns/customers/saveOrUpdate',
+            datas = vm.modifyDatas
+
+        if (!vm.checkTel(vm.modifyDatas.contact)) {
+            tmsky.ui.dialog.errorTips('请输入正确的手机号！')
+            return
+        }
+        tmsky.ui.dialog.loading()
+
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.datasList.splice(vm.modifyIndex, 1, rs.result)
+                vm.closeModifyDialog()
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    //发送短信
+    sendMsgDialog : false,
+    msgTemp : [],
+    curSendMsg : {},
+    sendMsgTxt : '',
+    sendMsgHint : '',
+    curMsgId : '',
+    openSendMsgDialog : function (el) {
+        console.log(el.$model)
+        vm_customersDatas.sendMsgDialog = true
+        vm_customersDatas.curSendMsg = el
+    },
+    closeSendMsgDialog : function () {
+        vm_customersDatas.sendMsgDialog = false
+        vm_customersDatas.curSendMsg = {}
+        vm_customersDatas.sendMsgTxt = ''
+        vm_customersDatas.sendMsgHint = ''
+        vm_customersDatas.curMsgId = ''
+    },
+    toSendMsg : function () {
+        var vm = vm_customersDatas
+        if (vm.sendMsgTxt == '') {
+            vm.sendMsgHint = '短信内容必须填写'
+            return
+        } else {
+            vm.sendMsgHint = ''
+        }
+        tmsky.ui.dialog.loading()
+        var datas = {
+                msgId : vm.curMsgId,
+                mobile : vm.curSendMsg.contact,
+                names : vm.curSendMsg.name,
+                content : vm.sendMsgTxt,
+                title : vm.msgTitleMap(vm.curMsgId),
+                statusId : 0,
+                orderType : 0,
+            },
+            url = '/inns/' + vm.innId + '/msg/sendMsg'
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                tmsky.ui.dialog.successTips('短信发送成功！')
+                vm.closeSendMsgDialog()
+            } else {
+                vm.sendMsgHint = rs.message
+            }
+        })
+    },
+    msgTitleMap : function (id) {
+        var vm = vm_customersDatas, title = '';
+        vm.msgTemp.forEach(function (el) {
+            if (el.id == id) {
+                title = el.msgTitle
+            }
+        })
+        return title
+    },
+    changeMsgTxt : function () {
+        var vm = vm_customersDatas
+        vm.msgTemp.forEach(function (el) {
+            if (vm.curMsgId == el.id) {
+                vm.sendMsgTxt = el.msgContent
+            }
+        })
+    },
+//查看详情
+    lookData : {},
+    costList : {
+        list : [],
+        totalCount : 0
+    },
+    openThisDetail : function (pageNo, el) {
+        tmsky.ui.dialog.loading()
+        var vm = vm_customersDatas
+        vm.lookData = el
+        vm.allDatas = false
+        vm.thisDetail = true
+        var url = '/inns/customers/getCostDetail?temp=' + new Date().getTime()
+        $.post(url, $.param({contact : vm.lookData.contact, pageNo : pageNo})).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                if (rs.page.result.length > 0) {
+                    rs.page.result.forEach(function (x) {
+                        x.roomNo = x.roomNo.split(',')
+                        x.inOut = x.inOut.split(',')
+                    })
+                }
+                vm.costList.list = rs.page.result
+                vm.costList.totalCount = rs.page.totalCount
+
+                var page = {};
+                page.totalPages = rs.page.totalPages;
+                page.pageNo = rs.page.pageNo;
+                page.pageSize = rs.page.pageSize;
+                avalon.nextTick(function () {
+                    tmsky.getVm('vm_customers').renderPage('detail_page', page, function () {
+                        var pageInfo = tmsky.ui.page.getParams("detail_page")
+                        vm.openThisDetail(pageInfo.pageNo, el)
+                    })
+                })
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    backToAll : function () {
+        var vm = vm_customersDatas
+        vm.allDatas = true
+        vm.thisDetail = false
+    },
+    orderStatusMap : function (x) {
+        var map = {
+            1 : '预定',
+            2 : '部分入住',
+            3 : '入住',
+            4 : '部分退房',
+            5 : '已退房'
+        }
+        return map[x]
+    }
+
+})

@@ -1,0 +1,77 @@
+<div class="" ms-controller="vm_roomSale">
+    <div class="finance-nav-head">
+        <h1>房费日销售表　<span>(统计已售房间在当日产生的收入，佣金比率来源于功能库“客人来源管理”的渠道佣金比率)</span></h1>
+        <div class="time_input f-right">
+            <input id="roomSale_time" ms-duplex="timeData.from" type="text" placeholder="开始时间" class="select-time">
+        </div>
+    </div>
+    <div class="finance-roomSale-content">
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>渠道来源</th>
+                <th>渠道订单号</th>
+                <th>房号（房型）</th>
+                <th>入住时间</th>
+                <th>离店时间</th>
+                <th>入住人</th>
+                <th>当日房费</th>
+                <th>违约房费</th>
+                <th>佣金比率</th>
+                <th>佣金额</th>
+                <th>当日房费(扣佣)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-if="roomSaleList.length" ms-repeat-el="roomSaleList">
+                <td>{{el.customerFrom}}</td>
+                <td>{{el.orderNo}}<span ms-if-loop="el.orderStatus==0" class="colred">(已取消)</span></td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.roomNo}}</p>
+                </td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.checkin}}</p>
+                </td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.checkout}}</p>
+                </td>
+                <td>{{el.contactUser}}</td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">￥{{elem.fee | toFixed}}</p>
+                </td>
+                <td>{{el.penalty | toFixed}}</td>
+                <td>
+                    {{el.commissionValue}}<span ms-if-loop="!el.commissionValue==''">%</span>
+                </td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos"><span
+                            ms-if-loop="elem.commissionSum != '' ||elem.commissionSum != 0">￥</span>{{elem.commissionSum | toFixed}}
+                    </p>
+                </td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">￥{{elem.realFee | toFixed}}</p>
+                </td>
+            </tr>
+            <tr ms-if="!roomSaleList.length">
+                <td colspan="11" style="text-align: center">暂无房费日销售信息</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="table-footer">
+            <ul>
+                <li>合计</li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li>￥{{totalDatas.todayFees | toFixed}}</li>
+                <li>￥{{totalDatas.deditFees | toFixed}}</li>
+                <li></li>
+                <li></li>
+                <li>￥{{totalDatas.realFees | toFixed}}</li>
+            </ul>
+        </div>
+    </div>
+
+</div>

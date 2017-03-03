@@ -1,0 +1,238 @@
+.integral-content {
+    padding: 15px;
+    font-size: 12px;
+}
+
+input {
+    cursor: pointer;
+}
+
+.jf-pd-10 {
+    padding: 10px 0;
+}
+
+.ft-col-blue {
+    color: #4095ef;
+}
+
+.jf-title {
+    background-color: #f4f4f4;
+    padding: 15px 0;
+}
+
+.jf-border-left {
+    font-weight: bold;
+    padding: 0 20px 0 10px;
+    border-left: 3px solid #cf2d01;
+    font-size: 14px;
+    line-height: 15px;
+}
+
+.u-line {
+    border: 1px solid #979797;
+    width: 2px;
+    height: 15px;
+    margin: 0 15px 0 10px;
+}
+
+.jf-nav {
+    border-bottom: 1px solid #d7d7d7;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.jf-nav li {
+    float: left;
+    width: 100px;
+    height: 30px;
+    background: #f5f5f5;
+    border: 1px solid #d7d7d7;
+    text-align: center;
+    line-height: 30px;
+    color: #4a4a4a;
+    border-bottom: none;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.jf-nav .selected {
+    background-color: #CA0207;
+    color: #ffffff;
+    border: none;
+}
+
+.jf-ex-item {
+    width: 230px;
+    border: 1px solid #d1d1d1;
+    padding: 15px;
+    position: relative;
+    float: left;
+    margin-right: 20px;
+}
+
+.jf-ex-item .item-img {
+    text-align: center;
+}
+
+.item-img img {
+    width: 230px;
+    height: 156px;
+}
+
+.item-ts {
+    padding: 8px 0;
+    font-size: 12px;
+}
+
+.item-ts i {
+    color: #ca0207;
+}
+
+.fj-ex-btn {
+    display: inline-block;
+    border-radius: 4px;
+    width: 100%;
+    height: 30px;
+    background-color: #ca0207;
+    color: #ffffff;
+    font-size: 14px;
+    text-align: center;
+    line-height: 30px;
+    cursor: pointer;
+}
+
+.fj-ex-btn:hover + .jf-hover-info {
+    display: block !important;
+}
+
+.fj-ex-btn .jf-hover-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: url("images/Group.png") no-repeat center;
+    background-size: 100% 100%;
+    position: relative;
+    top: 3px;
+    left: 5px;
+}
+
+.jf-hover-info {
+    display: none;
+    position: absolute;
+    padding: 10px;
+    background: #ffffff;
+    box-shadow: 1px 1px 5px #dbdbdb, -1px -1px 5px #dbdbdb;
+    border-radius: 2px;
+    width: 200px;
+    left: 115px;
+}
+
+.jf-hover-info p {
+    line-height: 20px;
+    font-size: 12px;
+}
+
+.triangle-upL {
+    position: absolute;
+    left: 40px;
+    top: -15px;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    border-width: 8px;
+    border-style: dashed dashed solid dashed;
+    border-color: transparent transparent #d1d1d1 transparent;
+}
+
+.triangle-upR {
+    position: absolute;
+    left: 40px;
+    top: -14px;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    border-width: 8px;
+    border-style: dashed dashed solid dashed;
+    border-color: transparent transparent #ffffff transparent;
+}
+
+.ex-dialog-title {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.ex-dialog-body {
+    border-top: 1px solid #cdcdcd;
+    border-bottom: 1px solid #cdcdcd;
+    margin: 5px 0;
+}
+
+.ex-dialog-body p, .ex-dialog-body .mdg-list {
+    line-height: 30px;
+    font-size: 14px;
+}
+
+.ft-bold {
+    font-weight: bold;
+}
+
+.mdg-list i {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    position: relative;
+    top: 6px;
+    border-radius: 2px;
+    margin: 0 5px;
+    cursor: pointer;
+}
+
+.mdg-list .num-jian {
+    background: url("images/j-green.png") no-repeat center;
+    background-size: 100% 100%;
+}
+
+.mdg-list .num-jia {
+    background: url("images/add-green.png") no-repeat center;
+    background-size: 100% 100%;
+}
+
+.mdg-list input {
+    width: 40px;
+    height: 25px;
+    border: 1px solid #bbbbbb;
+    text-align: center;
+}
+
+.jf-dialog-foot button {
+    border-radius: 4px;
+    width: 148px;
+    height: 30px;
+    cursor: pointer;
+}
+
+.jf-dialog-foot .sure {
+    background: #7bb811;
+    border: 1px solid #71a150;
+    color: #ffffff;
+    margin-right: 5px;
+}
+
+.jf-dialog-foot .quxiao {
+    background: #ffffff;
+    border: 1px solid #a5a5a5;
+    color: #404040;
+}
+
+.jf-rule-info {
+    line-height: 25px;
+}
+
+.jf-dialog-foot p {
+    border-top: 1px solid #ddd;
+    padding-top: 20px;
+    text-align: left;
+    font-size: 14px;
+    color: #919191;
+}

@@ -1,0 +1,126 @@
+/**
+ * 房态布局
+ */
+
+.top-box {
+	position: relative;
+	height: 56px;
+	text-align: center;
+	border-bottom: solid 2px #cccccc;
+}
+
+.top-box-panel,
+.content-box-panel {
+	position: relative;
+	float: left;
+	width: 120px;
+	background-color: #f9f9f9;
+
+	box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	z-index: 50;
+	box-shadow: 2px 0px 2px #CCC;
+}
+
+.easy-room .top-box-panel,
+.easy-room .content-box-panel {
+	width: 200px;
+}
+
+.content-box-panel {
+	top: 0;
+	z-index: 40;
+	border-right: none;
+}
+
+.top-box-grid{
+	position: absolute;
+	left: 0;
+	right: 0;
+	margin-left: 120px;
+	height: 100%;
+	color: #666666;
+	cursor: e-resize; 
+	overflow: hidden;
+	width: auto !important;
+}
+
+.content-box {
+	position: absolute;
+	top: 58px;
+	bottom: 37px;
+	width: 100%;
+	overflow: hidden;
+	-moz-user-select: none;
+	-o-user-select:none;
+	-khtml-user-select:none;
+	-webkit-user-select:none;
+	-ms-user-select:none;
+	user-select:none;
+}
+
+.content-box-grid {
+	position: absolute;
+	left: 120px;
+	right: 0;
+	height: 100%;
+	overflow: auto;
+	overflow-x: scroll;
+	background: #F6F6F6;
+}
+
+.open>.top-box>.top-box-grid,
+.open>.content-box>.content-box-grid {
+	right: 340px;
+}
+
+.content-slide {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	/*right: 0;*/
+	right: -340px;
+	width: 340px;
+	background-color: #fff;
+	border-left: 1px solid #abadb3;
+	z-index: 100;
+}
+.content-slide-open {
+	right: 0;
+}
+.content-slide {
+	transition: right 1s;
+	-moz-transition: right 1s;	
+	-webkit-transition: right 1s;	
+	-o-transition: right 1s;
+}
+
+/*布局*/
+.wrap{
+	min-width: 1170px;
+}
+
+/*#header{
+    position: relative;
+    padding-left: 8px;
+    height: 48px;
+    border-bottom: 2px solid #a9221c;
+}*/
+
+.logo{
+	float: left;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+#content{
+	position: absolute;
+	top: 50px;
+	bottom: 0;
+	width: 100%;
+	overflow-y: auto;
+	overflow-x: hidden;
+	min-width: 1280px;
+}

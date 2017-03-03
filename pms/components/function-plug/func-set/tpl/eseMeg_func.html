@@ -1,0 +1,490 @@
+<!--智能短信-->
+<link rel="stylesheet" href="../css/eseMeg_func.css">
+<div ms-visible="funcBool.msg_plug">
+    <!--开启前-->
+    <div class="ui_fun_contenter" ms-visible="!hasSubOn">
+        <h1 class="u_border_left">功能说明</h1>
+        <div class="ui_fun_wrap">
+            <h5>开通该功能后，可设定短信模版、手动发送短信、智能发送短信、群发短信。提示：运营商规定短信模板需要审核通过后才可以发送，每次修改都需要重新审核。</h5>
+            <h5>建议修改模板时新建一条模板，通过后再替换原有模板。</h5>
+            <div class="border-b"></div>
+            <img class="des_1" src="../images/msg_img.png" alt="">
+        </div>
+    </div>
+    <!--开启后-->
+    <div ms-visible="hasSubOn" ms-controller="vm_eseMeg">
+        <h1 class="u_border_left msg_title">
+            累计发送短信<span class="u-stand-out">{{msgBaseInfo.sendMsgNum}}</span>条，
+            当月发送短信<span class="u-stand-out">{{msgBaseInfo.curMonNum}}</span>条，
+            短信剩余<span class="u-stand-out">{{msgBaseInfo.rechargeMsgNum}}</span>条。
+            <span ms-visible="msgBaseInfo.rechargeMsgNum==0" style="color: rgb(212, 0, 16)">短信余额已经用完，请充值使用。</span>
+
+        </h1>
+        <div class="msg_btn_list">
+            <button class="msg_btn_red" ms-click="checkTpl('isMsgPay')">短信充值</button>
+            <button class="meg_btn_wrap" ms-click="checkTpl('isPayRecord')">查看充值记录</button>
+            <button class="meg_btn_wrap" ms-click="checkTpl('isSendRecord')">短信发送记录</button>
+        </div>
+        <!--短信模板-->
+        <div id="msg_content" ms-visible="tpl.isMsgTemp">
+            <div class="ui_fun_contenter">
+                <h1 class="u_border_left">短信模板管理<span class="ft-12">（短信运营商规定：每次修改短信模板都需审核通过后才可正常发送！）</span></h1>
+                <div class="ui_msg_box fl" ms-repeat-el="msgTempList" ms-if="msgTempList.length">
+                    <div class="msg_temp_off" ms-visible="!el.edit">
+                        <div class="ui_msg_title">
+                            <span class="ft_col_green ft_bold">{{el.msgTitle}}</span>
+                            <span id="msgStatus" class="msg_border_ft"
+                                  ms-class-border_ftcol_red="el.status==1||el.status==3"
+                                  ms-class-border_ftcol_green="el.status==2"
+                            >{{msgCheckStatus(el.status)}}</span>
+                            <span class="msg_opera_box fr">
+                                <a title="编辑" class="msg_edit" ms-click="editThisMsg($index)"></a><a title="删除"
+                                                                                                     class="msg_del"
+                                                                                                     ms-click="delThisMsg(el.id,$index)"></a>
+                            </span>
+                        </div>
+                        <div class="ui_msg_body">
+                            <p><span style="color: #d40010" ms-visible="el.isAddName==1">客人姓名，</span>{{el.msgContent}}</p>
+                        </div>
+                        <div class="ui_msg_footer">
+                            <p>
+                                一共<span>{{el.msgContent.length}}</span>个字，将按照<span>{{Math.ceil(el.msgContent.length/63)}}</span>条短信发送。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="msg_temp_on" ms-visible="el.edit">
+                        <i class="msg_icon_del" ms-click="closeEditTemp($index)"></i>
+                        <input type="text" class="msg_input_title" ms-duplex="copyList[$index].msgTitle">
+                        <textarea name="" id="" ms-duplex="copyList[$index].msgContent"></textarea>
+                        <div class="msg_add_name">
+                            <i ms-class-selected="copyList[$index].isAddName==1" ms-click="isAddName(copyList[$index].isAddName,$index)"></i>在短信内容中加入客人姓名
+                        </div>
+                        <button class="msg_temp_btn" ms-click="editSub(copyList[$index],$index)">提交</button>
+                    </div>
+                </div>
+                <!--新增-->
+                <div class="msg_temp_add fl">
+                    <div style="height: 170px;" ms-click="openAddTemp" ms-visible="addTemp.on">
+                        <a class="add"></a>
+                    </div>
+
+                    <div class="msg_temp_on" style="height: 190px" ms-visible="addTemp.off">
+                        <i class="msg_icon_del" ms-click="closeAddTemp()"></i>
+                        <input type="text" class="msg_input_title" ms-duplex="addTemp.msgTitle" placeholder="短信标题">
+                        <textarea name="" ms-duplex="addTemp.msgContent" placeholder="短信内容"></textarea>
+                        <div class="msg_add_name">
+                            <i ms-click="isAddName()"></i>在短信内容中加入客人姓名
+                        </div>
+                        <button class="msg_temp_btn" ms-click="addMsgTemp()">提交</button>
+                    </div>
+                </div>
+            </div>
+            <!--智能发送-->
+            <div class="ui_fun_contenter">
+                <h1 class="u_border_left">智能发送</h1>
+                <div class="ui_msg_box fl" ms-repeat-el="ATList" ms-if="ATList.length">
+                    <div class="msg_edit_off">
+                        <div class="ui_msg_title">
+                            <span class="ft_col_green ft_bold">发送条件</span>
+                            <span class="msg_opera_box fr">
+                                <a title="编辑" class="msg_edit" ms-click="openEdit($index)"></a><a title="删除"
+                                                                                                  class="msg_del"
+                                                                                                  ms-click="delThisAT(el.id,$index)"></a>
+                            </span>
+                        </div>
+                        <div class="msg_send_body">
+                            <p>客人来源：<span>{{el.customerFromName==null?'所有渠道':el.customerFromName}}</span></p>
+                            <p>发送情境：<span>{{operateTypeMap(el.operateType)}}</span></p>
+                            <p>发送短信：<span>{{el.msgTitle}}</span></p>
+                            <div class="msg_info">
+                                {{el.msgContent}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="msg_edit_on">
+                        <i class="msg_icon_del" ms-click="closeEdit($index)"></i>
+                        <div class="ui_msg_title">
+                            <span class="ft_col_green ft_bold">发送条件</span>
+                        </div>
+                        <div class="msg_send_body">
+                            <!--客人来源-->
+                            <div class="mg-btm-10">
+                                <label>客人来源：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input ms-change="changeMsgZnFrom(ALLCFList,copyAT[$index].customerFromId,$index)"
+                                           type="hidden" value="0" ms-duplex="copyAT[$index].customerFromId">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="copyAT[$index].customerFromId"
+                                              ms-duplex="copyAT[$index].customerFromName">{{copyAT[$index].customerFromName==null?'所有渠道':copyAT[$index].customerFromName}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value=""
+                                           style="display: block;">所有渠道</a>
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="ALLCFList">{{item.name}}</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--发送情境-->
+                            <div class="mg-btm-10">
+                                <label>发送情境：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="copyAT[$index].operateType">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="copyAT[$index].operateType">{{operateTypeMap(copyAT[$index].operateType)}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="operateTypeArr">{{item.txt}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--发送短信-->
+                            <div class="mg-btm-10">
+                                <label>发送短信：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220" ms-class-disabled="!hasMsgTemp"
+                                     data-ui="dropdown">
+                                    <input ms-change="changeMsgZnCondition(copyAT[$index].msgId,$index)" type="hidden"
+                                           value="0" ms-duplex="copyAT[$index].msgId">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value"
+                                              ms-duplex="copyAT[$index].msgId">{{copyAT[$index].msgTitle}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           ms-repeat-item="msgTempList"
+                                           ms-if-loop="item.status==2">{{item.msgTitle}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="msg_temp_btn" ms-click="modifyAt($index)">确认修改</button>
+                        </div>
+                    </div>
+                </div>
+                <!--新增智能发送模板-->
+                <div class="msg_temp_add fl">
+                    <div style="height: 170px;" ms-click="openAddAt" ms-visible="addAT.on">
+                        <a class="add"></a>
+                    </div>
+
+                    <div class="msg_edit_on" style="height: 205px" ms-visible="addAT.off">
+                        <i class="msg_icon_del" ms-click="closeAddAt()"></i>
+                        <div class="ui_msg_title">
+                            <span class="ft_col_green ft_bold">发送条件</span>
+                        </div>
+                        <div class="msg_send_body">
+                            <!--客人来源-->
+                            <div class="mg-btm-10">
+                                <label>客人来源：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="addAT.customerFromId">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="addAT.customerFromId" id="customerFrom">所有渠道</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value=""
+                                           style="display: block;">所有渠道</a>
+
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="ALLCFList">{{item.name}}</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--发送情境-->
+                            <div class="mg-btm-10">
+                                <label>发送情境：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="addAT.operateType">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="addAT.operateType" id="operate">请选择发送情境</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="operateTypeArr">{{item.txt}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--发送短信-->
+                            <div class="mg-btm-10">
+                                <label>发送短信：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220" ms-class-disabled="!hasMsgTemp"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="addAT.msgId">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value"
+                                              ms-duplex="addAT.msgId" id="msgTemp">{{electMsg}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           ms-repeat-item="msgTempList"
+                                           ms-if-loop="item.status==2">{{item.msgTitle}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="msg_temp_btn" ms-click="addAt()">提交</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!--==========================群发短信-->
+            <div class="ui_fun_contenter">
+                <h1 class="u_border_left">群发短信</h1>
+                <div class="ui_msg_box fl" style="height: 320px">
+                    <div class="msg_group_on">
+                        <div class="ui_msg_title">
+                            <span class="ft_col_green ft_bold">发送条件</span>
+                        </div>
+                        <div class="msg_send_body">
+                            <!--发送范围-->
+                            <div class="mg-btm-10">
+                                <label>发送范围：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="sendInfo.range">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="sendInfo.range" id="rangeTxt">{{sendInfo.rangeTxt}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="sendRange">{{item.name}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--发送对象-->
+                            <div class="mg-btm-10">
+                                <label>发送对象：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="sendInfo.ct" ms-change="sendPeopleNum()">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="sendInfo.ct" id="ctTxt">{{sendInfo.ctTxt}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="sendCt">{{item.name}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="msg_group_count">
+                                <span>共选择了{{sendInfo.peopleNum}}位客人</span>
+                            </div>
+
+                            <!--客人来源-->
+                            <div class="mg-btm-10">
+                                <label>客人来源：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="sendInfo.cf" ms-change="sendPeopleNum">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex="sendInfo.cf" id="cfTxt">{{sendInfo.cfTxt}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value=""
+                                           style="display: block;">所有渠道</a>
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           style="display: block;" ms-repeat-item="ALLCFList">{{item.name}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--发送短信-->
+                            <div class="mg-btm-10">
+                                <label>发送短信：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-220" ms-class-disabled="!hasMsgTemp"
+                                     data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="sendInfo.tempId" ms-change="sendMsgNum()">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value"
+                                              ms-duplex="sendInfo.tempId" id="tempTxt">{{sendInfo.tempTxt}}</span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item.id"
+                                           ms-repeat-item="msgTempList"
+                                           ms-if-loop="item.status==2">{{item.msgTitle}}</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="msg_group_count">
+                                <span>预计发送{{sendInfo.barNum}}条短信</span>
+                            </div>
+                            <button class="msg_temp_btn" ms-click="clickSend()">发送</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!--短信充值-->
+        <div class="ui_fun_contenter bg_white" ms-visible="tpl.isMsgPay">
+            <h1 class="u_border_left">短信充值<span class="ft-12">（每条短信0.1元。）</span>
+                <button class="fr meg_btn_wrap" ms-click="checkTpl('isMsgTemp')">返回</button>
+            </h1>
+            <div class="ui_fun_wrap ft-14 mg-top-30">
+                <div>充值数量：<input class="u-input-num" type="text" maxlength="6" ms-duplex="charge.num" onkeyup="this.value=this.value.replace(/\D/g,'')"
+                                 ms-change="chargeMsg()">　条
+                </div>
+                <p style="margin: 10px 0">充值金额：{{parseFloat(charge.num*0.1).toFixed(1)}}元</p>
+                <form ms-attr-action="{{msgPayUrl}}" target="_blank" method="post" id="payForm">
+                    <input type="hidden" name="msgNum" ms-duplex="charge.num">
+
+                    <!-- FOR ORDER ONLY-->
+                    <input type="hidden" id="totalPayPrice" name="payPrice" ms-duplex="charge.payPrice"/>
+                    <!-- FOR ORDER ONLY-->
+                    <input type="hidden" name="payBaseInfos[0].productCode" value="msg_recharge"/>
+                    <input type="hidden" name="payBaseInfos[0].productName" value="短信充值"/>
+                    <input type="hidden" name="payBaseInfos[0].innId" ms-duplex="charge.innId"/>
+                    <input type="hidden" name="payBaseInfos[0].orderId" value="">
+                    <input type="hidden" id="payPrice" name="payBaseInfos[0].payPrice" ms-duplex="charge.payPrice"/>
+                    <input type="hidden" name="payBaseInfos[0].title" value="番茄来了"/>
+                    <input type="hidden" name="payBaseInfos[0].desc" ms-duplex="charge.payDesc"/>
+                    <input type="hidden" name="payBaseInfos[0].remark" ms-duplex="charge.remark"/>
+                    <input type="hidden" name="payBaseInfos[0].deductType" value="1"/>
+                    <input type="hidden" name="payBaseInfos[0].deductPrice" value="0"/>
+                    <input type="hidden" id="payDesc" name="payBaseInfos[0].payDesc" ms-duplex="charge.payDesc"/>
+                    <input type="hidden" id="note" name="message" ms-duplex="charge.note"/>
+
+                    <input type="hidden" name="expire" ms-duplex="charge.expire"/>
+                    <input type="hidden" name="callbackUrl"
+                           ms-attr-value="paySuccessUrl"/>
+                    <input type="hidden" name="methodType" value="POST"/>
+                    <input type="hidden" name="returnUrl" value=""/>
+                    <input type="hidden" name="returnMethod" value="post"/>
+                    <input type="hidden" name="returnParamsFlag" value="1"/>
+                    <input type="hidden" name="returnParamsType" value="2"/>
+                    <input type="hidden" name="origin" value="1"/>
+                </form>
+                <button class="u-big-btn" ms-click="confirmPay()">去支付宝支付</button>
+            </div>
+            <!--去支付宝支付-->
+            <div id="msg_charge_popups" class="tomasky-ui-popups enter-info-popups">
+                <div class="ui-popups-dialog">
+                    <em class="close" data-dismiss="popups">X</em>
+                    <div class="ui-popups-head">
+                        <h3 class="ui-popups-title">支付信息确认</h3>
+                    </div>
+                    <div class="ui-popups-body">
+                        <ul>
+                            <li>
+                                <span class="grey">支付方：</span> {{charge.innName}}
+                            </li>
+                            <li>
+                                <span class="grey">收款方：</span>番茄来了
+                            </li>
+                            <li>
+                                <span class="grey">商品名称：</span> 短信充值
+                            </li>
+                            <li>
+                                <span class="grey">商品单价：</span>0.1元／条
+                            </li>
+                            <li>
+                                <span class="grey">商品数量：</span> {{charge.num}}条
+                            </li>
+                            <li>
+                                <span class="grey">商品总价：</span><span class="red">￥{{charge.payPrice}}</span>
+                            </li>
+                        </ul>
+			        	</textarea>
+                    </div>
+                    <div class="ui-popups-foot" style="text-align: center;">
+                        <button ms-click="gotoAlipay()" class="alipay-pay">支付宝支付</button>
+                    </div>
+                </div>
+            </div>
+            <div id="msg_charge_tip_popups" class="tomasky-ui-popups enter-info-popups">
+                <div class="ui-popups-dialog">
+                    <em class="close" data-dismiss="popups">X</em>
+                    <div class="ui-popups-head">
+                        <h3 class="ui-popups-title">提示信息</h3>
+                    </div>
+                    <div class="ui-popups-body">
+                        <h3>请在新窗口完成充值</h3>
+                    </div>
+                    <div class="ui-popups-foot" style="text-align: center;">
+                        <a class="alipay-pay" ms-click="checkTpl('successPay')">完成支付</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!--充值记录-->
+        <div class="ui_fun_contenter bg_white" ms-visible="tpl.isPayRecord">
+            <h1 class="u_border_left">短信充值记录
+                <button class="fr meg_btn_wrap" ms-click="checkTpl('isMsgTemp')">返回</button>
+            </h1>
+            <table class="table table-bordered mg-top-30">
+                <thead>
+                <tr>
+                    <th class="txt-center">充值时间</th>
+                    <th class="txt-center">支付宝流水号</th>
+                    <th class="txt-center">金额（元）</th>
+                    <th class="txt-center">详情</th>
+                    <th class="txt-center">状态</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="payList">
+                    <td class="txt-center">{{msToTime(el.payAt)}}</td>
+                    <td class="txt-center">{{el.orderCode}}</td>
+                    <td class="txt-center" style="color: #d40010;font-size: 14px">￥{{el.payPrice}}</td>
+                    <td class="txt-center">{{el.payDesc}}</td>
+                    <td class="txt-center">{{el.payStatus==0?'失败':'成功'}}</td>
+                </tr>
+
+                </tbody>
+            </table>
+            <div id="pay-page-div"></div>
+        </div>
+
+        <!--短信发送记录-->
+        <div class="ui_fun_contenter bg_white" ms-visible="tpl.isSendRecord">
+            <h1 class="u_border_left">短信发送记录
+                <button class="fr meg_btn_wrap" ms-click="checkTpl('isMsgTemp')">返回</button>
+            </h1>
+            <table class="table table-bordered mg-top-30">
+                <thead>
+                <tr>
+                    <th class="txt-center" style="width: 15%">接受号码</th>
+                    <th class="txt-center" style="width: 10%">短信模板</th>
+                    <th class="txt-center" style="width: 24%">发送内容</th>
+                    <th class="txt-center" style="width: 10%">发送条数</th>
+                    <th class="txt-center" style="width: 15%">发送时间</th>
+                    <th class="txt-center" style="width: 10%">发送方式</th>
+                    <th class="txt-center" style="width: 15%">操作人</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="sendList">
+                    <td class="txt-center">{{el.mobile}}</td>
+                    <td class="txt-center">{{el.title}}</td>
+                    <td class="txt-center">{{el.content}}</td>
+                    <td class="txt-center">{{el.sendNum}}</td>
+                    <td class="txt-center">{{el.sendTime}}</td>
+                    <td class="txt-center">{{sendTransform(el.sendType)}}</td>
+                    <td class="txt-center">{{el.sendUserCode}}</td>
+                </tr>
+
+                </tbody>
+            </table>
+            <div id="send-page-div"></div>
+        </div>
+    </div>
+</div>

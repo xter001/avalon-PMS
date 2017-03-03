@@ -1,0 +1,882 @@
+.callout-head {
+    font-size: 14px;
+    padding-left: 12px;
+    margin: 15px 0;
+    border-left: 2px solid #cf2d01;
+    position: relative;
+    height: 20px;
+    line-height: 20px;
+}
+
+.room-type-container {
+    padding: 0 20px;
+    overflow: auto;
+}
+
+.callout-head h1 {
+    font-size: 14px;
+}
+
+.callout-head a {
+    position: relative;
+    top: -20px;
+}
+
+.callout-head .btn-success {
+    background: #7ea800;
+. callout-head a border: 1 px #7ea800 solid;
+}
+
+.room-type-tb {
+    width: 100%;
+    max-height: 420px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+    top: -10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.room-type-tb table {
+    width: 100%;
+    border: 1px #e5e5e5 solid;
+}
+
+.room-type-tb table th {
+    background: #f5f5f5;
+    color: #5f5f5f;
+    font-weight: 600;
+    padding: 10px;
+    font-size: 12px;
+    border-right: 1px #e5e5e5 solid;
+    text-align: left;
+}
+
+.room-type-tb table th.textc, .room-type-tb table td.textc {
+    text-align: center
+}
+
+.room-type-tb table td {
+    border-right: 1px #e5e5e5 solid;
+    border-top: 1px #e5e5e5 solid;
+    padding: 10px;
+}
+
+.room-type-tb table tr:hover td {
+    background: #f5f5f5;
+}
+
+.room-type-tb td .btn {
+    margin: 0 5px;
+    padding: 2px 12px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ui-popups-foot .enter {
+    background: #7bb811;
+    border: none;
+}
+
+.room-type-tb td:last-child .btn {
+    margin: 0 5px;
+    padding: 2px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #4a90e2;
+    text-decoration: underline;
+}
+
+.room-type-tb td .room-hover1:hover {
+    background: #7ea800;
+    border: 1px #7ea800 solid;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.room-type-tb td .room-hover2:hover {
+    background: #cf2d01;
+    border: 1px #cf2d01 solid;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/*设置周末价 特殊价*/
+.room-set {
+    border: 1px #BFBFBF solid;
+}
+
+.room-set h2 {
+    color: #404040;
+    font-size: 12px;
+    padding: 0 10px 10px 10px;
+}
+
+.room-set-week {
+    padding: 10px;
+    height: 85px;
+    border-bottom: 1px #BFBFBF solid;
+}
+
+.room-set-spe {
+    padding: 10px;
+    height: 160px;
+}
+
+.shape1 {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    vertical-align: baseline;
+    background: #79ba00;
+    margin-right: 5px;
+}
+
+.shape2 {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    vertical-align: baseline;
+    background: #ff5f00;
+    margin-right: 5px;
+}
+
+.room-set-week ul {
+    width: 100%;
+    overflow: hidden;
+    zoom: 1
+}
+
+.room-set-week ul li h5 {
+    width: 100%;
+}
+
+.room-set-week ul li {
+    width: 60px;
+    float: left;
+    margin: 0 10px;
+}
+
+.room-set-week ul li div {
+    width: 100%;
+    height: 26px;
+    border: 1px #e5e5e5 solid;
+    margin-top: 5px;
+}
+
+.room-set-week ul li div span {
+    height: 26px;
+    line-height: 26px;
+    display: inline-block;
+    color: #BFBFBF
+}
+
+.room-set-week ul li div input {
+    width: 40px;
+    float: right;
+    height: 26px;
+}
+
+.room-set-spec {
+    height: 120px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 10px;
+}
+
+/*房型回收站*/
+.room-type-trash {
+    padding: 0 20px;
+    overflow: auto;
+}
+
+.room-type-trash .panel-body ul {
+    overflow: hidden;
+}
+
+.addSpePrice {
+    color: #4a90e2;
+    margin-left: 6px;
+}
+
+.room-type-trash .panel-body li {
+    border: 1px solid #e0e0e0;
+    width: 158px;
+    height: 140px;
+    float: left;
+    margin: 0 25px 20px 0;
+
+}
+
+.addSpePrice:hover {
+    color: #4a90e2;
+}
+
+.room-set-spe input[type=text].room-date {
+    background: none repeat scroll 0 0 #EDEDED;
+    border: medium none;
+    border-radius: 3px;
+    color: #62666F;
+    font-family: 微软雅黑;
+    height: 23px;
+    line-height: 23px;
+    margin: 0 7px;
+    text-align: center;
+    width: 115px;
+}
+
+.room-set-spe input[type=text].room-txt {
+    background: none repeat scroll 0 0 #ffffff;
+    border: 1px #EDEDED solid;
+    border-radius: 3px;
+    color: #62666F;
+    font-family: 微软雅黑;
+    height: 23px;
+    line-height: 23px;
+    margin: 0 7px;
+    text-align: center;
+    width: 115px;
+}
+
+.room-type-trash .room-box-head {
+    position: relative;
+    padding: 8px;
+    font-size: 18px;
+    color: #333333;
+    background-color: #f2f2f2;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.room-box-head:after {
+    content: '\25B4';
+    display: inline-block;
+    font-size: 1.8em;
+    color: #ffffff;
+    position: absolute;
+    top: 20px;
+    left: 15px;
+}
+
+.room-type-trash .room-box-body {
+    padding: 10px;
+}
+
+.room-type-trash .room-box-body p {
+    margin-bottom: 6px;
+}
+
+/*房间管理----锁房*/
+.room-manage-nav {
+    margin: 20px;
+    border-bottom: 1px solid #909090;
+    overflow: hidden;
+}
+
+.room-manage-nav ul li {
+    font-size: 14px;
+    float: left;
+    padding: 7px 20px;
+    box-sizing: border-box;
+}
+
+.room-manage-nav ul li:hover {
+    cursor: pointer;
+}
+
+.room-manage-nav ul .selected {
+    border-bottom: 2px solid #CF2D01;
+    color: #CF2D01;
+}
+
+.room-manage-close {
+    margin: 10px 20px;
+}
+
+.room-tishi {
+    background-color: #fdfae5;
+    border: 1px solid #f3ddc6;
+    padding: 10px 10px;
+    color: #AA5F02;
+    line-height: 20px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.room-manage-close .triangle-upL {
+    position: absolute;
+    left: 95px;
+    top: -15px;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    border-width: 8px;
+    border-style: dashed dashed solid dashed;
+    border-color: transparent transparent #f3ddc6 transparent;
+}
+
+.room-manage-close .triangle-upR {
+    position: absolute;
+    left: 95px;
+    top: -14px;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    border-width: 8px;
+    border-style: dashed dashed solid dashed;
+    border-color: transparent transparent #fdfae5 transparent;
+}
+
+.record-group {
+    position: relative;
+    min-width: 1200px;
+    margin-bottom: 10px;
+}
+
+.record-group .room-close-error {
+    color: #CF2D01;
+    font-size: 13px;
+    position: relative;
+}
+
+.record-group .room-close-error:before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: url("images/icon_tishi.png") no-repeat center;
+    background-size: cover;
+    margin-right: 3px;
+    position: absolute;
+    top: 2px;
+}
+
+.record-group .room-close-error span {
+    margin-left: 20px;
+}
+
+.btn-add-record {
+    color: #ffffff;
+    width: 126px;
+    height: 30px;
+    background-color: #7EA800;
+    border-radius: 30px;
+    font-size: 14px;
+    margin: 0 0 10px 0;
+    cursor: pointer;
+}
+
+.btn-add-record i {
+    margin-right: 2px;
+}
+
+.add-lock-check {
+    width: 120px;
+    border-radius: 2px 2px 0 0;
+    margin-right: 10px;
+    font-size: 12px;
+    color: #8b8b8b;
+    box-sizing: border-box;
+    display: block;
+    float: left;
+    padding: 0;
+}
+
+.add-lock-check .listdown {
+    display: block;
+    height: 90px;
+    overflow-y: auto;
+}
+
+.add-lock-check .ui-dropdown-list a {
+    border-bottom: 1px solid #d4d9df;
+    box-sizing: border-box;
+}
+
+.add-lock-check a {
+    line-height: 30px;
+}
+
+.add-lock-check a input {
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    text-indent: 10px;
+    cursor: default;
+}
+
+.add-lock-check a input:disabled, .add-lock-time input:disabled, .add-lock-msg input:disabled {
+    color: #aaaaaa;
+    background: #f5f5f5;
+}
+
+.add-lock-time {
+    font-size: 12px;
+    color: #8b8b8b;
+    padding: 0;
+    box-sizing: border-box;
+    border: none;
+    overflow: hidden;
+}
+
+.add-lock-time input {
+    width: 120px;
+    line-height: 30px;
+    text-align: center;
+    border: 1px solid #D5D5D5;
+    border-radius: 2px;
+    margin-right: 10px;
+    color: #8b8b8b;
+}
+
+.room-set-style {
+    background: none repeat scroll 0 0 #ffffff;
+    border: 1px #EDEDED solid;
+    border-radius: 3px;
+    color: #62666F;
+    font-family: 微软雅黑;
+    height: 23px;
+    line-height: 23px;
+    margin: 0 7px;
+    text-align: center;
+    width: 115px;
+    display: inline-block;
+}
+
+.room-set-spe .room-set-style input[type=text].room-txt {
+    width: 98px;
+    margin: 0;
+    border: 0;
+}
+
+.room-set-style span {
+    color: #adadad;
+}
+
+.add-lock-msg {
+    width: 350px;
+    line-height: 30px;
+    border: 1px solid #ccc;
+    padding: 0;
+    margin-right: 10px;
+    box-sizing: border-box;
+}
+
+.room-set-delete {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 3px;
+    background: url("images/room-delete.png") no-repeat;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.room-set-delete:hover {
+    background: url("images/room-delete-on.png") no-repeat;
+}
+
+.room-set-div {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+#newRoomTypeDiv {
+    width: 331px;
+}
+
+.boxinput2 {
+    float: left;
+    width: 100%;
+}
+
+.boxinput2 p {
+    float: left;
+    height: 40px;
+    line-height: 40px;
+    margin-bottom: 16px;
+    position: relative;
+    width: 100%;
+}
+
+.boxinput2 label {
+    color: gray;
+    font-size: 13px;
+    height: 35px;
+    left: 10px;
+    line-height: 35px;
+    /*position: absolute;*/
+    text-shadow: 1px 1px 0 #FCFCFC;
+    /*top: 2px;*/
+}
+
+.boxinput2 input {
+    /*background: url("images/button_bg.gif") repeat-x scroll 0 0;*/
+    border: 1px solid #CFC8BC;
+    border-radius: 2px;
+    /*color: #463415;*/
+    font-family: 微软雅黑;
+    font-size: 14px;
+    height: 35px;
+    line-height: 35px;
+    margin: 0;
+    padding: 0;
+    text-indent: 5px;
+    text-shadow: 1px 1px 0 #FFFFFF;
+    width: 78%;
+}
+
+.boxinput2 input.text-indent5 {
+    text-indent: 73px;
+}
+
+.boxinput2 input.text-indent15 {
+    text-indent: 15px;
+}
+
+.boxinput2 p {
+    float: left;
+    height: 40px;
+    line-height: 40px;
+    margin-bottom: 16px;
+    position: relative;
+    width: 100%;
+}
+
+.boxinput2 p.add7 {
+    max-height: 180px;
+    height: auto;
+    margin-bottom: 0;
+    margin-left: -3px;
+    width: 100%;
+    overflow: auto;
+    padding-top: 15px;
+}
+
+.boxinput2 p.add7 span a {
+    background: url("images/room-delete.png") no-repeat scroll 0 0;
+    cursor: pointer;
+    display: inline-block;
+    height: 20px;
+    position: absolute;
+    right: -7px;
+    top: -8px;
+    width: 20px;
+}
+
+.boxinput2 p.add7 span a:hover {
+    background: url("images/room-delete-on.png") no-repeat scroll 0 0;
+}
+
+.boxinput2 p.add7 span {
+    float: left;
+    margin: 0 20px 20px 3px;
+    position: relative;
+    width: 26%;
+}
+
+.boxinput2 p.add7 span a.add8 {
+    background: url("images/edit_bg34px.gif") repeat-x scroll 0 0;
+    border: 1px solid #C0C0C0;
+    border-radius: 2px;
+    color: #858585;
+    float: left;
+    height: 33px;
+    line-height: 33px;
+    position: relative;
+    right: 0;
+    text-align: center;
+    top: 0;
+    white-space: nowrap;
+    width: 87px;
+}
+
+.biggreen_button {
+    background: #7bb811;
+    border-radius: 2px;
+    height: 41px;
+    line-height: 41px;
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+    color: #fff;
+    white-space: nowrap;
+    -webkit-transition: 0.25s;
+    -moz-transition: 0.25s;
+    -o-transition: 0.25s;
+    transition: 0.25s;
+    -webkit-backface-visibility: hidden;
+    font-size: 16px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    float: left;
+}
+
+.biggreen_button:hover {
+    background: #71a810;
+    color: #ffffff
+}
+
+.add-lock-msg input {
+    width: 100%;
+    line-height: 30px;
+    text-indent: 15px;
+    cursor: default;
+}
+
+.btn-lockRoom {
+    width: 80px;
+    height: 30px;
+    border-radius: 2px;
+    margin-left: 20px;
+    position: relative;
+    top: -10px;
+    cursor: pointer;
+}
+
+.bg-red {
+    background-color: #CF2D01;
+    color: #ffffff;
+}
+
+.bg-red:hover {
+    background: #d95749;
+}
+
+.bg-write {
+    background-color: #ffffff;
+    color: #000;
+    border: 1px solid #D5D5D5;
+}
+
+.bg-write:hover {
+    background: #f4f4f4;
+}
+
+/*修改房间归属地*/
+.room-manage-edit {
+    margin: 10px 20px;
+}
+
+.room-manage-edit .triangle-upL {
+    position: absolute;
+    left: 188px;
+    top: -15px;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    border-width: 8px;
+    border-style: dashed dashed solid dashed;
+    border-color: transparent transparent #f3ddc6 transparent;
+}
+
+.room-manage-edit .triangle-upR {
+    position: absolute;
+    left: 188px;
+    top: -14px;
+    width: 0;
+    height: 0;
+    font-size: 0;
+    border-width: 8px;
+    border-style: dashed dashed solid dashed;
+    border-color: transparent transparent #fdfae5 transparent;
+}
+
+.room-manage-list {
+    border: 1px solid #e0e0e0;
+}
+
+.room-manage-list .list-item {
+    /*overflow: hidden;*/
+    position: relative;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+    background-color: #ffffff;
+    padding: 15px 0;
+    min-height: 40px;
+    position: relative;
+}
+
+.room-manage-list .list-item:nth-child(2n-1) {
+    background: #f6f6f6;
+}
+
+.room-manage-list .list-item:last-child {
+    border-bottom: none;
+}
+
+.room-manage-list .room-type {
+    width: 130px;
+    font-size: 14px;
+    position: absolute;
+    top: 40%;
+    line-height: 100%;
+    float: left;
+    padding-left: 20px
+}
+
+.room-manage-list .room-numList {
+    margin-left: 150px;
+    min-height: 30px;
+    min-width: 500px;
+}
+
+.room-manage-list .room-numList div {
+    padding: 4px 25px;
+    margin: 7px;
+    z-index: 999;
+    font-size: 12px;
+    border: 2px solid #ddd;
+    box-sizing: border-box;
+}
+
+.room-manage-list .room-numList div:hover {
+    border: 2px solid #fe8677;
+    box-sizing: border-box;
+}
+
+.room-manage-sort {
+    padding: 0 20px 10px 20px;
+}
+
+.room-manage-sort > .tips > p {
+    height: 42px;
+    line-height: 42px;
+    background-color: #FFFBF0;
+    padding: 0 20px;
+    color: #A95F00;
+}
+
+.room-manage-list .room-numList div
+.room-manage-sort > ul {
+    margin-top: 16px;
+}
+
+.sort-room-wrap {
+    border: solid 1px #CCCCCC;
+    text-align: center;
+    width: 140px;
+    float: left;
+    margin-right: 26px;
+    margin-bottom: 16px;
+    color: #333333;
+    font-size: 16px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -o-box--sizing: border-box;
+    -ms-box--sizing: border-box;
+    -moz-box--sizing: border-box;
+}
+
+.sort-room-wrap:hover {
+    border: 2px #fe8677 solid;
+}
+
+.sort-room-wrap:hover .sort-room-body {
+    height: 34px;
+}
+
+.sort-room-wrap.fold:hover .sort-room-head {
+    height: 34px;
+}
+
+.sort-room-wrap .sort-room-head {
+    background-color: #F4F4F4;
+    height: 57px;
+    border-bottom: solid 1px #ccc;
+}
+
+.sort-room-wrap .sort-room-head > em:before {
+    content: ' ';
+    border: solid transparent;
+    border-bottom-color: #CCCCCC;
+    position: relative;
+    top: 6px;
+    left: 7px;
+    border-width: 8px;
+}
+
+.sort-room-wrap .sort-room-head > em:after {
+    content: ' ';
+    border: solid transparent;
+    border-bottom-color: #ffffff;
+    position: relative;
+    top: 8px;
+    left: -8px;
+    border-width: 7px;
+}
+
+.sort-room-wrap .sort-room-head > p {
+    position: relative;
+    top: 20px;
+}
+
+.sort-room-wrap .sort-room-body {
+    height: 36px;
+    background-color: #ffffff;
+}
+
+.sort-room-wrap .sort-room-body > p {
+    position: relative;
+    top: 10px;
+    font-size: 12px;
+}
+
+.sort-room-wrap.fold {
+    width: 130px;
+    border-radius: 3px;
+}
+
+.sort-room-wrap.fold .sort-room-head {
+    height: 36px;
+    border-bottom: none !important;
+    font-size: 12px;
+}
+
+.sort-room-wrap.fold .sort-room-head > p {
+    top: 10px;
+}
+
+.sort-room-wrap.fold .sort-room-body {
+    display: none;
+}
+
+.room-manage-sort, .room-manage-close, .room-manage-edit {
+    min-height: 800px;
+}
+
+.table-th {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.table-tb {
+    margin-top: 34px;
+}
+
+.fold-room-type-close {
+    background: url("images/fold-room-type-close.png") no-repeat;
+    width: 72px;
+    height: 21px;
+    display: inline-block;
+    margin-left: 21px;
+    position: relative;
+    top: 7px;
+    cursor: pointer;
+}
+
+.fold-room-type-open {
+    background: url("images/fold-room-type-open.png") no-repeat;
+    width: 72px;
+    height: 21px;
+    display: inline-block;
+    margin-left: 21px;
+    position: relative;
+    top: 7px;
+    cursor: pointer;
+}
+
+.boxinput2 p.add7 input {
+    width: 100%;
+}

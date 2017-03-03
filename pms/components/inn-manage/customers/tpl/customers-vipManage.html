@@ -1,0 +1,248 @@
+<div ms-controller="vm_vipManage">
+    <ul class="u-li-title">
+        <li ms-class-selected="tab.chain" ms-click="vipChangeTab('chain')">连锁会员</li>
+        <li ms-class-selected="tab.set" ms-click="vipChangeTab('set')">会员设置</li>
+    </ul>
+    <!--连锁会员-->
+    <div ms-visible="tab.chain">
+        <div class="finance-nav-head">
+            <h1 style="top: 20px">一共有<a class="u-stand-out">{{baseDatas.total}}</a>条记录</h1>
+            <div class="f-right">
+                <div class="u-select-group">
+                    <select name="" class="u-select" ms-duplex="baseDatas.searchType">
+                        <option value="name">姓名</option>
+                        <option value="mobile">手机号</option>
+                    </select>
+                    <input class="u-input-txt" type="text" ms-attr-placeholder="baseDatas.searchType=='name'?'姓名':'手机号'"
+                           ms-duplex="baseDatas.searchKey">
+                </div>
+
+                <button class="btn btn-search" ms-click="getChainVip(1)">搜索</button>
+            </div>
+        </div>
+        <table class="table table-hover table-bordered">
+            <thead>
+            <tr>
+                <th>姓名</th>
+                <th>手机号</th>
+                <th>身份证号</th>
+                <th>会员等级</th>
+                <th>消费金额<i class="icon-sort" ms-class-sort-down="baseDatas.isDown"
+                           ms-class-sort-up="!baseDatas.isDown" ms-click="getChainVip(1,true)"></i></th>
+                <th>剩余积分</th>
+                <th>会员卡号</th>
+                <th>备注</th>
+                <th style="width: 14%;min-width: 165px;">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-repeat="baseDatas.list" ms-if="baseDatas.list.length">
+                <td>{{el.name}}</td>
+                <td>{{el.contact}}</td>
+                <td>{{el.idCardNo}}</td>
+                <td>{{tranfGrade(el.gradeId,el.totalConsume)}}</td>
+                <td>{{el.totalConsume}}</td>
+                <td>{{el.availableIntegral}}</td>
+                <td>{{el.memberNo}}</td>
+                <td>{{el.rmk}}</td>
+                <td>
+                    <button class="btn btn-small" ms-click="openChainModifyDialog(el,$index)">管理</button>
+                    <button class="btn btn-small" ms-click="openSendMsgDialog(el)">发短信</button>
+                </td>
+            </tr>
+            <tr ms-if="!baseDatas.list.length">
+                <td colspan="9">
+                    暂无连锁会员信息！
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div id="chainvip_page" style="overflow: hidden"></div>
+    </div>
+    <!--会员管理弹框-->
+    <div class="tomasky-ui-popups" ms-visible="modifyDialogVisible">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog">
+            <em class="close" data-dismiss="popups" ms-click="closeChainModifyDialog()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">会员管理</h3>
+            </div>
+            <div class="ui-popups-body u-add-customer">
+                <div class="rows">
+                    <label>姓　名：</label><input type="text" ms-duplex="chainModifyDatas.name">
+                </div>
+                <div class="rows">
+                    <label>手机号：</label><input type="text" ms-duplex="chainModifyDatas.contact" disabled>
+                </div>
+                <div class="rows">
+                    <label>身份证号：</label><input type="text" ms-duplex="chainModifyDatas.idCardNo">
+                </div>
+                <div class="rows">
+                    <label>会员卡号：</label><input type="text" ms-duplex="chainModifyDatas.memberNo" maxlength="20">
+                </div>
+
+                <div class="rows">
+                    <label>备　注：</label><textarea name="note" cols="30" rows="10" ms-duplex="chainModifyDatas.rmk"
+                                                 maxlength="50"></textarea>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="u-big-btn" ms-click="modifyToSave()">保存
+                </button>
+                <p class="u-send-hint">{{chainModifyDatas.hint}}</p>
+            </div>
+        </div>
+    </div>
+    <!--发送短信-->
+    <div class="tomasky-ui-popups" ms-visible="sendMsgDialog">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog u-send-msg">
+            <em class="close" data-dismiss="popups" ms-click="closeSendMsgDialog()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">发送短信</h3>
+            </div>
+            <div class="ui-popups-body">
+                <div class="row">
+                    <label>发送给：</label>{{curSendMsg.name}}({{curSendMsg.contact}})
+                </div>
+                <div class="row">
+                    <label>短信模板：</label><select name="" style="width: 235px" ms-duplex="curMsgId"
+                                                ms-change="changeMsgTxt()">
+                    <option value="">请选择短信模板</option>
+                    <option value="" ms-repeat="msgTemp" ms-if-loop="el.status==2" ms-attr-value="el.id">
+                        {{el.msgTitle}}
+                    </option>
+                </select>
+                </div>
+                <div class="row">
+                    <textarea name="" id="sendMsgTxt" cols="30" rows="10"
+                              ms-duplex="sendMsgTxt">{{sendMsgTxt}}</textarea>
+                    <p>已输入<span class="stand-out">{{sendMsgTxt.length}}</span>个字，将分为<span class="stand-out">{{Math.ceil(sendMsgTxt.length/53)}}</span>条短信发送
+                    </p>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="u-big-btn" ms-click="toSendMsg()">发送短信</button>
+                <p class="u-send-hint">{{sendMsgHint}}</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!--会员设置-->
+    <div ms-visible="tab.set">
+        <div class="vip-set-index" ms-visible="!hasOpenVip">
+            <div class="vip-set-wz"></div>
+            <button class="btn" ms-click="openUnion()">开通会员功能</button>
+        </div>
+        <div ms-visible="hasOpenVip">
+            <div class="finance-nav-head">
+                <h1>设置会员等级 （仅限小站使用）</h1>
+                <!--<div class="f-right">-->
+                <!--<button class="btn btn-add-grav" style="width: 100px" ms-click="openAddDialog()"><i>+</i>新增</button>-->
+                <!--</div>-->
+            </div>
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th>会员等级</th>
+                    <th>会员名称</th>
+                    <th>条件</th>
+                    <th>折扣</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="gradeList" ms-attr-id="el.id" ms-if="gradeList.length">
+                    <td><i class="icon-vip">{{$index+1}}</i>VIP{{$index+1}}</td>
+                    <td>{{el.name}}</td>
+                    <td>消费满{{el.promoteFee}}</td>
+                    <td>{{parseFloat(el.discountRadio*10).toFixed(1)}}</td>
+                    <td>
+                        <button class="btn btn-small" ms-click="openModifyDialog(el,$index)">编辑</button>
+                        <button class="btn btn-small" ms-click="openDelDialog($index,el)">删除</button>
+                    </td>
+                </tr>
+                <tr ms-if="gradeList.length<5">
+                    <td><i class="icon-vip">{{gradeList.length+1}}</i>VIP{{gradeList.length+1}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <button class="btn btn-add-grav" style="width: 100px" ms-click="openAddDialog()"><i>+</i>新增
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!--新增会员等级-->
+    <div class="tomasky-ui-popups" ms-visible="addVipVisible">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog u-add-vip">
+            <em class="close" data-dismiss="popups" ms-click="closeAddDialog()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">新增会员等级</h3>
+            </div>
+            <div class="ui-popups-body">
+                <div class="rows">会员名称 <input ms-duplex="addDatas.name" type="text" placeholder="最多输入8个字" maxlength="8"
+                                              style="width: 195px"></div>
+                <div class="rows">消费金额达到 <input ms-duplex="addDatas.promoteFee" maxlength="8" type="text"
+                                                style="width: 70px;" onkeyup="this.value=this.value.replace(/\D/g,'')">时，自动升级为该会员
+                </div>
+                <div class="rows">房价折扣 <input ms-duplex="addDatas.discountRadio" maxlength="4" type="text"
+                                              style="width: 50px" ms-on-keyup="checkPro(this)">折
+                    &nbsp;&nbsp;&nbsp;&nbsp;请填写1到10的数字，例：9.5为95折
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="u-big-btn" ms-click="updateVipGarde('add')">确定</button>
+                <p class="u-send-hint">{{addDatas.addHint}}</p>
+            </div>
+        </div>
+    </div>
+    <!--修改-->
+    <div class="tomasky-ui-popups" ms-visible="modifyVipVisible">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog u-add-vip">
+            <em class="close" data-dismiss="popups" ms-click="closeModifyDialog()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">编辑会员等级</h3>
+            </div>
+            <div class="ui-popups-body">
+                <div class="rows">会员名称 <input ms-duplex="modifyDatas.name" type="text" placeholder="最多输入8个字"
+                                              maxlength="8"
+                                              style="width: 195px"></div>
+                <div class="rows">消费金额达到 <input ms-duplex="modifyDatas.promoteFee" maxlength="8" type="text"
+                                                style="width: 70px;" onkeyup="this.value=this.value.replace(/\D/g,'')">时，自动升级为该会员
+                </div>
+                <div class="rows">房价折扣 <input id="inputNum" ms-duplex="modifyDatas.discountRadio"
+                                              ms-on-keyup="checkPro(this)"
+                                              type="text" style="width: 60px" maxlength="4">折
+                    &nbsp;&nbsp;&nbsp;&nbsp;请填写1到10的数字，例：9.5为95折
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="u-big-btn" ms-click="updateVipGarde('modify')">确定</button>
+                <p class="u-send-hint">{{modifyDatas.modifyHint}}</p>
+            </div>
+        </div>
+    </div>
+    <!--删除-->
+    <div class="tomasky-ui-popups" ms-visible="delDialogVisible">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog" style="width: 265px">
+            <em class="close" data-dismiss="popups" ms-click="closeDelDialog()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">新增会员等级</h3>
+            </div>
+            <div class="ui-popups-body">您确认要删除该会员等级吗？</div>
+            <div class="ui-popups-foot">
+                <button class="u-mid-btn" ms-click="delThisVip()">删除</button>
+                <button class="u-mid-btn" ms-click="closeDelDialog()">不删除</button>
+                <p class="u-send-hint">{{curDelDatas.hint}}</p>
+            </div>
+        </div>
+    </div>
+</div>

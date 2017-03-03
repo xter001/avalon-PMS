@@ -1,0 +1,46 @@
+<div class="tomasky-ui-popups ms-controller" ms-visible="popupShow.roomSet" ms-controller="vm_room_type">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="price.closeRoomSet()" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">设置价格</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x">
+            <div class="container">
+                <!--设置周末价 特殊价-->
+                <div class="room-set">
+                    <div class="room-set-week">
+                        <h2><i class="shape1"></i>设置周末价</h2>
+                        <ul>
+                            <li ms-repeat="weekPrice"><h5>{{el.name}}</h5>
+                                <div><span>￥</span><input ms-duplex="el.value" type="text" maxlength="8"></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="room-set-spe">
+                        <h2><i class="shape2"></i>设置特殊价</h2>
+                        <div class="room-set-spec">
+                            <div class="room-set-div" ms-repeat="spePrice">
+                                <input type="text" class="startpriceipt room-date" placeholder="价格变动开始时间" ms-duplex="el.startpriceipt" readonly="readonly"/>—
+                                <input type="text" ms-duplex="el.endpriceipt" class="endpriceipt room-date"  placeholder="价格变动结束时间" readonly="readonly"/>
+                                <div class="room-set-style">
+                                    <span>￥</span>
+                                    <input class="room-txt" id="price" ms-duplex="el.price" type="text" placeholder="变动后价格" maxlength="8" ms-onpaste="return false;" normalprice=""/>
+                                </div>
+                                <input class="room-txt" id="reason" ms-duplex="el.reason" type="text" placeholder="变动原因"  maxlength="6" title="价格变动原因最多为6个字符"/>
+                                <i class="room-set-delete" ms-click="price.removeSpePrice($index)"></i>
+                            </div>
+                            <a class="addSpePrice" ms-click="price.addSpePrice()">+ 新增一条特殊价</a>
+                        </div>
+                    </div>
+                </div>
+                <!--设置周末价 特殊价-->
+
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <button class="btn btndefault saveBtn" ms-class="enter" data-ui="popups" ms-click="price.savePrice()">保存设置</button>
+            <button class="btn btndefault" ms-class="cancel" data-ui="popups" ms-click="price.closeRoomSet()">取消</button>
+        </div>
+    </div>
+</div>

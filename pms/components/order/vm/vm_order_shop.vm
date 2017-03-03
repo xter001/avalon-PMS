@@ -1,0 +1,191 @@
+var COMMON_CONST = require('../../common/js/const.js')
+var ORDER_CONST = require('../common/const.js')
+var UserInfo = require('../../header/user.js'),
+    Access = require('../../header/access.js'),
+    CommonUtil = require('../../common/js/utils/common-util.js');
+
+var vm_order_shop = avalon.define({
+    $id : 'vm_order_shop',
+    spendsList : [],
+    shopSelect : {
+        spend : -1,
+        pay : -1,
+        finance : -1
+    },
+    date : {
+        from : tmsky.date.today(),
+        to : tmsky.date.tomorrow(true)
+    },
+    shopOrders : [],
+    payList : [],
+    shop_timeBox : false,
+    shopTempTime : {
+        from : tmsky.date.today(),
+        to : tmsky.date.tomorrow(true)
+    },
+    canEdit : Access.access(Access.AC_BOOK),
+    canDel : Access.access(Access.AC_DEL_ORDER),
+
+    init : function () {
+        vm_order_shop.initDatepicker()
+    },
+    //弹出编辑框
+    editShopCost : function (el,index) {
+        avalon.vmodels.vm_shop.editShopCost(el,index)
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+    getPayName : function (id) {
+        var name = ''
+        vm_order_shop.payList.forEach(function (item) {
+            if (item.id == id) {
+                name = item.name
+            }
+        })
+        return name
+    },
+    renderPage : function (id, rs) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("page-div");
+                vm_order_shop.ajaxShopList(pageInfo.pageNo)
+            },
+            pageNo : rs.page.pageNo,
+            pages : rs.page.totalPages,
+            totalCount : rs.page.totalCount,
+            maxPages : 10,//default
+            minPageSize : ORDER_CONST.MAIN_ORDER_PAGE_SIZE,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+    initDatepicker : function () {
+        var $checkInFrom = $("#checkInFromShop"), $checkInTo = $("#checkInToShop")
+        CommonUtil.bindingDatepickerByElement($checkInFrom, true, "#checkInFromShop", "#checkInToShop", true);
+        CommonUtil.bindingDatepickerByElement($checkInTo, false, "#checkInFromShop", "#checkInToShop", true);
+    },
+    ajaxShopList : function (pageNo) {
+        tmsky.ui.dialog.loading()
+        vm_order_shop.validateDate(vm_order_shop.date);
+        var data = {
+            goodsId : vm_order_shop.shopSelect.spend,
+            innId : UserInfo.getCurrentInn().id,
+            pageNo : pageNo || 1,
+            pageSize : ORDER_CONST.MAIN_ORDER_PAGE_SIZE,
+            pcId : vm_order_shop.shopSelect.pay,
+            from : vm_order_shop.date.from,
+            to : vm_order_shop.date.to,
+            settleType : vm_order_shop.shopSelect.finance
+        }
+        $.ajax({
+            type : "GET",
+            url : "/inn/orders/goodsQuery",
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    rs.page.result.forEach(function (el) {
+                        el.spendAt = tmsky.date.format(el.spendAt, 'yyyy-MM-dd hh:mm')
+                        el.rooms = el.rooms != null ? el.rooms.split(',') : []
+                    })
+                    //rs.page.result.sort(function (a, b) {
+                    //    return parseInt(b.spendAt.replace(/-/g, ''), 10) - parseInt(a.spendAt.replace(/-/g, ''), 10);
+                    //});
+                    vm_order_shop.shopOrders = rs.page.result
+                    avalon.nextTick(function () {
+                        vm_order_shop.renderPage('page-div', rs)
+                    })
+                } else {
+                    tmsky.ui.dialog.tips(rs.message)
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！")
+            }
+        })
+    },
+    deleteShopCost : function (el) {
+        tmsky.ui.dialog.confirm('确定要删除此商品？', function () {
+            vm_order_shop.ajaxDeleteShop(el)
+        })
+    },
+    ajaxDeleteShop : function (el) {
+        tmsky.ui.dialog.loading()
+
+        $.ajax({
+            type : "GET",
+            url : "/goods/order/del/" + el.mainId + "/" + el.gsid,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    var pageInfo = tmsky.ui.page.getParams("page-div");
+                    vm_order_shop.ajaxShopList(pageInfo.pageNo)
+                    tmsky.ui.dialog.tips("删除成功！", 'success')
+
+                } else {
+                    tmsky.ui.dialog.tips("删除失败！" + rs.message)
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！")
+            }
+        })
+    },
+    // 时间段校验，最多只能查询连续31天的订单信息，已选择的时间为基准，前后31天范围
+    validateDate : function (date) {
+        var startSelector = "#checkInFromShop",
+            activeSelectors = CommonUtil.getCurrActiveDateSelectors("#checkInFromShop");
+
+        if (!activeSelectors.active) {
+            return;
+        }
+        var isActiveByStartDate = startSelector == activeSelectors.active;
+        var base, dynamic;
+        if (isActiveByStartDate) {
+            base = tmsky.date.parse(date.from);
+            dynamic = tmsky.date.parse(date.to);
+        } else {
+            base = tmsky.date.parse(date.to);
+            dynamic = tmsky.date.parse(date.from);
+        }
+        if (Math.abs(tmsky.date.diffDays(base, dynamic)) > ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS) {
+            dynamic = tmsky.date.addDays(base, isActiveByStartDate ? ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS : -ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS);
+        } else {
+            if (isActiveByStartDate && (tmsky.date.after(base, dynamic) || tmsky.date.equals(base, dynamic))) {
+                dynamic = tmsky.date.addDays(base, ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS);
+            }
+            if (!isActiveByStartDate && tmsky.date.before(base, dynamic)) {
+                dynamic = tmsky.date.addDays(base, -ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS);
+            }
+        }
+        dynamic = tmsky.date.format(dynamic);
+        if (isActiveByStartDate) {
+            date.to = dynamic;
+        } else {
+            date.from = dynamic;
+        }
+    },
+    //搜索商品订单
+    searchShopOrder : function () {
+        var vm = vm_order_shop
+        var defTime = parseInt(tmsky.date.diffDays(vm.shopTempTime.from, vm.shopTempTime.to))
+        if (vm.date.from == vm.shopTempTime.from && vm.date.to == vm.shopTempTime.to) {
+            vm.shop_timeBox = false
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.date.from = vm.shopTempTime.from
+            vm.date.to = vm.shopTempTime.to
+            vm.ajaxShopList()
+            vm.shop_timeBox = false
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的订单信息！')
+        }
+    },
+})

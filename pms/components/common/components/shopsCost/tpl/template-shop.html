@@ -1,0 +1,68 @@
+<!--商品销售-->
+<div class="noShopList" ms-visible="shopsList.length==1">
+    <h2>您还没有添加商品项目！</h2>
+    <h3>请在功能库“商品销售管理”中添加商品，添加完之后，您就可以在这里进行商品销售了.</h3>
+    <img class="tipsImg" src="../images/noShopsTipImg.png">
+</div>
+<div class="shopCost"  ms-visible="shopsList.length>1">
+    <!--<div class="cost-shop-title">-->
+        <!--<ul>-->
+            <!--<li class="cost-shop-title1">选择商品</li>-->
+            <!--<li class="cost-shop-title2">单价</li>-->
+            <!--<li class="cost-shop-title3">数量</li>-->
+        <!--</ul>-->
+    <!--</div>-->
+    <div class="cost-shop-list">
+        <div class="cost-list" ms-repeat="shopCostList">
+            <div class="cost-list1">
+                <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" data-ui="dropdown">
+                    <input ms-duplex="el.selectedShop"  ms-change="shopsChange(el)" type="hidden">
+                    <a href="javascript:void(0);">
+                        <span data-role="value" ms-data-value="el.selectedShop">{{el.name}}</span>
+                        <i class="iconfont icon-arrowdown"></i>
+                    </a>
+                    <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                        <em class="tomasky-ui-dropdown-search-in">
+                            <input old-value="" placeholder="搜索.." data-role="search" class="tomasky-ui-dropdown-search-input-in">
+                        </em>
+                        <a href="javascript:;" ms-repeat-item="shopsList" ms-data-value="$index"
+                           data-role="item">{{item.name}}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="cost-list3">
+                <span>￥</span>
+                <input ms-duplex="el.price" ms-class-canNotInput="el.selectedShop==0" ms-attr-disabled="el.selectedShop==0" ms-blur="getEffectNum(el,'price')" maxlength="8"  ms-on-keyup="checkPrice(el,'price')" type="text" ms-change="costTotalPriceFun()" class="cost-num">
+            </div>
+            <div class="cost-list2">
+                <i ms-click="jShopNo(el,el.shopNo)" ms-class-cost-j-btn-on="el.selectedShop!=0" class="cost-j-btn"></i>
+                <input ms-duplex="el.shopNo" type="text" ms-class-canNotInput="el.selectedShop==0" ms-attr-disabled="el.selectedShop==0"  ms-on-keyup="checkNumber(el)"  maxlength="2" ms-change="costTotalPriceFun()" class="cost-num">
+                <i ms-click="addShopNo(el,el.shopNo)" ms-class-cost-add-btn-on="el.selectedShop!=0" class="cost-add-btn"></i>
+            </div>
+            <i ms-click="deleteShopItem(el,$index)" class="iconfont icon-minus ui-item-del fr"></i>
+        </div>
+    </div>
+    <span ms-click="addShops()" ms-if="gsid==''&&shopCostList.length<5" class="cost-add-cost">商品销售</span>
+
+    <div class="f14 totalPay">收款：￥{{costTotalPrice}}<span ms-if="settleType==1">（挂房费账，随房费一同结算）</span></div>
+    <div ms-visible="settleType==2" class="fr payWay">
+        <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" data-ui="dropdown">
+            <input ms-duplex="selectedPayWay.index"  ms-change="payChange()" type="hidden">
+            <a href="javascript:void(0);">
+                <span data-role="value" ms-data-value="selectedPayWay.index">{{selectedPayWay.name}}</span>
+                <i class="iconfont icon-arrowdown"></i>
+            </a>
+            <div class="ui-dropdown-list ui-dropdown-list-max-height-4 payList">
+                <a href="javascript:;" ms-repeat-item="costPayList" ms-data-value="$index"
+                   data-role="item">{{item.name}}</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="ui-popups-foot">
+    <button class="btn btndefault saveBtn cost-enter fl" data-ui="popups" ms-click="ajaxShopCost()" ms-visible="shopsList.length>1">记录</button>
+    <button class="btn btndefault cost-cancel fr" ms-class="cancel" data-ui="popups" ms-click="cancelShopCost()" ms-visible="shopsList.length>1">取消</button>
+    <button class="btn btndefault saveBtn cost-enter fl" data-ui="popups" ms-visible="shopsList.length==1" onclick="window.location.href = '/public/views/1/functions-plug.html#tab=accountBook_plug'">现在去添加>></button>
+    <button class="btn btndefault cost-cancel fr" ms-class="cancel" data-ui="popups" ms-click="cancelShopCost()" ms-visible="shopsList.length==1">稍后</button>
+</div>
+<!--设商品销售-->

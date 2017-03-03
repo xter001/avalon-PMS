@@ -1,0 +1,476 @@
+var vm_vipManage = avalon.define({
+    $id : 'vm_vipManage',
+    tab : {
+        chain : false,
+        set : true
+    },
+    innBase : {},
+    unions : '',
+    gradeList : [],
+    hasOpenVip : false,
+
+    init : function () {
+        if (vm_vipManage.unions == '') {
+            vm_vipManage.hasOpenVip = false
+        } else {
+            vm_vipManage.hasOpenVip = true
+        }
+    },
+    vipChangeTab : function (type) {
+        var map = {
+            chain : false,
+            set : false
+        }
+        for (var key in map) {
+            if (key == type) {
+                map[key] = true
+            }
+        }
+        switch (type) {
+            case 'chain':
+                vm_vipManage.getChainVip(1)
+                break;
+            case 'set':
+
+                break;
+            default:
+                ;
+        }
+        vm_vipManage.tab = map
+    },
+//    连锁会员
+    baseDatas : {
+        total : '',
+        isDown : true,
+        searchType : 'name',
+        searchKey : '',
+        input : '',
+        list : []
+    },
+    getChainVip : function (pageNo, sort) {
+        var vm = vm_vipManage, secure = vm.innBase.secure;
+        if (sort) {
+            vm.baseDatas.isDown = !vm.baseDatas.isDown
+        }
+        var datas = {
+                searchType : vm.baseDatas.searchType,
+                searchKey : vm.baseDatas.searchKey,
+                pageNo : pageNo,
+                appId : secure.appId,
+                appKey : secure.appKey,
+                innId : secure.innId,
+                sortType : 'monetary',
+                sortWay : vm.baseDatas.isDown ? 'asc' : 'desc',
+                timestamp : secure.timestamp,
+                unionCode : vm.unions.uniqueCode,
+                token : secure.token,
+                userCode : secure.userCode
+            },
+            url = COMMON_CONST.DOMAIN.DIS + '/union/queryMembers'
+        if (vm.unions.uniqueCode == null) {
+            return
+        }
+        tmsky.ui.dialog.loading()
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.baseDatas.total = rs.page.totalCount
+                vm.baseDatas.list = rs.page.result
+                var page = {};
+                page.totalPages = rs.page.totalPages;
+                page.pageNo = rs.page.pageNo;
+                page.pageSize = 20;
+                avalon.nextTick(function () {
+                    tmsky.getVm('vm_customers').renderPage('chainvip_page', page, function () {
+                        var pageInfo = tmsky.ui.page.getParams("chainvip_page")
+                        vm.getChainVip(pageInfo.pageNo)
+                    })
+                })
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    //验证手机号
+    checkTel : function (tel) {
+        var temp = /^0?1[3|4|5|7|8][0-9]\d{8}$/
+        return temp.test(tel)
+    },
+    tranfGrade : function (id, totalConsume) {
+        var vm = vm_vipManage, grades = vm.unions.grades, name = ''
+        if (id) {
+            grades.forEach(function (el) {
+                if (id == el.id) {
+                    name = el.name
+                }
+            })
+        } else {
+            grades.forEach(function (x, i) {
+                if (totalConsume >= grades[grades.length - 1].promoteFee) {
+                    name = grades[grades.length - 1].name
+                } else if (totalConsume >= x.promoteFee && totalConsume < grades[i + 1].promoteFee) {
+                    name = x.name
+                }
+            })
+        }
+        return name
+    },
+    //客户管理
+    modifyDialogVisible : false,
+    modifyIndex : 0,
+    chainModifyDatas : {
+        availableIntegral : '',
+        contact : "",
+        gradeId : '',
+        id : '',
+        idCardNo : '',
+        name : "",
+        totalConsume : 0,
+        totalIntegral : 0,
+        memberNo : '',
+        rmk : '',
+        hint : ''
+    },
+
+    openChainModifyDialog : function (el, index) {
+        var vm = vm_vipManage
+        vm.modifyDialogVisible = true
+        vm.modifyIndex = index
+        vm.chainModifyDatas = {
+            availableIntegral : el.availableIntegral,
+            contact : el.contact,
+            gradeId : el.gradeId,
+            id : el.id,
+            idCardNo : el.idCardNo,
+            name : el.name,
+            totalConsume : el.totalConsume,
+            totalIntegral : el.totalIntegral,
+            memberNo : el.memberNo,
+            rmk : el.rmk,
+            hint : ''
+        }
+    },
+    closeChainModifyDialog : function () {
+        vm_vipManage.modifyDialogVisible = false
+    },
+    modifyToSave : function () {
+        var vm = vm_vipManage, secure = vm.innBase.secure
+        tmsky.ui.dialog.loading()
+        var datas = {
+                id : vm.chainModifyDatas.id,
+                idCardNo : vm.chainModifyDatas.idCardNo,
+                name : vm.chainModifyDatas.name,
+                memberNo : vm.chainModifyDatas.memberNo,
+                rmk : vm.chainModifyDatas.rmk,
+                appKey : secure.appKey,
+                appId : secure.appId,
+                innId : secure.innId,
+                timestamp : secure.timestamp,
+                token : secure.token,
+                userCode : secure.userCode,
+                unionCode : vm.unions.uniqueCode
+            },
+            url = COMMON_CONST.DOMAIN.DIS + '/union/updateMember?temp=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                tmsky.ui.dialog.successTips('编辑成功！')
+                vm.baseDatas.list.splice(vm.modifyIndex, 1, vm.chainModifyDatas)
+                vm.closeChainModifyDialog()
+            } else {
+                vm.chainModifyDatas.hint = rs.message
+            }
+        })
+    },
+
+//    发短信
+    sendMsgDialog : false,
+    msgTemp : [],
+    curSendMsg : {},
+    sendMsgTxt : '',
+    sendMsgHint : '',
+    curMsgId : '',
+
+    openSendMsgDialog : function (el) {
+        vm_vipManage.sendMsgDialog = true
+        vm_vipManage.curSendMsg = el
+    },
+    closeSendMsgDialog : function () {
+        vm_vipManage.sendMsgDialog = false
+        vm_vipManage.curSendMsg = {}
+        vm_vipManage.sendMsgTxt = ''
+        vm_vipManage.sendMsgHint = ''
+        vm_vipManage.curMsgId = ''
+    },
+    toSendMsg : function () {
+        var vm = vm_vipManage
+        if (vm.sendMsgTxt == '') {
+            vm.sendMsgHint = '短信内容必须填写'
+            return
+        } else {
+            vm.sendMsgHint = ''
+        }
+        var datas = {
+                msgId : vm.curMsgId,
+                mobile : vm.curSendMsg.contact,
+                names : vm.curSendMsg.name,
+                content : vm.sendMsgTxt,
+                title : vm.msgTitleMap(vm.curMsgId),
+                statusId : 0,
+                orderType : 0,
+            },
+            url = '/inns/' + vm.innBase.secure.innId + '/msg/sendMsg'
+        tmsky.ui.dialog.loading()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                tmsky.ui.dialog.successTips('短信发送成功！')
+                vm.closeSendMsgDialog()
+            } else {
+                vm.sendMsgHint = rs.message
+            }
+        })
+    },
+    msgTitleMap : function (id) {
+        var vm = vm_vipManage, title = '';
+        vm.msgTemp.forEach(function (el) {
+            if (el.id == id) {
+                title = el.msgTitle
+            }
+        })
+        return title
+    },
+    changeMsgTxt : function () {
+        var vm = vm_vipManage
+        vm.msgTemp.forEach(function (el) {
+            if (vm.curMsgId == el.id) {
+                vm.sendMsgTxt = el.msgContent
+            }
+        })
+    },
+
+//    新增会员等级
+    addVipVisible : false,
+    addDatas : {
+        name : '',
+        promoteFee : '',
+        discountRadio : '',
+        addHint : ''
+    },
+    openAddDialog : function () {
+        var vm = vm_vipManage
+        vm.addVipVisible = true
+    },
+    closeAddDialog : function () {
+        var vm = vm_vipManage
+        vm.addVipVisible = false
+        vm.addDatas = {
+            name : '',
+            promoteFee : '',
+            discountRadio : '',
+            addHint : ''
+        }
+    },
+    updateVipGarde : function (type) {
+        var vm = vm_vipManage, secure = vm.innBase.secure
+        var datas = {
+                appId : secure.appId,
+                appKey : secure.appKey,
+                discountRadio : type == 'add' ? vm.addDatas.discountRadio / 10 : vm.modifyDatas.discountRadio / 10,
+                id : type == 'add' ? '' : vm.modifyDatas.id,
+                innId : secure.innId,
+                name : type == 'add' ? vm.addDatas.name : vm.modifyDatas.name,
+                promoteFee : type == 'add' ? vm.addDatas.promoteFee : vm.modifyDatas.promoteFee,
+                timestamp : secure.timestamp,
+                token : secure.token,
+                unionCode : vm.unions.uniqueCode,
+                userCode : secure.userCode
+            },
+            url = COMMON_CONST.DOMAIN.DIS + '/union/saveGrade'
+        datas.discountRadio = parseFloat(datas.discountRadio.toFixed(2))
+
+        if (type == 'add') {
+            if (datas.name == '') {
+                vm.addDatas.addHint = '会员名称不能为空！'
+                return
+            }
+            if (!tmsky.isNumber(datas.discountRadio) && datas.discountRadio != 0) {
+                vm.addDatas.addHint = '房价折扣必须填写数字！'
+                return
+            }
+            if (datas.discountRadio == '') {
+                vm.addDatas.addHint = '房价折扣设置不能为空！'
+                return
+            } else if (datas.discountRadio <= 0.1 || datas.discountRadio > 1) {
+                vm.addDatas.addHint = '房价折扣必须填写1到10的数字！'
+                return
+            }
+            if (datas.promoteFee == '') {
+                vm.addDatas.addHint = '最低消费金额设置不能为空！'
+                return
+            }
+        } else if (type == 'modify') {
+            if (datas.name == '') {
+                vm.modifyDatas.modifyHint = '会员名称不能为空！'
+                return
+            }
+            if (!tmsky.isNumber(datas.discountRadio) && datas.discountRadio != 0) {
+                vm.modifyDatas.modifyHint = '房价折扣必须填写数字！'
+                return
+            }
+            if (datas.discountRadio == '') {
+                vm.modifyDatas.modifyHint = '房价折扣设置不能为空！'
+                return
+            } else if (datas.discountRadio <= 0.1 || datas.discountRadio > 1) {
+                vm.modifyDatas.modifyHint = '房价折扣必须填写1到10的数字！'
+                return
+            }
+            if (datas.promoteFee == '') {
+                vm.modifyDatas.modifyHint = '最低消费金额设置不能为空！'
+                return
+            }
+
+        }
+        tmsky.ui.dialog.loading()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                if (type == 'add') {
+                    vm.closeAddDialog()
+                    vm.addDatas.addHint = rs.message
+                    //vm.gradeList.push(rs.grade)
+
+                } else if (type == 'modify') {
+                    vm.closeModifyDialog()
+                    //vm.gradeList.splice(vm.modifyDatas.index, 1, rs.grade)
+                }
+                tmsky.getVm('vm_customers').getUnions()
+            } else {
+                if (type == 'add') {
+                    vm.addDatas.addHint = rs.message
+                } else if (type == 'modify') {
+                    vm.modifyDatas.modifyHint = rs.message
+                }
+            }
+        })
+    },
+
+//    编辑
+    modifyVipVisible : false,
+    modifyDatas : {
+        id : '',
+        name : '',
+        promoteFee : '',
+        discountRadio : '',
+        modifyHint : '',
+        index : ''
+    },
+    openModifyDialog : function (el, index) {
+        var vm = vm_vipManage
+        vm.modifyVipVisible = true
+        vm.modifyDatas = {
+            id : el.id,
+            name : el.name,
+            promoteFee : el.promoteFee,
+            discountRadio : parseFloat(el.discountRadio * 10).toFixed(1),
+            modifyHint : '',
+            index : index
+        }
+    },
+    closeModifyDialog : function () {
+        var vm = vm_vipManage
+        vm.modifyVipVisible = false
+        vm.modify = {
+            id : '',
+            name : '',
+            promoteFee : '',
+            discountRadio : '',
+            modifyHint : '',
+            index : ''
+        }
+    },
+//删除
+    delDialogVisible : false,
+    curDelDatas : {
+        index : 0,
+        hint : '',
+        datas : {}
+    },
+    openDelDialog : function (index, el) {
+        var vm = vm_vipManage
+        vm.delDialogVisible = true
+        vm.curDelDatas.index = index
+        vm.curDelDatas.datas = el
+    },
+    closeDelDialog : function () {
+        var vm = vm_vipManage
+        vm.delDialogVisible = false
+        vm.curDelDatas.index = 0
+        vm.curDelDatas.hint = ''
+        vm.curDelDatas.datas = {}
+    },
+    delThisVip : function () {
+        var vm = vm_vipManage, secure = vm.innBase.secure
+        tmsky.ui.dialog.loading()
+        var datas = {
+                appId : secure.appId,
+                appKey : secure.appKey,
+                id : vm.curDelDatas.datas.id,
+                innId : secure.innId,
+                timestamp : secure.timestamp,
+                token : secure.token,
+                unionCode : vm.unions.uniqueCode,
+                userCode : secure.userCode
+            },
+            url = COMMON_CONST.DOMAIN.DIS + '/union/removeGrade?temp=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.gradeList.splice(vm.curDelDatas.index, 1)
+                vm.closeDelDialog()
+                tmsky.getVm('vm_customers').getUnions()
+            } else {
+                vm.curDelDatas.hint = rs.message
+            }
+        })
+
+    },
+//    开通会员
+    openUnion : function () {
+        var vm = vm_vipManage, secure = vm.innBase.secure, currentInn = vm.innBase.currentInn,
+            datas = {
+                appId : secure.appId,
+                appKey : secure.appKey,
+                innId : secure.innId,
+                name : currentInn.name,
+                timestamp : secure.timestamp,
+                token : secure.token,
+                userCode : secure.userCode
+            },
+            url = COMMON_CONST.DOMAIN.DIS + '/union/submitMembers?temp=' + new Date().getTime()
+        tmsky.ui.dialog.loading()
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                tmsky.ui.dialog.successTips('会员开通成功！')
+                vm.hasOpenVip = true
+                avalon.vmodels.vm_customers.getUnions()
+            } else if (rs.status == 400) {
+                vm.hasOpenVip = true
+                avalon.vmodels.vm_customers.getUnions()
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+
+        })
+    },
+//    1到10的数字
+    checkPro : function (obj) {
+        var number = obj.value;
+        if ((/^[.0-9]+$/).test(number))
+            return;
+        else
+            obj.value = number.substring(0, number.length - 1);
+    }
+
+})

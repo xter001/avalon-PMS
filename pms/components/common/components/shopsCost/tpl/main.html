@@ -1,0 +1,84 @@
+<div class="tomasky-ui-popups ms-controller" ms-visible="costShow" id="shopCost" ms-controller="vm_shopcost">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+
+        <!--记一笔引导step2-->
+        <div ms-if="InOutGuide == 1" class="ui-guide-step6 ui-guide-back textc" style="visibility: hidden"
+             ms-css-visibility="InOutGuide == 1?'visible':'hidden'">
+            <i class="ui-guide-triangle-right"></i>
+            <h4>“记一笔”包含商品销售、费用支出、其他收入</h4>
+            <p>· 您可以在这里记录商品销售和客栈费用收支情况</p>
+            <p>· 原账本中“支出”现修改为“费用支出”</p>
+            <p>· 原账本中“收入”现修改为“其他收入”</p>
+            <span ms-click="changeGuide(2)" class="ui-guide-btn">下一步</span>
+        </div>
+        <!--记一笔引导step3-->
+        <div ms-if="InOutGuide == 2" class="ui-guide-step7 ui-guide-back textc" style="visibility: hidden"
+             ms-css-visibility="InOutGuide == 2?'visible':'hidden'">
+            <i class="ui-guide-triangle" style="top: 50%;margin-top: -12px;"></i>
+            <h4>收入与支出明细记录</h4>
+            <p>点击这里可直接跳转到财务-收支流水表中查看收支明细</p>
+            <span ms-click="changeGuide(-1)" class="ui-guide-btn">朕知道了</span>
+        </div>
+
+        <em class="close" ms-click="cancelShopCost()" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">记一笔</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x">
+            <div class="container" style="width: auto">
+
+                <div class="main-top">
+                    <div class="main-top-menu">
+                        <ul class="fl">
+                            <li ms-class="on:tabIndex == 0" class="on" ms-click="changeTabIndex(0)"
+                                ms-if="access.shop&&(editTabIndex == -1||editTabIndex==0)">商品销售
+                            </li>
+                            <li ms-class="on:tabIndex == 1" ms-controller="vm_shop"
+                                ms-if="settleType==2&&access.out&&(editTabIndex == -1||editTabIndex==1)"
+                                ms-click="changeTabIndex(1)">费用支出
+                            </li>
+                            <li ms-class="on:tabIndex == 2" ms-controller="vm_shop"
+                                ms-if="settleType==2&&access.in&&(editTabIndex == -1||editTabIndex==2)"
+                                ms-click="changeTabIndex(2)">其他收入
+                            </li>
+                        </ul>
+                        <div class="cost-date fr">
+                            <input type="text" id="cost-time" class="cost-date-input" ms-duplex="costDate">
+                        </div>
+                    </div>
+                    <div class="main-top-tips" ms-if="tabIndex == 0">
+                        <span class="fl">记录前台销售的商品流水</span>
+                        <a class="fr" href="order.html#tab=SHOP" target="view_window">商品销售记录</a>
+                    </div>
+                    <div class="main-top-tips" ms-if="tabIndex == 1">
+                        <span class="fl">记录客栈日常费用支出</span>
+                        <a class="fr" href="/public/views/1/finance.html?sub=costList#tab=inCome" target="view_window">支出记录</a>
+                    </div>
+                    <div class="main-top-tips" ms-if="tabIndex == 2">
+                        <span class="fl">记录客栈主营以外的其他收入</span>
+                        <a class="fr" href="/public/views/1/finance.html?sub=costList#tab=inCome" target="view_window">收入记录</a>
+                    </div>
+                </div>
+
+                <div class="main-part">
+                    <!--商品销售-->
+                    <div id="tem-shop" ms-visible="tabIndex == 0" ms-controller="vm_shop"></div>
+                    <!--费用支出 其他收入-->
+                    <div id="tem-spent" ms-visible="tabIndex !=0" ms-controller="vm_spent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--记一笔引导step1-->
+<div ms-if="InOutGuide == 0" ms-controller="vm_shopcost" class="ui-guide-step5 ui-guide-back textc"
+     style="visibility: hidden"
+     ms-css-visibility="InOutGuide == 0?'visible':'hidden'">
+    <i class="ui-guide-triangle-top" style="left:50%; margin-left: -13px;"></i>
+    <h4>商品销售和账本合并改为“记一笔”</h4>
+    <p>点击下一步，让小番茄带您认识新功能吧！</p>
+    <span ms-click="changeGuide(1)" class="ui-guide-btn">下一步</span>
+</div>

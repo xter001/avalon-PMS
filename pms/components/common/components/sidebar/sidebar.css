@@ -1,0 +1,51 @@
+.sidebar {
+    position: absolute;
+    /*width: 8%;*/
+    height: 100%;
+    background: #eee;
+    box-shadow: 1px 1px 1px #cdcdcd;
+    min-width: 140px;
+}
+
+
+.sidebar ul li {
+    padding: 10px;
+    padding-left: 40px;
+    color: #000;
+    font-size: 14px;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: 20px 11px;
+}
+
+.sidebar ul li.orderMessage {
+    background-image: url(../../../message-manage/images/orderMessage.png);
+}
+
+.sidebar ul li.orderMessage.active{
+    background-image: url(../../../message-manage/images/orderMessage-hover.png);
+}
+
+.sidebar ul li.clockTips {
+    background-image: url(../../../message-manage/images/clockTips.png);
+}
+
+.sidebar ul li.clockTips.active {
+    background-image: url(../../../message-manage/images/clockTips-hover.png);
+}
+
+.sidebar ul li.accountNotice {
+    background-image: url(../../../message-manage/images/clockTips.png);
+}
+
+.sidebar ul li.accountNotice.active {
+    background-image: url(../../../message-manage/images/clockTips-hover.png);
+}
+
+
+.sidebar ul li.active {
+    color: #bb1c21;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff,0 1px 1px #cdcdcd;
+    min-width: 90px;
+}

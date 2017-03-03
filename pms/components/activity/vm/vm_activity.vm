@@ -1,0 +1,322 @@
+var UserInfo = require('../../header/user.js');
+var COMMON = require('../../common/js/const.js')
+var vm_activity = avalon.define({
+    $id : 'vm_activity',
+    init : function () {
+        vm_activity.getAllActivity()
+    },
+    order : {},
+    oldPage : 0,
+    goState : function (index, el) {
+        var state = [false, false, false]
+        state[index] = true
+        if (index == 2) {
+            //查看详情
+            var order = el
+            var loopArr = []
+            if (!tmsky.isEmpty(order.loopPicture)) {
+                if (order.loopPicture.indexOf("*") > 0) {
+                    loopArr = order.loopPicture.split('*')
+                    var arr = []
+                    loopArr.forEach(function (item) {
+                        arr.push("url(" + item + ") no-repeat center / cover")
+                    })
+                } else {
+                    var arr = []
+                    arr.push("url(" + order.loopPicture + ") no-repeat center / cover")
+                }
+                setTimeout(function () {
+                    $('.l-banner').lyScrollInit({
+                        time : 4000,
+                        obj : $('.banner1_c')
+                    })
+                }, 100)
+            } else {
+                var arr = []
+                $('.l-banner').lyScrollStop()
+            }
+            order.loopPictureArr = arr
+            vm_activity.order = order
+            $('#requireStr').html(order.requireStr)
+        } else {
+            vm_activity.order = {}
+            vm_activity.oldPage = index
+        }
+        vm_activity.state = state
+    },
+    state : [true, false, false],
+    stateClass : function (state) {
+        if (vm_activity.state[2]) {
+            return vm_activity.state[state] || vm_activity.oldPage == state
+        } else {
+            return vm_activity.state[state]
+        }
+    },
+    bool : {
+        refuse : false,//近期有拒单无法参加该活动
+        noOpenDx : false,//未开通代销
+        night : false,//间夜量未达标
+        orders : false//订单量未达标
+    },
+    getInnId : function () {
+        return UserInfo.getCurrentInn().id
+    },
+    scan : function () {
+        avalon.scan()
+        return this
+    },
+    renderPage : function (id, rs, pageNo) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("page-div");
+                var state = vm_activity.state
+                var stateVal = vm_activity.state[0] ? 0 : 1
+                vm_activity.getAllActivity(pageInfo.pageNo, stateVal)
+            },
+            pageNo : pageNo,
+            pages : rs.pageNum,
+            totalCount : rs.totalRecords,
+            maxPages : 8,
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+    enterStatusClass : function (index, enterStatus) {
+        if (index == 0) {
+            if (enterStatus == 1) {
+                //审核中
+                return 'ac-btn-1'
+            } else if (enterStatus == 2) {
+                //通过
+                return 'ac-btn-2'
+            } else if (enterStatus == 3) {
+                //拒绝
+                return 'ac-btn-3'
+            } else {
+                //立即报名
+                return 'ac-btn-0'
+            }
+        }
+
+        if (index == 1) {
+            if (enterStatus == 1) {
+                //审核中
+                return '审核中...'
+            } else if (enterStatus == 2) {
+                //通过
+                return '报名成功'
+            } else if (enterStatus == 3) {
+                //拒绝
+                return '审核失败'
+            } else {
+                //立即报名
+                return '立即报名'
+            }
+        }
+    },
+    //活动报名
+    openActicity : function (activityId, enterStatus) {
+        if (enterStatus != 1 && enterStatus != 2 && enterStatus != 3) {
+            tmsky.ui.dialog.loading()
+            //var hasOpenDx = UserInfo.getCurrentInn().hasOpenDx
+            //if (!hasOpenDx) {
+            //    $.get('/oms/hasOpenDx').done(function (rs) {
+            //        if (rs && rs.status == 200 && rs.result) {
+            //            vm_activity.toOpenActicityByAjax(activityId, enterStatus)
+            //        } else {
+            //            tmsky.ui.dialog.loading.close()
+            //            tmsky.ui.dialog.alert("您暂未开通代销平台，请在右上角“卖房管理”中开通后方可报名。")
+            //        }
+            //    })
+            //} else if (hasOpenDx) {
+            //    vm_activity.toOpenActicityByAjax(activityId, enterStatus)
+            //}
+            vm_activity.toOpenActicityByAjax(activityId, enterStatus)
+        }
+    },
+    toOpenActicityByAjax : function (activityId, enterStatus) {
+        var data = {
+            activityId : activityId,
+            innId : vm_activity.getInnId()
+        }
+        $.ajax({
+            type : "GET",
+            url : COMMON.DOMAIN.FQMS + "/activity/application",
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('参加活动成功！', 'success')
+                    setTimeout(function () {
+                        location.reload()
+                    }, 1000)
+
+                } else if (rs.status == 500) {
+                    vm_activity.bool = {
+                        refuse : false,//近期有拒单无法参加该活动
+                        noOpenDx : false,//未开通代销
+                        night : false,//间夜量未达标
+                        orders : false//订单量未达标
+                    }
+                    //1:未开通代销 2:拒单 3:间夜量不满足4:订单量不满足
+                    if (rs.message == 1) {
+                        vm_activity.bool.noOpenDx = true
+                    } else if (rs.message == 2) {
+                        vm_activity.bool.refuse = true
+                    }
+                    if (rs.message == 3) {
+                        vm_activity.bool.night = true
+                    }
+                    if (rs.message == 4) {
+                        vm_activity.bool.orders = true
+                    }
+                } else {
+                    tmsky.ui.dialog.tips(rs.message)
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！")
+            }
+        })
+    },
+    showme : function (e) {
+        $(this).next().stop(true, true).fadeIn(200)
+        if (e.offsetX) {
+            var x = e.offsetX,
+                y = e.offsetY
+            $(this).next().css('left', x + 130)
+            $(this).next().css('top', y + 35)
+        }
+    },
+    hideme : function () {
+        $(this).next().stop().fadeOut(100)
+    },
+//取正
+    getZnum : function (num) {
+        if (num < 0) {
+            num = -num
+        }
+        if (!num) {
+            num = 0
+        }
+        return num
+    },
+    activityList : [],
+    closeAlert : function () {
+        vm_activity.bool = {
+            refuse : false,//近期有拒单无法参加该活动
+            noOpenDx : false,//未开通代销
+            night : false,//间夜量未达标
+            orders : false//订单量未达标
+        }
+    },
+    filterHtmlBr : function (str) {
+        //str = str.replace(/<br>/g, "\r");
+        //str =$.parseHTML(str,'',true)
+        //console.log(str)
+        //return str;
+    },
+    failHover : function (el) {
+        if (el.enterStatus == 3 && el.activityStatus == 1) {
+            $(this).siblings('.failReason').fadeIn(200)
+        }
+    },
+    failOut : function (el) {
+        if (el.enterStatus == 3 && el.activityStatus == 1) {
+            $(this).siblings('.failReason').fadeOut(200)
+        }
+    },
+    getAllActivity : function (pageNo, state) {
+        if (tmsky.isEmpty(state)) {
+            state = 0
+        }
+        tmsky.ui.dialog.loading()
+        var data = {
+            innId : vm_activity.getInnId(),
+            pageNo : pageNo || 1,
+            status : 1 - state
+        }
+        $.ajax({
+            type : "GET",
+            url : COMMON.DOMAIN.FQMS + "/activity/all",
+            data : data,
+            success : function (rs) {
+                avalon.nextTick(function () {
+                    vm_activity.renderPage('page-div', rs, pageNo)
+                })
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    if (!rs.result) {
+
+                        vm_activity.activityList = []
+                        return false
+                    }
+                    var list = []
+                    rs.result.forEach(function (el, i) {
+                        if (el.activityStatus == 1) {
+                            var json = {
+                                days : el.days,
+                                activityId : el.activityId,
+                                activityName : el.activityName,
+                                activityStatus : el.activityStatus,
+                                activityTime : el.activityTime,
+                                content : el.content,
+                                enterStatus : el.enterStatus,
+                                imgUrl : el.imgUrl,
+                                recommend : el.recommend,
+                                requireStr : el.requireStr,
+                                entryTime : el.entryTime.substr(13,21),
+                                loopPicture : el.loopPicture,
+                                loopPictureArr : [],
+                                status : el.status,
+                                examineResult : el.examineResult
+                            }
+                            list.push(json)
+                        }
+
+                    })
+
+                    rs.result.forEach(function (el, i) {
+                        if (el.activityStatus == 0) {
+                            var json = {
+                                days : el.days,
+                                activityId : el.activityId,
+                                activityName : el.activityName,
+                                activityStatus : el.activityStatus,
+                                activityTime : el.activityTime,
+                                content : el.content,
+                                enterStatus : el.enterStatus,
+                                imgUrl : el.imgUrl,
+                                recommend : el.recommend,
+                                requireStr : el.requireStr,
+                                entryTime : el.entryTime.substr(13,21),
+                                loopPicture : el.loopPicture,
+                                loopPictureArr : [],
+                                status : el.status,
+                                examineResult : el.examineResult
+                            }
+                            list.push(json)
+                        }
+
+                    })
+
+                    vm_activity.activityList = list
+                } else {
+                    tmsky.ui.dialog.tips(rs.message)
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！")
+            }
+        })
+    },
+    closeAlert : function () {
+        $('.tomasky-ui-popups').hide()
+    }
+
+})
+

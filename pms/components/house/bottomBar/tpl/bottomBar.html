@@ -1,0 +1,193 @@
+<!--直连订单小窗口-->
+<div id="house-message" class="house-message ms-controller" ms-controller="vm_bottombar">
+    <!--成功接单提示-->
+    <div class="dialog-success" ms-visible="bool.successJd">
+        <h3 style="margin-top: 25px">成功接单！</h3>
+        <h3>请继续分配房间！</h3>
+        <div class="dashed"></div>
+        <h4>注：若要调整房间，请在下拉列表中选择房间。</h4>
+        <a class="btn" ms-click="closeTips()">朕知道了</a>
+    </div>
+    <!--成功接单提示-->
+    <div class="ms-controller house-boxshadow" ms-controller="vm_bottombar">
+        <div class="house-message-head">
+            <ul>
+                <li ms-click="gopopup(0)" ms-class-on="bool.popup[0]">待处理<i ms-visible="(alertListNum[0]+alertListNum[1])!=0">{{alertListNum[0]+alertListNum[1]}}</i></li>
+                <!--<li ms-click="gopopup(1)" ms-class-on="bool.popup[1]">待分房<i ms-visible="alertListNum[1]!=0">{{}}</i></li>-->
+                <li ms-click="gopopup(2)" ms-class-on="bool.popup[2]">重要通知<i ms-visible="alertListNum[2]!=0">{{alertListNum[2]}}</i></li>
+            </ul>
+            <div class="allRead" ms-click="allRead()" title="点击全部已读，清空重要通知所有消息。" ms-visible="bool.popup[2]&&alertListNum[2]!=0">全部已读</div>
+            <i ms-click="barClose()" class="house-message-close"></i>
+        </div>
+        <div class="house-message-content">
+            <div class="effecticon2"><span class="effecticon">1</span></div>
+            <!--待确认-->
+            <div class="house-message-list house-message-part1" ms-visible="bool.popup[0]||bool.popup[1]">
+                <div class="noMessagePart" ms-if="commonAdviceHandle.length==0&&ordersList.HandleConfirmHandleBook.length==0&&ordersList.HandleConfirmAutoBook.length==0&&ordersList.autoConfirmHandleBook.length==0"><img src="../../images/noRoomIcon.png">现在暂无待处理信息哦！</div>
+                <!--common-advise-->
+                <div class="listPart commonadvice" ms-data-id="el.id" ms-repeat="commonAdviceHandle">
+                    <h3><b>{{el.title}}</b></h3>
+                    <h4></h4>
+                    <a class="fr btnSure" ms-repeat-btn="el.buttons" ms-click="adviseBtnAjax(el,btn,'h')">{{btn.name}}</a>
+                </div>
+
+                <div class="listPart" ms-repeat="ordersList.HandleConfirmHandleBook" ms-class-border0="bool.handleFf">
+                    <h3>
+                        <span class="fl">{{el.contactUser}} / {{el.contactPhone}}</span>
+                        <span class="fr" ms-class-qudao1="el.otaId==107" ms-class-qudao2="el.otaId!=107"><i></i>{{el.channelName}} | {{getPayTypeName(el.payType)}}</span>
+                    </h3>
+                    <h3><span class="fl"><b>{{el.roomTypeName}}</b> / {{el.roomTypeNum}}间</span></h3>
+                    <h4>
+                        <span class="fl">{{getShortDate(el.checkInAt)}}住~{{getShortDate(el.checkOutAt)}}离   {{tmsky.date.getDatePeriod(el.checkInAt, el.checkOutAt, 'd')}}晚<b>￥{{el.totalAmount}}（已付：￥{{el.paidAmount}}）</b></span>
+                        <a class="fr btnCancel" ms-click="openRefuse(el)" ms-visible="!bool.handleFf">拒绝</a>
+                        <a class="fr btnSure" ms-click="openFf('handle',el)" ms-visible="!bool.handleFf">接单并分房</a>
+                        <a class="btnOrigin" ms-click="openDetailOrder(el.fqOrderNo,el.checkInAt,el.operateType)" ms-if="el.operateType==2">查看原单</a>
+                    </h4>
+                    <div class="clear" ms-visible="bool.handleFf">
+                        <div ms-repeat-el="selectRoom">
+                            <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" data-ui="dropdown">
+                                <input ms-duplex="el.typeIndex" ms-change="changeType(el)"  type="hidden">
+                                <a href="javascript:void(0);">
+                                    <span data-role="value" ms-data-value="el.typeIndex">{{el.type}}</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                    <a href="javascript:;" ms-repeat-item="roomList" ms-data-value="$index" data-role="item">{{item.name}}</a>
+                                </div>
+                            </div>
+                            <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" ms-click="changearr(el)" data-ui="dropdown" style="margin-left: 12px">
+                                <input ms-duplex="el.roomIndex" type="hidden">
+                                <a href="javascript:void(0);">
+                                    <span data-role="value" ms-data-value="el.roomIndex">{{el.room}}</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                    <a href="javascript:;" ms-repeat-item="selectArr" ms-click="changeRoom(el,$index)"  ms-data-value="$index" data-role="item">{{item.name}}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="handleBtn">
+                            <a class="fr btnCancel" ms-click="laterFf('confirm')">稍后</a>
+                            <a class="fr btnSure" ms-click="sureFf(el)">确认分房</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="listPart"  ms-repeat="ordersList.HandleConfirmAutoBook" ms-class-border0="bool.handleFf">
+                    <h3>
+                        <span class="fl">{{el.contactUser}} / {{el.contactPhone}}</span>
+                        <span class="fr" ms-class-qudao1="el.otaId==107" ms-class-qudao2="el.otaId!=107"><i></i>{{el.channelName}} | {{getPayTypeName(el.payType)}}</span>
+                    </h3>
+                    <h3><span class="fl"><b>{{el.roomTypeName}}</b> / {{el.roomTypeNum}}间</span></h3>
+                    <h4>
+                        <span class="fl">{{getShortDate(el.checkInAt)}}住~{{getShortDate(el.checkOutAt)}}离   {{tmsky.date.getDatePeriod(el.checkInAt, el.checkOutAt, 'd')}}晚<b>￥{{el.totalAmount}}（已付：￥{{el.paidAmount}}）</b></span>
+                        <a class="fr btnCancel" ms-click="openRefuse(el)">拒绝</a>
+                        <a class="fr btnSure" ms-click="openFf('auto',el)">接单并分房</a>
+                        <a class="btnOrigin" ms-click="openDetailOrder(el.fqOrderNo,el.checkInAt,el.operateType)" ms-if="el.operateType==2">查看原单</a>
+                    </h4>
+
+                </div>
+
+
+                <div class="listPart" ms-repeat="ordersList.autoConfirmHandleBook" ms-class-border0="bool.handleFf">
+                    <h3>
+                        <span class="fl">{{el.contactUser}} / {{el.contactPhone}}</span>
+                        <span class="fr" ms-class-qudao1="el.otaId==107" ms-class-qudao2="el.otaId!=107"><i></i>{{el.channelName}} | {{getPayTypeName(el.payType)}}</span>
+                    </h3>
+                    <h3><span class="fl"><b>{{el.roomTypeName}}</b> / {{el.roomTypeNum}}间</span></h3>
+                    <h4>
+                        <span class="fl">{{getShortDate(el.checkInAt)}}住~{{getShortDate(el.checkOutAt)}}离   {{tmsky.date.getDatePeriod(el.checkInAt, el.checkOutAt, 'd')}}晚<b>￥{{el.totalAmount}}（已付：￥{{el.paidAmount}}）</b></span>
+                        <a class="fr btnSure"  ms-click="openFf('later',el)" style=" width: 57px; left: 8px;" ms-visible="!bool.handleFf">分房</a>
+                        <a class="btnOrigin" style="margin-right: 0" ms-click="openDetailOrder(el.fqOrderNo,el.checkInAt,el.operateType)"  ms-visible="!bool.handleFf" ms-if="el.operateType==2">查看原单</a>
+                    </h4>
+                    <div class="clear" ms-visible="bool.handleFf">
+                        <div ms-repeat-el="selectRoom">
+                            <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" data-ui="dropdown">
+                                <input ms-duplex="el.typeIndex" ms-change="changeType(el)"  type="hidden">
+                                <a href="javascript:void(0);">
+                                    <span data-role="value" ms-data-value="el.typeIndex">{{el.type}}</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                    <a href="javascript:;" ms-repeat-item="roomList" ms-data-value="$index" data-role="item">{{item.name}}</a>
+                                </div>
+                            </div>
+                            <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" ms-click="changearr(el)" data-ui="dropdown" style="margin-left: 12px">
+                                <input ms-duplex="el.roomIndex" type="hidden">
+                                <a href="javascript:void(0);">
+                                    <span data-role="value" ms-data-value="el.roomIndex">{{el.room}}</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                    <a href="javascript:;" ms-repeat-item="selectArr" ms-click="changeRoom(el,$index)"  ms-data-value="$index" data-role="item">{{item.name}}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="handleBtn">
+                            <a class="fr btnCancel" ms-click="laterFf('later')">稍后</a>
+                            <a class="fr btnSure" ms-click="sureFf(el)">确认分房</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--待确认-->
+
+            <!--重要通知-->
+            <div class="house-message-list house-message-part3" ms-visible="bool.popup[2]">
+                <div class="noMessagePart" ms-if="commonAdviceNotice.length==0&&ordersList.autoConfirmAutoBook.length==0"><img src="../../images/noRoomIcon.png">现在暂无重要通知哦！</div>
+                <!--common-advise-->
+                <div class="house-announce commonadvice" ms-data-id="el.id" ms-repeat="commonAdviceNotice">
+                    <div class="title2">{{el.title}}</div>
+                    <h4 class="advice-content"></h4>
+                    <a class="fr btn-red" ms-repeat-btn="el.buttons" ms-click="adviseBtnAjax(el,btn,'a')">{{btn.name}}</a>
+                </div>
+                <div class="house-announce"  ms-repeat="ordersList.autoConfirmAutoBook">
+                    <div class="title2">{{getOperateTypeName("type",el.operateType,el.cancelStatus)}}</div>
+                    <div class="info">
+                        <h4>{{el.channelName}}<label ms-if="el.payType != ''&&el.payType != undefined">（{{getPayTypeName(el.payType)}}）</label>：<label>{{el.roomTypeName}}</label>   {{el.roomTypeNum}}间  </h4>
+                        <div>
+                            <span style="display: block">{{getShortDate(el.checkInAt)}}~{{getShortDate(el.checkOutAt)}}  ￥{{el.totalAmount}}（已付：￥{{el.paidAmount}})</span>
+                            <span style="padding-bottom: 0">{{el.contactUser}}  {{getOperateTypeName("state",el.operateType,el.cancelStatus)}}！</span>
+                            <!--<a ms-if="el.operateType==1" >详情</a>-->
+                        </div>
+                    </div>
+                    <div class="btn-red" ms-click-2="openDetailOrder(el.fqOrderNo,el.checkInAt,el.operateType)" ms-click="ajaxOperateReceiveOrder('remove',el.id)">知道了</div>
+                </div>
+            </div>
+            <!--重要通知-->
+
+        </div>
+    </div>
+</div>
+
+
+<!--拒单-->
+<div class="tomasky-ui-popups ms-controller" ms-visible="bool.refuse" ms-controller="vm_bottombar">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups" ms-click="closeRefuse()">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">消息提示</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x bottom-refuse">
+            <div class="container">
+                <img src="../../images/dialog-icon1.png">
+                <h4>您正在拒单！</h4>
+                <div class="tomasky-ui-dropdown oo-dropdown-width-channel" data-ui="dropdown">
+                    <input ms-duplex="refuseReasonList.selected" type="hidden">
+                    <a href="javascript:void(0);">
+                        <span data-role="value" ms-data-value="refuseReasonList.selected">{{refuseReasonList.list[refuseReasonList.selected]||'请选择拒单原因'}}</span>
+                        <i class="iconfont icon-arrowdown"></i>
+                    </a>
+                    <div class="ui-dropdown-list">
+                        <a href="javascript:;" ms-repeat-item="refuseReasonList.list" ms-data-value="$index" data-role="item">{{item}}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="btn btndefault btnSure" ms-click="sureRefuse()" ms-class-btnok="refuseReasonList.selected!=0" data-ui="popups">确定</button>
+                <button class="btn btndefault btnCancel" data-ui="popups" ms-click="closeRefuse()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>

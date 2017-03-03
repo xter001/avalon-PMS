@@ -1,0 +1,104 @@
+.pay-popups {
+	width: 480px;
+	color: #333333;
+	font-size: 14px;
+}
+
+.pay-popups>.ui-popups-body {
+	overflow: inherit;
+}
+
+.pay-popups>.ui-popups-foot {
+	padding-top: 10px;
+}
+
+.pay-popups .dec {
+	position: relative;
+	display: inline-block;
+	float: right;
+}
+
+.pay-popups .bumb {
+	display: none;
+	position: absolute;
+	left: 100%;
+	top: 5px;
+	color: #fff;
+	background-color: #5C5A5A;
+	padding: 10px 20px;
+	border-radius: 4px;
+	white-space: nowrap;
+	max-height: 375px;
+	overflow: auto;
+}
+
+.pay-popups .dec:hover .bumb {
+	display: block;
+}
+
+.pay-content {
+	margin-top: 15px;
+  	padding-top: 10px;
+	text-align: center;
+	border-top: 1px solid #f2f2f2;
+}
+
+.pay-content>.img-explain {
+	height: 284px;
+	background: url(saoma.jpg) no-repeat center center;
+}
+
+.pay-code-input {
+	width: 410px;
+  	font-size: 16px;
+	line-height: 1.5;
+	font-weight: bold;
+	padding: 8px 10px;
+	margin-bottom: 10px;
+	border: 2px solid #ccc;
+	border-radius: 2px;
+	box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	resize: none;
+}
+
+.scan-img {
+	float: left;
+	margin-left: 60px;
+	width: 65px;
+	height: 65px;
+	background: url(target.png) no-repeat;
+}
+
+.pay-result {
+	text-align: center;
+}
+
+.pay-result>h3 {
+	font-size: 18px;
+}
+
+.pay-result .iconfont {
+	font-size: 26px;
+	margin-right: 10px;
+}
+
+.success>.iconfont {
+	color: #7ea800;
+}
+
+.error>.iconfont {
+	color: #ff0000;
+}
+
+.repay-link {
+	color: #7ea800;
+	font-size: 12px;
+}
+
+.repay-link:hover {
+	color: #7ea800;
+}
+

@@ -1,0 +1,395 @@
+var CommonUtil = require('../../../js/utils/common-util.js');
+var COMMON_CONST = require('../../../js/const.js')
+var Plug = require('../../../../header/plug.js');
+var Controller = require('../../../../house/js/control.js')
+var vm_shop = avalon.define({
+    $id : 'vm_shop',
+    init : function () {
+        $(document).on('click', '.cost-list', function (e) {
+            var e = window.event || e
+            if ($(e.target).parents('.cost-list1').length != 0 && $(e.target).parents('.cost-list1').find('.ui-dropdown-list').is(':visible')) {
+                var that = $(e.target).parents('.cost-list1').find('.ui-dropdown-list')
+                if (that.find('a').eq(0).attr('data-value') == 0) {
+                    that.find('a').eq(0).remove()
+                }
+            }
+        })
+    },
+    //计算总价
+    costTotalPrice : 0,
+    roomsEdit : true,
+    costTotalPriceFun : function () {
+        var price = 0;
+        vm_shop.shopCostList.forEach(function (el, i) {
+            price += Number(el.price) * el.shopNo
+        })
+        vm_shop.costTotalPrice = price
+    },
+    //所有商品列表
+    shopsList : [],
+    //选中的支付方式
+    selectedPayWay : {
+        canModify : 0,
+        id : 4,
+        name : "现金",
+        otaId : '',
+        index : 0
+    },
+    //选择计算费用方式 结算方式（1：计入房费 2：单独结算）
+    settleType : 2,
+    orderId : '', //判断主订单id
+    //当前所有选中的消费项数组
+    shopCostList : [
+        {
+            selectedShop : 0,
+            shopNo : 0,
+            price : '',
+            name : '商品销售项目'
+        }
+    ],
+    //ajax增加消费项
+    ajaxShopCost : function () {
+        var vm_shopcost = avalon.vmodels.vm_shopcost
+        var vm = vm_shop
+        if (vm.shopCostList.length == 1 && vm.shopCostList[vm.shopCostList.length - 1].selectedShop == 0) {
+            tmsky.ui.dialog.tips('请选择商品销售项目！', 'error');
+            return false
+        }
+        if (vm.shopCostList[vm.shopCostList.length - 1].shopNo == '') {
+            tmsky.ui.dialog.tips('请输入商品数量！', 'error');
+            return false
+        }
+        if (vm.shopCostList[vm.shopCostList.length - 1].shopNo == 0) {
+            tmsky.ui.dialog.tips('商品数量不能为0！', 'error');
+            return false
+        }
+        if (vm.shopCostList[vm.shopCostList.length - 1].price == 0) {
+            tmsky.ui.dialog.tips('商品价格不能为0！', 'error');
+            return false
+        }
+        tmsky.ui.dialog.loading()
+        var Data = vm.getData()
+        $.ajax({
+            data : JSON.stringify(Data),
+            type : 'POST',
+            contentType : 'application/json;charset=utf-8',
+            url : "/goods/order/save",
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    vm_shopcost.costShow = false
+                    if (!!avalon.vmodels.vm_inCome) {
+                        avalon.vmodels.vm_inCome.updateDetailRecords()
+                    }
+                    if (Data.id == '') {
+                        vm_shopcost.reset()
+                        return false
+                    }
+                    if (!!avalon.vmodels.vm_order_operate) {
+                        //订单页的订单
+                        if (rs.mainOrder.goodSpends.length != 0) {
+                            rs.mainOrder.goodSpends.forEach(function (item, i) {
+                                item.good.name = vm_shop.getGoodsName(item.good.id)
+                                item.good.price = vm_shop.getGoodsPrice(item.good.id)
+                            })
+                        }
+                        avalon.vmodels.vm_order_operate.spend.goodSpends = rs.mainOrder.goodSpends
+                        avalon.vmodels.vm_order_operate.order.paidAmount = rs.mainOrder.paidAmount
+                        avalon.vmodels.vm_order_operate.$model.orderHandle.updateOrderInfo()
+                        avalon.vmodels.vm_order_main.$model.dataReload()
+                    }
+                    if (!!avalon.vmodels.vm_b_checkout_model) {
+                        //房态页的订单
+                        avalon.vmodels.vm_finances.paidAmount = rs.mainOrder.paidAmount
+                        Controller.set_g_mainOrder(rs.mainOrder)
+                        avalon.vmodels.vm_orders.flushMainOrder(rs.mainOrder)
+                    }
+
+                    vm_shopcost.reset()
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！", 'error')
+            }
+        })
+        // 百度统计
+        _hmt.push(['_trackEvent', 'finance', 'click', '商品销售'])
+    },
+    financeId : '',
+    gsid : '',
+    getData : function () {
+        var vm = vm_shop
+        var vm_shopcost = avalon.vmodels.vm_shopcost
+        //判断结算方式
+        var settleType = vm_shop.settleType
+
+        var orderFrom = -1  //判断订单来源  除订单中的新增外都是-1
+        if (!!avalon.vmodels.vm_order_operate && vm_shop.orderId != '') {
+            //订单页
+            orderFrom = -6
+
+        }
+        var goodSpend = []
+        vm.shopCostList.forEach(function (el, i) {
+            if (el.selectedShop > 0) {
+                if (settleType == 1) {
+                    goodSpend.push(
+                        {
+                            good : {
+                                id : vm.shopsList[el.selectedShop].id,
+                                name : el.name
+                            },
+                            goodNum : el.shopNo,
+                            id : vm_shop.gsid,//消费id  新增为空
+                            realPrice : el.price,//单价
+                            settleType : 1,//结算方式（1：计入房费 2：单独结算）
+                            spendTime : vm_shopcost.costDate
+                        }
+                    )
+                }
+                if (settleType == 2) {
+                    goodSpend.push(
+                        {
+                            good : {
+                                id : vm.shopsList[el.selectedShop].id,
+                                name : el.name
+                            },
+                            goodNum : el.shopNo,
+                            id : vm_shop.gsid,//消费id  新增为空
+                            innFinanceRecord : {
+                                id : vm_shop.financeId,  //新增 所以id为空
+                                item : 9,//9  其他
+                                payChannel : {
+                                    id : vm.selectedPayWay.id   //单独支付的支付id
+                                },
+                                price : el.price * el.shopNo  //支付总价
+                            },
+                            realPrice : el.price,//单价
+                            settleType : 2,//结算方式（1：计入房费 2：单独结算）
+                            spendTime : vm_shopcost.costDate
+                        }
+                    )
+                }
+            }
+        })
+
+        var data = {
+            goodSpends : goodSpend,
+            id : vm.orderId,  //主订单id
+            orderFrom : orderFrom  //订单来源类别 -1：WEB（房态）、-2：PAD、-3：ANDROID、-4：CLIENT、-5：IPHONE、-6：WEB（订单）
+        }
+
+        return data
+    },
+    deleteShopItem : function (el, $index) {
+        if (vm_shop.shopCostList.length > 1) {
+            avalon.Array.removeAt(vm_shop.shopCostList, $index)
+        } else {
+            tmsky.ui.dialog.tips('不能删除最后一条！', 'error')
+        }
+    },
+    payChange : function () {
+        var index = vm_shop.selectedPayWay.index,
+            vm_shopcost = avalon.vmodels.vm_shopcost
+        var newSelect = {
+            canModify : vm_shopcost.costPayList[index].canModify,
+            id : vm_shopcost.costPayList[index].id,
+            name : vm_shopcost.costPayList[index].name,
+            otaId : vm_shopcost.costPayList[index].otaId,
+            index : index
+        }
+        vm_shop.selectedPayWay = newSelect
+    },
+    //添加消费项
+    addShops : function () {
+        if (vm_shop.shopCostList[vm_shop.shopCostList.length - 1].selectedShop == 0) {
+            tmsky.ui.dialog.tips('请选择消费项！', 'error');
+            return
+        }
+        if (vm_shop.shopCostList[vm_shop.shopCostList.length - 1].price == 0) {
+            tmsky.ui.dialog.tips('商品价格不能为0！', 'error');
+            return false
+        }
+        if (vm_shop.shopCostList[vm_shop.shopCostList.length - 1].shopNo == 0) {
+            tmsky.ui.dialog.tips('商品数量不能为0！', 'error');
+            return false
+        }
+        var json = {
+            selectedShop : 0,
+            shopNo : 0,
+            price : 0,
+            name : '商品销售项目'
+        }
+        vm_shop.shopCostList.push(json)
+        vm_shop.costTotalPriceFun()
+    }
+    ,
+    //减消费项数量
+    jShopNo : function (el, shopNo) {
+        shopNo = parseInt(shopNo)
+        if (shopNo > 1) {
+            shopNo--
+            el.shopNo = shopNo
+        }
+        vm_shop.costTotalPriceFun()
+    }
+    ,
+    //加消费项数量
+    addShopNo : function (el, shopNo) {
+        if (shopNo >= 99)return
+        if (el.selectedShop == 0)return
+        shopNo = parseInt(shopNo)
+        shopNo++
+        el.shopNo = shopNo
+        vm_shop.costTotalPriceFun()
+    }
+    ,
+    //切换消费项
+    shopsChange : function (el) {
+        if (el.selectedShop == 0)return
+        if (el.selectedShop != 0) {
+            el.shopNo = 1
+            el.price = vm_shop.shopsList[el.selectedShop].price
+            el.name = vm_shop.shopsList[el.selectedShop].name
+        }
+        vm_shop.costTotalPriceFun()
+    },
+
+    editShopCost : function (el, showTabIndex) {
+        var vm_shopcost = avalon.vmodels.vm_shopcost
+        if (el.rooms == null) {
+            //隐藏计入房费
+            vm_shopcost.roomsEdit = false
+        }
+        var callback = function () {
+            vm_shopcost.costDate = el.spendAt
+            vm_shop.settleType = el.settleType
+            vm_shop.orderId = el.mainId
+            vm_shop.financeId = el.financeId
+            vm_shop.gsid = el.gsid
+            if (el.pcid != '' && el.pcid != null) {
+                var selectedPayWay = {
+                    canModify : vm_shopcost.costPayList[vm_shopcost.getPayIndex(el.pcid)].canModify,
+                    id : el.pcid,
+                    name : vm_shopcost.costPayList[vm_shopcost.getPayIndex(el.pcid)].name,
+                    otaId : vm_shopcost.costPayList[vm_shopcost.getPayIndex(el.pcid)].otaId,
+                    index : vm_shopcost.getPayIndex(el.pcid)
+                }
+                vm_shop.selectedPayWay = selectedPayWay
+            }
+            var selectList = [
+                {
+                    price : el.realPrice,
+                    shopNo : el.goodNum,
+                    name : vm_shop.getGoodsName(el.goodId),
+                    selectedShop : vm_shop.getGoodsIndex(el.goodId)
+                }
+            ]
+
+            vm_shop.shopCostList = selectList
+            vm_shop.costTotalPriceFun()
+        }
+
+        vm_shopcost.openShopCost(el.mainId, callback, showTabIndex)
+    },
+    deleteShopCost : function (el, index) {
+        tmsky.ui.dialog.confirm('确定要删除此商品？', function () {
+            vm_shop.ajaxDeleteShop(el, index)
+        })
+    },
+    ajaxDeleteShop : function (el, index) {
+        tmsky.ui.dialog.loading()
+        $.ajax({
+            type : "GET",
+            url : "/goods/order/del/" + el.mainId + "/" + el.gsid,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips("删除成功！", 'success')
+                    if (!!avalon.vmodels.vm_orders) {
+                        //房态
+                        avalon.Array.removeAt(avalon.vmodels.vm_orders.spends, index)
+                        avalon.vmodels.vm_finances.paidAmount = rs.mainOrder.paidAmount
+                        Controller.set_g_mainOrder(rs.mainOrder)
+                        avalon.vmodels.vm_orders.flushMainOrder(rs.mainOrder)
+                    } else {
+                        //订单
+                        if (rs.mainOrder.goodSpends.length != 0) {
+                            rs.mainOrder.goodSpends.forEach(function (item, i) {
+                                item.good.name = vm_shop.getGoodsName(item.good.id)
+                                item.good.price = vm_shop.getGoodsPrice(item.good.id)
+                            })
+                        }
+                        avalon.vmodels.vm_order_operate.spend.goodSpends = rs.mainOrder.goodSpends
+                        avalon.vmodels.vm_order_operate.order.paidAmount = rs.mainOrder.paidAmount
+                        avalon.vmodels.vm_order_operate.$model.orderHandle.updateOrderInfo()
+                        avalon.vmodels.vm_order_main.$model.dataReload()
+                    }
+                } else {
+                    tmsky.ui.dialog.tips("删除失败！" + rs.message)
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！")
+            }
+        })
+    },
+    getGoodsName : function (id) {
+        var name = ''
+        vm_shop.shopsList.forEach(function (item) {
+            if (item.id == id) {
+                name = item.name
+            }
+        })
+        return name
+    },
+    getGoodsPrice : function (id) {
+        var price = ''
+        vm_shop.shopsList.forEach(function (item) {
+            if (item.id == id) {
+                price = item.price
+            }
+        })
+        return price
+    },
+    getGoodsIndex : function (id) {
+        var index = ''
+        vm_shop.shopsList.forEach(function (item, i) {
+            if (item.id == id) {
+                index = i
+            }
+        })
+        return index
+    },
+    reset : function () {
+        var shopCostList = [
+            {
+                selectedShop : 0,
+                shopNo : 0,
+                price : '',
+                name : '商品销售项目'
+            }
+        ]
+        var selectedPayWay = {
+            canModify : 0,
+            id : 4,
+            name : "现金",
+            otaId : '',
+            index : 0
+        }
+
+        vm_shop.orderId = ''
+        vm_shop.gsid = ''
+        vm_shop.roomsEdit = true
+        vm_shop.shopCostList = shopCostList
+        vm_shop.selectedPayWay = selectedPayWay
+        vm_shop.settleType = 2
+        vm_shop.costTotalPrice = 0
+        vm_shop.financeId = ''
+    }
+})
+

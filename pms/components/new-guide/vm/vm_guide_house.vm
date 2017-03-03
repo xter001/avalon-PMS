@@ -1,0 +1,187 @@
+var COMMON = require('../../common/js/const.js'),
+    GUIDE_CONST = require('../js/guide_const.js')
+var vm_guide_roomtype = avalon.define({
+    $id : 'vm_guide_house',
+    roomStepType : false,
+    init : function (guideTag) {
+        var currentStep = window.localStorage.getItem('room_localStorage')
+        $.each(vm_guide_roomtype.roomStep,function(key,val) {
+            vm_guide_roomtype.roomStep[key] = false
+        })
+
+        setTimeout(function(){
+            if(currentStep) {
+                if(currentStep == 'four'){
+                    var $toDayDom = $("#clickToDay13").find('.order-item'),
+                        _thisClickLattice = $toDayDom.attr('data-type')
+                    if(_thisClickLattice == 'booked'){
+                        currentStep = 'five'
+                    }else if(_thisClickLattice == 'checkin'){
+                        currentStep = 'six'
+                    }
+                }
+                if(currentStep == 'eight')
+                    $('#roomStepLL').popups()
+                if(currentStep == 'five' || currentStep == 'six')
+                    $("#clickToDay13").click()
+                if(currentStep == 'seven')
+                    vm_guide_roomtype._address()
+                vm_guide_roomtype.roomStep[currentStep] = true
+            }else {
+                /*var $toDayDom = $("#clickToDay13").find('.order-item'),
+                    _thisClickLattice = $toDayDom.attr('data-type')
+                if(_thisClickLattice == 'booked'){
+                    $toDayDom.click();
+                    vm_guide_roomtype.roomStep.five = true
+                }else if(_thisClickLattice == 'checkin'){
+                    $toDayDom.click();
+                    vm_guide_roomtype.roomStep.six = true
+                }else{
+                    vm_guide_roomtype.roomStep.one = true
+                }*/
+                vm_guide_roomtype.roomStep.one = true
+            }
+        },1000)
+        //vm_guide_roomtype.roomStep.seven = true
+    },
+    roomStep : {
+        one : false,
+        two : false,
+        three : false,
+        four : false,
+        five : false,
+        six : false,
+        seven : false,
+        eight : false
+    },
+    roomStep1 : {
+        one : {type:false,smallType:true},
+        two : {type:false,smallType:true},
+        three : {type:false,smallType:true},
+        four : {type:false,smallType:true},
+        five : {type:false,smallType:true},
+        six : {type:false,smallType:true},
+        seven : {type:false,smallType:true},
+        eight : {type:false,smallType:true}
+    },
+    //房态导航步骤
+    nextStep : function(step) {
+        vm_guide_roomtype.setCurentStep(step)
+    },
+    setCurentStep : function(step) {
+        $.each(vm_guide_roomtype.roomStep,function(key,val) {
+            vm_guide_roomtype.roomStep[key] = false
+        })
+        switch (step) {
+            case 'one' :
+                vm_guide_roomtype.roomStep.two = true
+                window.localStorage.setItem('room_localStorage', 'two')
+                break;
+            case 'two' :
+                vm_guide_roomtype.roomStep.three = true
+                window.localStorage.setItem('room_localStorage', 'three')
+                break;
+            case 'three' :
+                setTimeout(function(){
+                    var currentStep = 'four'
+                    var $toDayDom = $("#clickToDay13").find('.order-item'),
+                        _thisClickLattice = $toDayDom.attr('data-type')
+                    if (_thisClickLattice == 'booked') {
+                        currentStep = 'five'
+                        vm_guide_roomtype.roomStep.five = true
+                    } else if (_thisClickLattice == 'checkin') {
+                        currentStep = 'six'
+                        vm_guide_roomtype.roomStep.six = true
+                    } else if (currentStep == 'four') {
+                        vm_guide_roomtype.roomStep.four = true
+                    }
+                    if(currentStep == 'eight')
+                        $('#roomStepLL').popups()
+                    if(currentStep == 'five' || currentStep == 'six')
+                        $("#clickToDay13").click()
+                    if(currentStep == 'seven')
+                        vm_guide_roomtype._address()
+                    window.localStorage.setItem('room_localStorage', currentStep)
+                },500)
+
+                break;
+            case 'four' :
+                window.localStorage.setItem('room_localStorage', 'five')
+                vm_guide_roomtype.roomStep.five = true
+                break;
+            case 'five' :
+                vm_guide_roomtype.roomStep.six = true
+                window.localStorage.setItem('room_localStorage', 'six')
+                break;
+            case 'six' :
+                vm_guide_roomtype.roomStep.seven = true
+                window.localStorage.setItem('room_localStorage', 'seven')
+                vm_guide_roomtype._address()
+                break;
+            case 'seven' :
+                vm_guide_roomtype.roomStep.eight = true
+                window.localStorage.setItem('room_localStorage', 'eight')
+                $('#roomStepLL').popups()
+                break;
+            case 'eight' :
+                avalon.vmodels.vm_new_guide.ajaxSaveGuide(GUIDE_CONST.GUIDES.HOUSE,function(){
+                    avalon.vmodels.vm_new_guide.ajaxSaveGuide(GUIDE_CONST.GUIDES.GUIDE_DONE,function(){})
+                    vm_guide_roomtype.roomStep.eight = false
+                    window.localStorage.setItem('room_localStorage', 'eight')
+                    $('.new-guide-cover').css('display','none')
+                    $('#slider_trigger').click()
+                })
+                break;
+        }
+
+    },
+    _click : function () {
+        $("#clickToDay13").click();
+        vm_guide_roomtype.automatismName()
+        for(i in vm_guide_roomtype.roomStep.$model){
+            if(vm_guide_roomtype.roomStep[i] == true){
+                vm_guide_roomtype.roomStep1[i].smallType = false
+            }
+        }
+    },
+    /*
+    * 自动添加姓名
+    * */
+    automatismName : function (){
+        var _name = '',
+            _type = 0,
+            _nameList = ['新','手','引','导']
+        var _automatism = setInterval(function(){
+            _name = _name+_nameList[_type]
+            $("input[placeholder='姓名']").val(_name)
+            _type ++
+            if(_type == 4){
+                clearInterval(_automatism)
+                avalon.vmodels.vm_guests.datas[0].name = '新手引导'
+                avalon.vmodels.vm_guests.customerSearch(1,0)
+            }
+        },300)
+    },
+    guideHouseBtn : function(){
+        $('#guideClick').click()
+        for(i in vm_guide_roomtype.roomStep.$model){
+            if(vm_guide_roomtype.roomStep[i] == true){
+                if(!vm_guide_roomtype.roomStep1[i].smallType){
+                    vm_guide_roomtype.nextStep(i)
+                    return
+                }else {
+                    vm_guide_roomtype.roomStep1[i].smallType = false
+                }
+                if(i == 'eight'){
+                    $('#roomStepLL').popups()
+                }
+            }
+        }
+    },
+    _address : function (){
+        //debugger
+        $('.guide-house-unlock-all').css('left',$("#main-nav").find('li')[1].offsetLeft)
+    }
+})
+return vm_guide_roomtype
+

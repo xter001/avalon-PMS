@@ -1,0 +1,59 @@
+<div ms-controller="vm_checkIn_new">
+    <!--div class="c-content-title">
+        <p>选择时间段内在住客人信息表</p>
+    </div-->
+    <div class="finance-nav-head" style="margin-top:15px;">
+        <h1 style="top: 10px">一共有<a class="u-stand-out">{{totalNum}}</a>条记录</h1>
+        <div class="time-list-box fr">
+            <div class="time-cover small-box fl" ms-click="openTimeBox" style="height: 34px;margin-right: 3px;line-height: 34px">
+                <i></i>{{formatTime(datas.from)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(datas.to)}}
+
+            </div>
+            <div class="time-select small-time-select" style="top: 65px;right: 468px;">
+                <input id="c_checkin_new_from" ms-duplex="tempTime.from" type="text" placeholder="开始时间" style="padding: 0">
+                到
+                <input id="c_checkin_new_to" ms-duplex="tempTime.to" type="text" placeholder="结束时间" style="padding: 0"></br>
+                <button class="btn-sure" ms-click="sureTime">确定</button>
+            </div>
+
+            <select class="customers-filter-sort" ms-duplex="datas.searchType">
+                <option value="2" selected>按入住时间查询</option>
+                <option value="1">按离店时间查询</option>
+
+            </select>
+            <input class="u-input-txt" type="text" placeholder="姓名" ms-duplex="datas.input">
+            <button class="btn btn-search" ms-click="getOrderPersons(1)">搜索</button>
+            <button class="btn btn-excel" ms-click="exportExcel()"><i class="icon-excel"></i>导出Excel</button>
+        </div>
+    </div>
+    <table class="table table-hover table-bordered">
+        <thead>
+        <tr>
+            <th>姓名</th>
+            <th>证件类型</th>
+            <th>证件号码</th>
+            <th>民族</th>
+            <th>地址</th>
+            <th>房间号</th>
+            <th>入住时间</th>
+            <th>离店时间</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ms-repeat-el="datasList" ms-if="datasList.length">
+            <td>{{el.name}}</td>
+            <td>{{el.cardType}}</td>
+            <td>{{el.cardNo}}</td>
+            <td>{{el.nation}}</td>
+            <td>{{el.address}}</td>
+            <td>{{el.roomNo}}</td>
+            <td>{{el.checkInTime}}</td>
+            <td>{{el.checkOutTime}}</td>
+        </tr>
+        <tr ms-if="!datasList.length">
+            <td colspan="8">暂无客人信息！</td>
+        </tr>
+        </tbody>
+    </table>
+    <div id="checkin_page_new"></div>
+</div>

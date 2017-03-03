@@ -1,0 +1,14 @@
+.account-book-head-fl {
+    height: 30px;
+    line-height: 30px;
+    font-weight: bold;
+}
+.account-book-head-fl label {
+    margin-right: 30px;
+}
+.account-book-head-fl label.total-income {
+    color: #7EA800;
+}
+.account-book-head-fl label.total-payout {
+    color: #A9221C;
+}

@@ -1,0 +1,248 @@
+<div class="base-info">
+    <h1>今日（{{todayText}}）</h1>
+    <ul>
+        <li>
+            <h1><span>{{stats.checkInCount}}</span>人今日入住</h1>
+            <p><a ms-click="proxyChangeMainOrder('MOT_BOOK')">查看/办理</a> 今日预到订单</p>
+            <!--<p><a>查看/办理</a>&nbsp;<a>今日预到订单详情</a></p>-->
+        </li>
+        <li>
+            <h1><span>{{stats.checkOutCount}}</span>人将要退房</h1>
+            <p><a ms-click="proxyChangeMainOrder('MOT_CHECKIN')">查看/办理</a> 今日退房订单</p>
+            <!--<p><a>查看/办理</a>&nbsp;<a>今日退房订单详情</a></p>-->
+        </li>
+    </ul>
+</div>
+<div class="tomasky-ui-tabs tab">
+    <div class="border-b">
+        <span class="nav-tabs">
+            <a id="MOT_BOOK" class="nav active" ms-click="changeMainOrder('BOOK')">即将到店</a>
+            <a id="MOT_CHECKIN" class="nav" ms-click="changeMainOrder('CHECKIN')">即将离店</a>
+            <a id="MOT_NEW_TODAY" class="nav" ms-click="changeMainOrder('NEW_TODAY')">今日新办</a>
+            <a id="MOT_ALL" class="nav" ms-click="changeMainOrder('ALL')">全部订单</a>
+            <a id="MOT_ERROR" class="nav" ms-click="changeMainOrder('ERROR')">异常订单</a>
+            <a id="MOT_SHOP" class="nav" ms-click="changeMainOrder('SHOP')">商品订单</a>
+            <!-- <a id="MOT_CHECKOUT">已退房</a>
+            <a id="MOT_CANCEL">未到/取消</a>
+            <a id="MOT_YAFANG">哑房订单</a> -->
+            <span>
+                <a href="http://note.youdao.com/share/?id=e1f93f652e1513e2fe4f42d135d424cf&amp;type=note"
+                   target="_blank" class="operate-instructions">操作说明</a>
+            </span>
+        </span>
+        <span class="right search-wrapper" id="notVisible" ms-visible="orderType!='SHOP'">
+            <div class="more-search" ms-visible="display.moreSearch">
+                <select ms-duplex="params.searchType" ms-change="filterHandler">
+                    <option value="CHECK_IN_AT">客人在住时间</option>
+                    <option value="CREATED_AT">办理订单时间</option>
+                </select>
+                <div class="time-list-box fr" style="position: relative">
+                    <div class="time-cover small-box fr" ms-click="openTimeBox('all')">
+                        <i></i>{{formatTime(params.checkInFrom)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(params.checkInTo)}}
+                    </div>
+                    <div class="time-select small-time-select" ms-visible="all_timeBox" style="top: 32px;right: 0px;">
+                        <input type="text" id="checkInFrom" ms-duplex="allTempTime.from" class="select-time"
+                               placeholder="请选择日期">到
+                        <input type="text" id="checkInTo" ms-duplex="allTempTime.to" class="select-time" placeholder="请选择日期">
+                        <button class="btn-sure" ms-click="searchAllOrder">确定</button>
+                    </div>
+                </div>
+
+                <select ms-duplex="oparams.subOrderStatus" ms-change="filterHandler">
+                    <option value="10">全部</option>
+                    <!-- BOOK -->
+                    <option value="1,2">预定订单</option>
+                    <option value="1">未入住</option>
+                    <option value="2">部分入住</option>
+                    <!-- CHECKIN -->
+                    <option value="3,4">入住订单</option>
+                    <option value="3">未退房</option>
+                    <option value="4">部分退房</option>
+                    <!-- CHECKOUT -->
+                    <!--<option value="5,6,7,8">退房订单</option>-->
+                    <option value="5">已退房</option>
+                    <!-- <option value="6">违约退房</option>
+                    <option value="7">客户挂账</option>
+                    <option value="8">客户存款</option> -->
+                    <!-- YAFANG -->
+                    <!-- <option value="-1">哑房</option> -->
+                    <!-- CANCEL -->
+                    <option value="0">取消</option>
+                </select>
+            </div>
+            <input id="searchValue" type="search" class="search-value" ms-duplex="searchValue" placeholder="房间号/电话/姓名"
+                   ms-keyup="enterSearch($event)">
+            <button id="searchBtn" class="search-btn search" ms-click="searchOrders">搜索</button>
+        </span>
+        <!--异常订单-->
+        <span class="right" style="position: relative;width: 325px" ms-visible="isErrorOrder">
+            <div class="more-search2">
+                <select ms-duplex="errorParams.type" ms-change="valueChang" class="fr">
+                    <option value="-1" selected="selected">全部</option>
+                    <option value="1">未平账</option>
+                    <option value="2">未入住</option>
+                    <option value="3">未退房</option>
+                </select>
+                <!--<input type="text" id="err_checkInFrom" ms-duplex="errorParams.checkInFrom" class="select-time"-->
+                       <!--placeholder="请选择日期">到-->
+                <!--<input type="text" id="err_checkInTo" ms-duplex="errorParams.checkInTo" class="select-time"-->
+                       <!--placeholder="请选择日期">-->
+
+                <div class="time-list-box fr" style="position: relative;margin-right: 10px">
+                    <div class="time-cover small-box fr" ms-click="openTimeBox('err')">
+                        <i></i>{{formatTime(errorParams.checkInFrom)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(errorParams.checkInTo)}}
+                    </div>
+                    <div class="time-select small-time-select" ms-visible="err_timeBox" style="top: 32px;right: 0px;">
+                        <input type="text" id="err_checkInFrom" ms-duplex="errTempTime.from" class="select-time"
+                               placeholder="请选择日期">到
+                        <input type="text" id="err_checkInTo" ms-duplex="errTempTime.to" class="select-time"
+                               placeholder="请选择日期">
+                        <button class="btn-sure" ms-click="searchErrOrder">确定</button>
+                    </div>
+                </div>
+            </div>
+        </span>
+        <div class="right" ms-controller="vm_order_shop" ms-visible="orderType=='SHOP'"
+             style="position: relative;top: -5px;">
+            <!--<input type="text" id="checkInFromShop" ms-duplex="date.from" class="select-time"-->
+                   <!--placeholder="请选择日期">到-->
+            <!--<input type="text" id="checkInToShop" ms-duplex="date.to" class="select-time" placeholder="请选择日期">-->
+
+            <div class="time-list-box fr" style="position: relative;margin-right: 10px">
+                <div class="time-cover small-box fr" ms-click="openTimeBox('shop')">
+                    <i></i>{{formatTime(date.from)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(date.to)}}
+                </div>
+                <div class="time-select small-time-select" ms-visible="shop_timeBox" style="top: 32px;right: 0px;">
+                    <input type="text" id="checkInFromShop" ms-duplex="shopTempTime.from" class="select-time"
+                           placeholder="请选择日期">到
+                    <input type="text" id="checkInToShop" ms-duplex="shopTempTime.to" class="select-time"
+                           placeholder="请选择日期">
+                    <button class="btn-sure" ms-click="searchShopOrder">确定</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="today-tomarow" ms-css-visibility="display.todayTomorrow">
+        <a ms-attr-class="css.today" ms-click="todayTomorrow(true)">今天</a>
+        <a ms-attr-class="css.tomorrow" ms-click="todayTomorrow(false)">明天</a>
+    </div>
+    <div id="shop-list" ms-visible="orderType=='SHOP'" ms-controller="vm_order_shop">
+        <table class="table table-bordered arrive-table">
+            <thead>
+            <tr>
+                <th>时间</th>
+                <th>房间号</th>
+                <th>客人姓名</th>
+                <th style="width:180px">
+                    <select ms-duplex="shopSelect.spend" ms-change="ajaxShopList(1)">
+                        <option ms-value="el.id||-1" ms-repeat="spendsList">{{el.name}}</option>
+                    </select>
+                </th>
+                <th class="table-right">单价</th>
+                <th class="table-right">数量</th>
+                <th class="table-right">总价</th>
+                <th style="width:120px">
+                    <select ms-duplex="shopSelect.finance" ms-change="ajaxShopList(1)">
+                        <option ms-value="-1">结算方式</option>
+                        <option ms-value="1">计入房费结算</option>
+                        <option ms-value="2">单独结算</option>
+                    </select>
+                </th>
+                <th style="width:120px">
+                    <select ms-duplex="shopSelect.pay" ms-change="ajaxShopList(1)">
+                        <option ms-value="-1">支付方式</option>
+                        <option ms-value="el.id" ms-repeat="payList">{{el.name}}</option>
+                    </select>
+                </th>
+                <th>操作人</th>
+                <th class="table-center">操作</th>
+            </tr>
+            </thead>
+            <tbody id="shop-items">
+            <tr ms-repeat="shopOrders">
+                <td>{{el.spendAt}}</td>
+                <td><span ms-repeat="el.rooms">{{el}}<br></span></td>
+                <td>{{el.consumerName}}</td>
+                <td style="font-weight: 400;width:180px">{{el.goodName}}</td>
+                <td class="table-right">￥{{el.realPrice}}</td>
+                <td class="table-right">{{el.goodNum}}</td>
+                <td class="table-right">￥{{el.realPrice*el.goodNum}}</td>
+                <td style="width:120px">{{el.settleType==1 ? "计入房费结算" : "单独结算"}}</td>
+                <td style="width:120px">{{el.settleType==1 ? "" : getPayName(el.pcid)}}</td>
+                <td>{{el.operateUser}}</td>
+                <td class="table-center">
+                    <a ms-visible="canEdit" ms-click="editShopCost(el,0)" style="margin-right: 20px">修改</a>
+                    <a ms-visible="canDel" ms-click="deleteShopCost(el)">删除</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="order-list">
+        <table class="table table-bordered arrive-table">
+            <thead>
+            <tr>
+                <th>客人来源</th>
+                <th>房间号</th>
+                <th>入住/退房时间</th>
+                <th>联系人</th>
+                <th>手机号</th>
+                <th class="table-right">订单金额</th>
+                <th class="table-right">需补房费</th>
+                <th class="table-right">已收押金</th>
+                <th>操作人</th>
+                <th class="table-center">操作</th>
+            </tr>
+            </thead>
+            <tbody id="order-items"></tbody>
+        </table>
+    </div>
+    <div id="order-error-list" ms-visible="isErrorOrder">
+        <table class="table table-bordered arrive-table">
+            <thead>
+            <tr>
+                <th>客人来源</th>
+                <th>房间号</th>
+                <th>入住/退房时间</th>
+                <th>入住人</th>
+                <th>手机号</th>
+                <th class="table-right">订单金额</th>
+                <th class="table-right">需补房费</th>
+                <th class="table-right">已收押金</th>
+                <th>操作人</th>
+                <th>异常原因</th>
+                <th class="table-center">操作</th>
+            </tr>
+            </thead>
+            <tbody id="order-error-items">
+            <tr ms-if="errorList.length" ms-repeat-el="errorList">
+                <td>{{el.cfname}}</td>
+                <td>
+                    <p ms-repeat-elem="el.roomPopu">{{elem.roomno}}</p>
+                </td>
+                <td>
+                    <p ms-repeat-xx="el.roomPopu">{{xx.checkin}}~{{xx.checkout}}</p>
+                </td>
+                <td>{{el.contactUser}}</td>
+                <td>{{el.contactPhone}}</td>
+                <td class="table-right">￥{{el.totalAmount}}</td>
+                <td class="table-right">
+                    <span ms-if="el.goOnPay">￥</span>{{el.goOnPay}}
+
+                </td>
+                <td class="table-right">{{el.paidPayment}}</td>
+                <td>{{el.operateUser}}</td>
+                <td style="color: #CA0207">{{orderToState(el.orderStatus)}}</td>
+                <td class="table-center">
+                    <a class="handleErrorOrder" ms-click="errorOrderBind(el.id)" ms-attr-index=$index>操作订单</a>
+                </td>
+            </tr>
+            <tr ms-if="!errorList.length">
+                <td colspan="11" style="text-align: center;">暂无订单信息</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="page-div"></div>

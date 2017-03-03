@@ -1,0 +1,97 @@
+
+<!--客栈联盟-->
+<link rel="stylesheet" href="../css/inn_union_func.css">
+<div ms-visible="funcBool.union_plug">
+    <!--开启前-->
+    <div class="ui_fun_contenter" ms-visible="!hasSubOn">
+        <h1 class="u_border_left">功能说明</h1>
+        <div class="ui_fun_wrap">
+            <h5>.开启后，可以创建联盟或加入已有联盟。会员消费可以累积积分，还可以根据会员等级给与会员折扣优惠。</h5>
+            <img style="margin-top: 15px" src="../images/inn_union.png" alt="">
+        </div>
+    </div>
+    <!--开启后-->
+    <div  ms-visible="hasSubOn" ms-controller="vm_innUnion" class="func_union_on">
+        <div class="ui_fun_contenter bg_white">
+            <h1 class="u_border_left">我的联盟</h1>
+            <div class="ui_fun_wrap">
+                <h5>创建联盟或加入已有联盟。会员消费可以累积积分，还可以根据会员等级给与会员折扣优惠。</h5>
+                <div class="inn_union_l fl ui_func_box">
+                    <h1 class="ui_box_title">第二客栈联盟</h1>
+                    <div class="ui_box_content">
+                        <div class="border-btm">
+                            <p>简　介：西南客栈第二客栈联盟。</p>
+                        </div>
+                    </div>
+                    <div class="ui_box_footer">
+                        <button class="selected">提交会员资料</button>
+                        <button class="btn-">修改</button>
+                    </div>
+                </div>
+                <div class="inn_union_r fl">
+                    <div class="ui_func_box" style="margin-bottom: 20px" >
+                        <h1 class="ui_box_title">会员积分设置</h1>
+                        <div class="ui_box_content">
+                            <label>设置积分获取比例：</label><input type="text" class="u_input"> %　<button class="u_btn">修改</button>
+                        </div>
+                    </div>
+                    <div class="ui_func_box">
+                        <h1 class="ui_box_title">会员等级设置</h1>
+                        <div class="ui_box_content">
+                            <div style="height: 30px">
+                                <label>设置会员升级规则：</label>
+                                <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-90" style="top: -17px" ms-class-disabled="disabled" data-ui="dropdown">
+                                    <input type="hidden" value="0" ms-duplex="">
+                                    <a href="javascript:void(0);">
+                                        <span data-role="value" ms-duplex=""></span>
+                                        <i class="iconfont icon-arrowdown"></i>
+                                    </a>
+                                    <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                                        <a href="javascript:;" data-role="item" ms-data-value="item" style="display: block;" ms-repeat-item="">按消费金额</a>
+                                    </div>
+                                </div>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="u_btn">修改</button>
+                            </div>
+                            <div class="vip_list">
+                                <!--<span class="ui_inblock_grey">aaa <i></i></span>-->
+                                <div class="ui_inblock_grey" ms-repeat-el="">
+                                    <span class="txt">{{}} </span>
+                                    <div class="hide">
+                                        <input type="text">
+                                        <button>确定</button>
+                                    </div>
+                                    <i ms-click="delGood(el.id,$index)"></i>
+                                </div>
+
+                                <span class="ui_inblock_grey add">+添加会员等级</span>
+
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="ui_fun_contenter bg_white">
+            <h1 class="u_border_left">已加入的联盟</h1>
+            <div class="ui_fun_wrap">
+                <div class="inn_union_l fl ui_func_box">
+                    <h1 class="ui_box_title">第二客栈联盟</h1>
+                    <div class="ui_box_content">
+                        <div class="border-btm">
+                            <p>简　介：西南客栈第二客栈联盟。</p>
+                        </div>
+                    </div>
+                    <div class="ui_box_footer">
+                        <button class="selected">提交会员资料</button>
+                        <button class="btn-">退出联盟</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>

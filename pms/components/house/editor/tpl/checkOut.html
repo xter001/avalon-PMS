@@ -1,0 +1,159 @@
+<h3 class="info-top-head" ms-class-info-top-head-red="CHECK_OUT_STATUS != 1" ms-controller="vm_b_checkout_model">
+    <span ms-if="CHECK_OUT_STATUS == 1" class="f-14">办理退房</span>
+    <span ms-if="CHECK_OUT_STATUS != 1" class="f-14">提前退房</span>
+</h3>
+<!--姓名、大订单日期-->
+<div class="checkout-box co-borderb-dashed"  ms-controller="vm_b_checkout_model">
+    <h4  ms-controller="vm_guests" class="checkout-name" ms-repeat="datas" ms-if-loop="$index == 0">{{el.name}}</h4>
+    <div ms-if="CHECK_OUT_STATUS != 1">
+        <span>请选择离店时间：</span>
+        <div class="tomasky-ui-dropdown tomasky-ui-dropdown-num ui-checkout-date" data-ui="dropdown">
+            <input ms-duplex="allCheckOutDate" type="hidden">
+            <a  ms-click="clickCheckoutDate()"  href="javascript:void(0);">
+                <span data-role="value">{{allCheckOutDate | date("MM-dd")}}</span>
+                <i class="iconfont icon-arrowdown"></i>
+            </a>
+            <div class="ui-dropdown-list">
+                <a ms-click="changeCheckoutDate(el)" href="javascript:;" ms-repeat-el="checkoutDate"  ms-data-value="el" data-role="item">{{el | date("MM-dd")}}</a>
+            </div>
+        </div>
+        <span class="checkout-ld">离店</span>
+    </div>
+</div>
+<div class="checkout-box co-borderb-solid" ms-controller="vm_orders">
+    <dl ms-repeat-el="orders"  ms-controller="vm_b_checkout_model">
+        <!--正常退房-->
+        <dt ms-if="CHECK_OUT_STATUS == 1">
+            <label ms-click="toggleChecked(el, 'checkout', el.nocheck)">
+                <i class="iconfont"
+                   ms-class-icon-checked="el.checked&&!el.nocheck"
+                   ms-class-icon-unchecked="!el.checked&&!el.nocheck"
+                >
+                </i>
+                  <em class="stutas-label"
+                    ms-class-stutas-label-book="el.status == 2"
+                    ms-class-stutas-label-in="el.status == 3"
+                    ms-class-stutas-label-out="el.status == 4"
+                    ms-class-stutas-label-cancle="el.status == 5">
+                </em>
+                <span class="ft-14">{{el.roomNo.substring(0, 12)}}（{{el.roomtypeName}}）</span>
+            </label>
+        </dt>
+        <!--提前退房-->
+        <dt ms-if="CHECK_OUT_STATUS != 1" ms-class-padt6="allCheckout&&!isNoCheckInTruely(el.start)">
+            <label  ms-click="toggleChecked(el, 'checkout', el.nocheck)">
+                <i class="iconfont"
+                   ms-class-icon-checked="el.checked&&!el.nocheck&&!isNoCheckInTruely(el.start)&& el.status == 3"
+                   ms-class-icon-unchecked="!el.checked&&!el.nocheck&&!isNoCheckInTruely(el.start)&& el.status == 3"
+                >
+                </i>
+                <span class="ft-14">{{el.roomNo.substring(0, 12)}}（{{el.roomtypeName}}）</span>
+                <em class="stutas-label"
+                    ms-class-stutas-label-no-out="isNoCheckInTruely(el.start)"
+                    ms-class-stutas-label-book="el.status == 2&&!isNoCheckInTruely(el.start)"
+                    ms-class-stutas-label-in="el.status == 3&&!isNoCheckInTruely(el.start)"
+                    ms-class-stutas-label-out="el.status == 4&&!isNoCheckInTruely(el.start)"
+                    ms-class-stutas-label-cancle="el.status == 5&&!isNoCheckInTruely(el.start)">
+                </em>
+            </label>
+        </dt>
+        <dd>
+            <i></i>
+            <span class="ft-12 checkout-time" ms-if="!el.checked">{{el.start| date("MM-dd")}}入住 ~  {{el.stop| date("MM-dd")}}退房</span>
+            <span class="ft-12 checkout-time" ms-if="el.checked">{{el.start| date("MM-dd")}}入住 ~  {{allCheckOutDate>el.stop?el.stop:allCheckOutDate| date("MM-dd")}}退房</span>
+            <span ms-class="subOrderAll{{$index}} ft-12" ms-visible="el.days!=0"><span ms-visible="el.checked">{{el.daysPrefix}}</span>{{el.days}}晚</span>
+            <span ms-class="subOrderHalf{{$index}} ft-12" ms-visible="el.days == 0"><span ms-visible="el.checked">{{el.daysPrefix}}</span>半天</span>
+            <span class="right-sum ft-12" style="cursor: default;">￥{{el.sum | toFixed(2)}}</span>
+        </dd>
+    </dl>
+</div>
+<!-- 财务信息 -->
+<div ms-controller="vm_finances">
+    <div class="info-box" style="border-bottom: 0">
+        <div class="info-box-wrap">
+            <div class="info-show-section">
+                <b class="info-show-section-icon">
+                    <i class="iconfont icon-finance"></i>
+                </b>
+                <dl>
+                    <dt class="clearfix">
+                        <span>订单金额：</span>
+                        <strong class="right-sum">￥{{totalAmount | toFixed}}</strong>
+                    </dt>
+                    <dt class="clearfix">
+                        <span>已收金额：</span>
+                        <span class="right-sum">￥{{paidAmount | toFixed}}</span>
+                    </dt>
+                    <dt class="clearfix" ms-visible="paidPayment != 0">
+                        <span>已收押金：</span>
+                        <span class="right-sum">￥{{paidPayment | toFixed}}</span>
+                    </dt>
+                    <dt class="clearfix">
+                        <span>需{{overage < 0 ? '退' : '补'}}房费：</span>
+                        <strong class="right-sum c-red">￥{{Math.abs(overage) | toFixed}}</strong>
+                    </dt>
+                </dl>
+                <!-- 追加的财务 -->
+                <div class="dashed-line"></div>
+                <dl class="items-area">
+                    <dd class="clearfix">
+                        <div class="tomasky-ui-dropdown price-dropdown" data-ui="dropdown">
+                            <input ms-duplex="backRoomFee.financeId" type="hidden" ms-change="financeChange(backRoomFee, $event)">
+                            <a href="javascript:void(0);">
+                                <span data-role="value" ms-data-value="backRoomFee.financeId">{{financeEnum[backRoomFee.financeId].name}}</span>
+                                <i class="iconfont icon-arrowdown"></i>
+                            </a>
+                            <div class="ui-dropdown-list">
+                                <a href="javascript:;" data-value="5" data-role="item">退还房费</a>
+                                <a href="javascript:;" data-value="2" data-role="item">支付房费</a>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control input-amount tabId" maxlength="8" placeholder="金额"
+                               ms-blur="avalon.filters.validNumber(this, 'n', false, null, null, null, true)"
+                               ms-duplex="backRoomFee.amount"
+                               ms-on-keyup="checkPrice(backRoomFee, $event)"/>
+                        <div class="tomasky-ui-dropdown fr price-dropdown" data-ui="dropdown" ms-visible="backRoomFee.payId && backRoomFee.financeId != 11" ms-click="payEnumClick(backRoomFee, $event)">
+                            <input ms-duplex="backRoomFee.payId" type="hidden" ms-change="payChange(backRoomFee, $event)">
+                            <a href="javascript:void(0);">
+                                <span data-role="value" ms-data-value="backRoomFee.payId">{{backRoomFee.payName}}</span>
+                                <i class="iconfont icon-arrowdown"></i>
+                            </a>
+                            <div class="ui-dropdown-list">
+                                <a href="javascript:;" ms-repeat="payEnum" ms-data-value="el.id" ms-visible="el.show" data-role="item">{{el.name}}</a>
+                            </div>
+                        </div>
+                    </dd>
+                    <dd class="clearfix" ms-visible="backPayment.show">
+                        <div class="tomasky-ui-dropdown" data-ui="dropdown">
+                            <input ms-duplex="backPayment.financeId" type="hidden" ms-change="financeChange(backPayment, $event)">
+                            <a href="javascript:void(0);">
+                                <span data-role="value" ms-data-value="backPayment.financeId">{{financeEnum[backPayment.financeId].name}}</span>
+                                <i class="iconfont icon-arrowdown"></i>
+                            </a>
+                            <div class="ui-dropdown-list">
+                                <a href="javascript:;" data-value="6" data-role="item">退还押金</a>
+                                <a href="javascript:;" data-value="3" data-role="item">支付押金</a>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control input-amount tabId" maxlength="8" placeholder="金额"
+                               ms-blur="avalon.filters.validNumber(this, 'n', false, null, null, null, true)"
+                               ms-duplex="backPayment.amount"
+                               ms-on-keyup="checkPrice(backPayment, $event)"/>
+                        <div class="tomasky-ui-dropdown fr" data-ui="dropdown" ms-visible="backPayment.payId && backPayment.financeId != 11" ms-click="payEnumClick(backPayment, $event)">
+                            <input ms-duplex="backPayment.payId" type="hidden" ms-change="payChange(backPayment, $event)">
+                            <a href="javascript:void(0);">
+                                <span data-role="value" ms-data-value="backPayment.payId">{{backPayment.payName}}</span>
+                                <i class="iconfont icon-arrowdown"></i>
+                            </a>
+                            <div class="ui-dropdown-list">
+                                <a href="javascript:;" ms-repeat="payEnum" ms-data-value="el.id" ms-visible="el.show" data-role="item">{{el.name}}</a>
+                            </div>
+                        </div>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+

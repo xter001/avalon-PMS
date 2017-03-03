@@ -1,0 +1,37 @@
+<div id="bank_info_jump_popups" class="tomasky-ui-popups info-isnot-all">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">确认信息</h3>
+        </div>
+        <div class="ui-popups-body warm">
+            <p>您的收款银行卡信息不完整！</p>
+            <p>请前往填写后再确认订单</p>
+        </div>
+        <div class="ui-popups-foot dialog-foot">
+            <a target="_blank" href="/public/views/1/finance.html#tab=baseInfo" class="btn btndefault enter">前往填写&gt;&gt;</a>
+        </div>
+    </div>
+</div>
+
+<div id="bank_info_show_popups" class="tomasky-ui-popups enter-info">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">确认信息</h3>
+        </div>
+        <div class="ui-popups-body info-defail">
+            <h3>请确认您的收款银行卡信息上是否有误！</h3>
+            <p><span>账户类型：</span>{{bankType[innInfo.bankType]}}</p>
+            <p><span>户名：</span>{{innInfo.bankAccount}}</p>
+            <p><span>账户号：</span>{{innInfo.bankCode}}</p>
+            <p><span>开户银行：</span>{{innInfo.bankName}}</p>
+            <p><span>开户支行：</span>{{innInfo.bankRegion}}</p>
+            <p>注：若收款账号有误，请联系您的签约经理</p>
+        </div>
+        <div class="ui-popups-foot dialog-foot">
+            <button ms-click="comfirmBankInfo()" class="btn btndefault enter">确认无误</button>
+            <button class="btn btnsuccess cancel" data-dismiss="popups">取消</button>
+        </div>
+    </div>
+</div>

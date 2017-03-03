@@ -1,0 +1,143 @@
+var User = require('../../../header/user.js');
+var vm_customers = avalon.define({
+    $id : 'vm_customers',
+    tabShow : {
+        datas : true,
+        checkIn : false,
+        checkIn_new:false,
+        blacklist : false,
+        vipManage : false
+    },
+    innBase : {},
+    unions : {},
+
+    init : function () {
+        vm_customers.getBase()
+        vm_customers.getInnBase()
+
+    },
+    changeTab : function (type) {
+        location.hash = '#tab=' + type
+        var vm = vm_customers
+        var map = {
+            checkIn : false,
+            checkIn_new:false,
+            datas : false,
+            blacklist : false,
+            vipManage : false
+        }
+        for (var key in map) {
+            if (key == type) {
+                map[type] = true
+                break;
+            }
+        }
+        switch (type) {
+            case 'checkIn':
+                tmsky.getVm('vm_checkIn').init()
+                break;
+            case 'checkIn_new':
+                tmsky.getVm('vm_checkIn_new').init()
+                break;
+            case 'datas':
+                tmsky.getVm('vm_customersDatas').init()
+                break;
+            case 'blacklist':
+                tmsky.getVm('vm_blackList').init()
+                break;
+            case 'vipManage':
+                tmsky.getVm('vm_vipManage').init()
+                break;
+
+
+        }
+        vm.tabShow = map
+    },
+    renderPage : function (id, rs, callback) {
+        var list = [];
+        tmsky.ui.page.render({
+            id : id,
+            callbackParams : list,
+            callback : callback, // 或click : click
+            pages : rs.totalPages,
+            pageNo : rs.pageNo,
+            skin : 'red',
+            align : 'center',
+            totalCount : rs.totalCount
+        })
+    },
+
+    getBase : function () {
+        var url = '/inn/info/base/MT'
+        $.get(url).done(function (rs) {
+            tmsky.getVm('vm_customersDatas').msgTemp = rs.result.MT
+            tmsky.getVm('vm_vipManage').msgTemp = rs.result.MT
+        })
+    },
+    isMainInn : false,
+    isPsb:false,
+    getInnBase : function () {
+        var vm = vm_customers
+        var url = '/inn/info/base?temp=' + new Date().getTime()
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                vm.innBase = rs.result
+                tmsky.getVm('vm_vipManage').innBase = rs.result
+                //tmsky.getVm('vm_customersDatas').innBase = rs.result
+                if (rs.result.currentInn.id == rs.result.currentInn.superInnId) {
+                    vm.isMainInn = true
+                } else {
+                    vm.isMainInn = false
+                }
+                for(var o in vm.innBase.func){
+                    if(vm.innBase.func[o] == 'psb_func'){
+                        vm.isPsb = true;
+                        break;
+                    }
+                }
+                vm_customers.getUnions()
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    getUnions : function () {
+        var vm = vm_customers
+        var datas = {
+                pmsInnId : vm.innBase.currentInn.superInnId,
+                type : 2
+            },
+            url = COMMON_CONST.DOMAIN.DIS + '/union/getUnionInfo?temp=' + new Date().getTime()
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                if (rs.unions.length > 0 && rs.unions[0].openMember==1) {
+                    vm.unions = rs.unions[0]
+                    tmsky.getVm('vm_vipManage').unions = rs.unions[0]
+                    tmsky.getVm('vm_vipManage').gradeList = rs.unions[0].grades
+                    tmsky.getVm('vm_customersDatas').unions = rs.unions[0]
+                    tmsky.getVm('vm_customersDatas').hasUnions = true
+                    tmsky.getVm('vm_vipManage').hasOpenVip = true
+                } else {
+                    tmsky.getVm('vm_customersDatas').hasUnions = false
+                }
+                var params = location.hash
+                params = params.split('#')
+                var paramsJson = {}
+                params.forEach(function (el, i) {
+                    if (el == '')return
+                    var type = el.split('=')[0],
+                        value = el.split('=')[1]
+                    paramsJson[type] = value
+                })
+                if (!tmsky.isEmpty(paramsJson.tab)) {
+                    vm_customers.changeTab(paramsJson.tab)
+                } else {
+                    location.hash = '#tab=datas'
+                    vm_customers.changeTab('datas')
+                }
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    }
+})

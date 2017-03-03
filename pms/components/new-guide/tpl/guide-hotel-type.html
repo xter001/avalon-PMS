@@ -1,0 +1,30 @@
+<!--店铺类型-->
+<div class="new-guide-cover ms-controller"  ms-visible="bool.hotel" ms-controller="vm_guide_roomtype">
+    <div class="guide-cover-white"></div>
+    <div class="guide-hotel">
+        <h4 class="guide-hotel-title">{{innName}}老板 您好！</h4>
+        <h5 class="guide-hotel-des">欢迎使用“番茄来了”客栈管理系统，请选择您店铺的类型：</h5>
+        <div class="guide-hotel-list">
+            <ul>
+                <li class="guide-hotel-list-1" ms-class-on="hotelTypeActive == 0" ms-click="changeHotelType(0)">
+                    <i></i>
+                    <span>青旅</span>
+                </li>
+                <li class="guide-hotel-list-2" ms-class-on="hotelTypeActive == 1" ms-click="changeHotelType(1)">
+                    <i></i>
+                    <span>客栈/民宿</span>
+                </li>
+                <li class="guide-hotel-list-3" ms-class-on="hotelTypeActive == 2" ms-click="changeHotelType(2)">
+                    <i></i>
+                    <span>公寓</span>
+                </li>
+                <li class="guide-hotel-list-4" ms-class-on="hotelTypeActive == 3" ms-click="changeHotelType(3)">
+                    <i></i>
+                    <span>酒店</span>
+                </li>
+            </ul>
+        </div>
+        <a class="guide-btn-green" ms-click="ajaxHotelType()">下一步</a>
+    </div>
+</div>
+<link rel="stylesheet" href="../css/guide-room-type.css?__inline">

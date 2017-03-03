@@ -1,0 +1,641 @@
+<div class="finance-list-item fl">
+    <ul>
+        <!--2016/6/27 新增财务报表-->
+        <li class="finance-index"
+            ms-class-finance-index-active="tabShow.financeIndex"
+            ms-class-active="tabShow.financeIndex"
+            ms-click="changeTabs('financeIndex')"
+
+        >财务概览
+        </li>
+        <li class="day-list-income"
+            ms-class-active="tabShow.inCome"
+            ms-class-day-list-income-active="tabShow.inCome"
+            ms-click="changeTabs('inCome')"
+        >收支流水表<i class="ui-tips-new"></i>
+        </li>
+        <li class="day-sale-room"
+            ms-class-day-sale-room-active="tabShow.roomSale"
+            ms-class-active="tabShow.roomSale"
+            ms-click="changeTabs('roomSale')"
+        >房费日销售表
+        </li>
+        <li class="day-sale-good"
+            ms-class-day-sale-good-active="tabShow.goodSale"
+            ms-class-active="tabShow.goodSale"
+            ms-click="changeTabs('goodSale')"
+        >商品日销售表
+        </li>
+        <!--<li class="day-list-income"-->
+            <!--ms-if="!isNewUser"-->
+            <!--ms-class-active="tabShow.dayIncome"-->
+            <!--ms-class-day-list-income-active="tabShow.dayIncome"-->
+            <!--ms-click="changeTabs('dayIncome')"-->
+        <!--&gt;日收支流水表-->
+        <!--</li>-->
+        <li class="checkin-customer"
+            ms-class-checkin-customer-active="tabShow.customerIn"
+            ms-class-active="tabShow.customerIn"
+            ms-click="changeTabs('customerIn')"
+        >在住客人表
+        </li>
+        <li class="relief-shift-record" ms-if="plug.hasFunc('handover_func')"
+            ms-class-list-relief-shift-record="tabShow.handover" ms-class-active="tabShow.handover"
+            ms-click="changeTabs('handover')">交接班记录
+        </li>
+
+        <li class="accountBook" ms-if="!isNewUser" ms-class-list-account-book="tabShow.accountBook" ms-class-active="tabShow.accountBook"
+            ms-click="changeTabs('accountBook')">账本<i class="ui-red-circle"></i>
+        </li>
+        <li class="inn-gathering-info" ms-class-list-inn-gathering-info="tabShow.baseInfo"
+            ms-class-active="tabShow.baseInfo" ms-click="changeTabs('baseInfo')">客栈收款信息
+        </li>
+        <li class="commission-reconciliation" ms-class-list-commission-reconciliation="tabShow.sale"
+            ms-class-active="tabShow.sale" ms-click="changeTabs('sale')">代销对账
+        </li>
+        <li class="collecting-reconciliation" ms-class-list-collecting-reconciliation="tabShow.collection"
+            ms-class-active="tabShow.collection" ms-click="changeTabs('collection')">番茄代收对账
+        </li>
+
+        <li class="hand-account-detail" ms-class-active="tabShow.handoverDetail"
+            ms-class-list-hand-account-detail="tabShow.handoverDetail"
+            ms-if="tabShow.handoverDetail"
+            ms-click="changeTabs('handoverDetail')">交接明细
+        </li>
+    </ul>
+</div>
+<div class="items-info finance-main-info">
+    <div class="ui-guiding" ms-if="guide.show">
+        <!--step1-->
+        <!--<div ms-visible="guide.step == 0" class="ui-guide-step1 ui-guide-back">-->
+            <!--<i class="ui-guide-triangle"></i>-->
+            <!--<h4>全新的收支流水表</h4>-->
+            <!--<span ms-click="changeGuide(1)" class="ui-guide-btn">下一步</span>-->
+        <!--</div>-->
+        <div ms-visible="guide.step == 0" class="ui-guide-step2 ui-guide-back">
+            <i class="ui-guide-triangle-top"></i>
+            <h4 class="textc">设置您的筛选条件</h4>
+            <p>· 默认情况下，系统将搜索全部条件的财务信息。</p>
+            <p>· 您可以在“功能库”中自定义筛选项目。</p>
+            <span ms-click="changeGuide(1)" class="ui-guide-btn">下一步</span>
+        </div>
+        <div ms-visible="guide.step == 1" class="ui-guide-step3 ui-guide-back textc">
+            <i class="ui-guide-triangle-top" style="left: 116px;"></i>
+            <h4>这里可查看客栈的全部收支流水情况</h4>
+            <span ms-click="changeGuide(2)" class="ui-guide-btn">下一步</span>
+        </div>
+        <div ms-visible="guide.step == 2" class="ui-guide-step4 ui-guide-back textc">
+            <i class="ui-guide-triangle-top"></i>
+            <h4>订单收支明细和记一笔收支明细</h4>
+            <p>您可以在这里对账</p>
+            <p>点击查看详细“查看订单”可了解更多订单信息</p>
+            <span ms-click="changeGuide(-1)" class="ui-guide-btn">朕知道了</span>
+        </div>
+    </div>
+
+    <div id="financeIndex_div" ms-if="tabShow.financeIndex"></div>
+
+    <div id="roomSale_div" ms-if="tabShow.roomSale"></div>
+
+    <div id="goodSale_div" ms-if="tabShow.goodSale"></div>
+
+    <!--<div id="dayIncome_div" ms-if="tabShow.dayIncome"></div>-->
+    <div id="income_div" ms-visible="tabShow.inCome"></div>
+
+    <div id="customerIn_div" ms-if="tabShow.customerIn"></div>
+
+    <div id="account_book_div" ms-if="tabShow.accountBook&&!isNewUser" ms-controller="vm_account_book"
+         class="account-book finance-book">
+        <div ms-click="changeTabs('inCome')" class="account_book_tips">
+            <a>该页面将于  <span>2017年3月1日</span> 被删除，我们建议您使用新的“收支流水表”进行对账；使用记一笔记录原账本的支出与收入。</a>
+        </div>
+        <div class="account-book-head">
+            <div class="fl">
+                <a ms-if="access.access('account_book_in')" ms-click="saveOrUpdate(accountBook, 'save', '1')"
+                   class="book-income">收入</a>
+                <a ms-if="access.access('account_book_out')" ms-click="saveOrUpdate(accountBook, 'save', '2')"
+                   class="book-spend">支出</a>
+                <a ms-if="access.access('account_book_batch_add')" ms-click="showAccountList()" class="batch-account"
+                   data-ui="popups" data-target="#accountBooks_popups">批量计账<span></span></a>
+            </div>
+            <div class="fr">
+                <select ms-duplex="data.type" ms-change="getFinanceRecords(1)" class="select-account-type">
+                    <option value="1" selected="selected">全部账目</option>
+                    <option value="2">账本财务</option>
+                    <option value="3">订单财务</option>
+                </select>
+                <!--<input id="account_from" ms-duplex="data.from" type="text" placeholder="开始时间" class="select-time">-->
+                <!--至-->
+                <!--<input id="account_to" ms-duplex="data.to" type="text" placeholder="结束时间" class="select-time">-->
+                <!--<a ms-click="getFinanceRecords(1, 'export')" class="button_yuding">导出excel</a>-->
+                <div class="time-list-box fr">
+                    <a ms-click="getFinanceRecords(1, 'export')" class="button_yuding fr">导出excel</a>
+                    <div class="time-cover big-box fr" ms-click="openBookTimeBox">
+                        <i></i>{{formatTime(data.from,true)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(data.to,true)}}
+                    </div>
+                    <div class="time-select" style="top: 106px;right: 135px;">
+                        <input id="account_from" ms-duplex="tempTime.from" type="text" placeholder="开始时间" class="select-time">
+                        至
+                        <input id="account_to" ms-duplex="tempTime.to" type="text" placeholder="结束时间" class="select-time"></br>
+                        <button class="btn-sure" ms-click="searchFinanceRecords">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="clear account-book-body">
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th width="12.2%">时间</th>
+                    <th width="7.9%">
+                        <select ms-duplex="data.itemType" ms-change="getFinanceRecords(1)">
+                            <option value="">类型</option>
+                            <option value="1">收入</option>
+                            <option value="2">支出</option>
+                        </select>
+                    </th>
+                    <th width="10.2%">
+                        <select ms-change="changeItem()">
+                            <option value="">项目</option>
+                            <option ms-repeat-el="acs" tag="ac_item" ms-attr-value="el.name">{{el.name}}</option>
+                            <option ms-repeat-el="fis" ms-if-loop="($index + 1) <= 6" tag="fi_item"
+                                    ms-attr-value="$index + 1">{{el}}
+                            </option>
+                            <option ms-repeat-el="fis" ms-if-loop="($index + 1) > 6" tag="fi_item"
+                                    ms-attr-value="$index + 3">{{el}}
+                            </option>
+                        </select>
+                    </th>
+                    <th width="5.5%" class="table-right">数量</th>
+                    <th width="12.8%" class="table-right">总金额</th>
+                    <th width="12.6%" class="th-select-num">
+                        <select ms-duplex="data.payChannelName" ms-change="getFinanceRecords(1)">
+                            <option value="">支付方式</option>
+                            <option ms-repeat-el="allpcs" ms-attr-value="el.name">{{el.name}}</option>
+                        </select>
+                    </th>
+                    <th width="12.6%">
+                        <select ms-duplex="data.mobile" ms-change="getFinanceRecords(1)">
+                            <option value="">操作人</option>
+                            <option ms-repeat-el="ads" ms-attr-value="el.userCode">{{el.userCode}}</option>
+                        </select>
+                    </th>
+                    <th width="13.4%">备注</th>
+                    <th width="12.8%" class="table-center">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="books" ms-class-red="el.streamType == '支出'"
+                    ms-class-account-book-modify="el.sign != 0">
+                    <td>{{el.recordingTime}}</td>
+                    <td class="td-select">{{el.streamType}}</td>
+                    <td class="td-select">{{el.item}}</td>
+                    <td class="table-right">{{el.nums}}</td>
+                    <td class="table-right">{{el.streamMoney}}</td>
+                    <td class="td-select-num">{{el.payChannelName}}</td>
+                    <td class="td-select">{{el.recordingUser || el.updatedUser}}</td>
+                    <td ms-if="el.sign != 0" ms-attr-value="el.notes">{{el.notes}}</td>
+                    <td ms-if="el.sign == 0" ms-attr-value="el.roomNos">{{el.roomNos}}<span
+                            ms-if="el.roomNos!=''&& el.contactUser!=''">({{el.contactUser}})</span>
+                    </td>
+                    <td class="table-center" ms-if="el.sign == 0"><a ms-click="getOrderInfo(el)">查看订单</a></td>
+                    <td class="table-center" ms-if="el.sign != 0">
+                        <a ms-if="access.access('account_book_remove_change')" data-ui="popups"
+                           data-target="#account_book_popups" ms-click="saveOrUpdate(el, 'edit', 0)" class="edit">编辑</a>
+                        <a ms-if="access.access('account_book_remove_change')" ms-click="removeAccountBook(el)"
+                           class="delete">删除</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div id="account_book_page" style="margin-bottom: 35px;"></div>
+        </div>
+        <div class="account-book-footer">
+            <ul>
+                <li style="width: 12.2%">合计</li>
+                <li style="width: 7.9%">&nbsp;</li>
+                <li style="width: 10.2%">&nbsp;</li>
+                <li ms-class-red="total.num < 0" style="width: 5.5%">{{total.num}}</li>
+                <li ms-class-red="total.fee < 0" style="width: 12.8%">{{total.fee}}</li>
+                <li style="width: 12.6%">&nbsp;</li>
+                <li style="width: 12.6%">&nbsp;</li>
+                <li style="width: 13.4%">&nbsp;</li>
+                <li style="width: 12.8%">&nbsp;</li>
+            </ul>
+        </div>
+        <div id="account_book_alert">
+        </div>
+    </div>
+    <div id="bank_info_div" ms-if="tabShow.baseInfo" ms-controller="vm_bank_info" class="inn-gathering-info">
+        <p>
+            完善收支账户信息可以便捷使用番茄代销和番茄代收，填写完成后，不可修改，请务必正确填写。
+            <a ms-if="editView.agreeClause" data-ui="popups" data-target="#bank_info_clause_popups" class="inn-a">查看番茄来了代收协议</a>
+        </p>
+        <p class="open-fanqiedaishou-p">
+            <button ms-if="!editView.agreeClause" data-ui="popups" data-target="#bank_info_clause_popups"
+                    class="inn-btn-s" style="width: 200px;">填写收支账户信息
+            </button>
+        </p>
+        <div ms-if="editView.agreeClause" class="bank-account-receipt-info">
+            <h3>
+                银行账户收款信息
+            </h3>
+            <div class="bank-info-body">
+                <p>
+                    账户类型：
+                    <label>
+                        <input ms-attr-disabled="!editView.editBank" ms-duplex-string="bankInfo.bankType" value="1"
+                               type="radio" name="accountType">个人账户
+                    </label>
+                    <label>
+                        <input ms-attr-disabled="!editView.editBank" ms-duplex-string="bankInfo.bankType" value="2"
+                               type="radio" name="accountType">公司账户
+                    </label>
+                    <span class="tip" ms-if="error.bank.bankType">*{{error.bank.bankType}}</span>
+                </p>
+                <p>
+                    户&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;名：
+                    <input ms-attr-disabled="!editView.editBank" id="bankAccount" name="bankAccount" type="text"
+                           ms-duplex="bankInfo.bankAccount" placeholder="公司名或个人姓名" class="common-input"/>
+                    <span class="tip" ms-if="error.bank.bankAccount">*{{error.bank.bankAccount}}</span>
+                </p>
+                <p>
+                    账&nbsp;&nbsp;户&nbsp;&nbsp;号：
+                    <input ms-css-font-weight="bankInfo.bankCode!=null&&bankInfo.bankCode!=''?'800':'400'" ms-attr-disabled="!editView.editBank" id="bankCode" name="bankCode" type="text"
+                           ms-duplex="bankInfo.bankCode" maxlength="39" ms-on-keyup="metalWork()" placeholder="银行卡号或者存折号" class="common-input"/>
+                    <span class="tip" ms-if="error.bank.bankCode">*{{error.bank.bankCode}}</span>
+                </p>
+                <p>
+                    开户银行：
+                    <input ms-attr-disabled="!editView.editBank" id="bankName" type="hidden" name="bankName"
+                           ms-duplex="bankInfo.bankName" class="common-input"/>
+                    <span class="tip" ms-if="error.bank.bankName">*{{error.bank.bankName}}</span>
+                </p>
+                <p>请认真核对开户行信息，以免造成结算款无法支付。例：<span class="red">浙江省嘉兴市嘉善马路口支行</span></p>
+                <p>
+                    开户地区：
+                    <input ms-attr-disabled="!editView.editBank" id="bank-province" type="hidden" class="common-input"/><input
+                        ms-attr-disabled="!editView.editBank" id="bank-city" type="hidden" class="common-input"/>
+                    <input ms-attr-disabled="!editView.editBank" id="bankRegion" name="bankRegion"
+                           ms-duplex="bankInfo.bankRegion" type="text" maxlength="50" placeholder="XX支行"
+                           class="common-input detail-address"/>
+                    <span class="tip" ms-if="error.bank.bankRegion">*{{error.bank.bankRegion}}</span>
+                    <span class="tip" ms-if="error.bank.bankProvince">*{{error.bank.bankProvince}}</span>
+                    <span class="tip" ms-if="error.bank.bankCity">*{{error.bank.bankCity}}</span>
+                </p>
+                <p>
+                    <button ms-if="editView.editBank" ms-click="updateBankInfo()" class="save">保存</button>
+                </p>
+            </div>
+            <div>
+                <div class="third-party-account-info">
+                    <div>
+                        <a class="alipay"><img src="../images/alipay.png"></a>
+                        <p>
+                            支付宝账号：
+                            <input ms-attr-disabled="!editView.editAliPay" ms-duplex="payInfo.alipayCode" type="text"
+                                   placeholder="Email/手机号" class="common-input">
+                            <span class="tip" ms-if="error.pay.bankType">*{{error.pay.bankType}}</span>
+                        </p>
+                        <p>
+                            付款人姓名：
+                            <input ms-attr-disabled="!editView.editAliPay" ms-duplex="payInfo.alipayUser" type="text"
+                                   placeholder="用于支付宝银行校验全名" class="common-input">
+                            <i class="question"><span>为保证账户收款正常，请务必填写已实名认证的支付宝账户</span></i>
+                            <span class="tip" ms-if="error.pay.alipayUser">*{{error.pay.alipayUser}}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <a class="tenpay"><img src="../images/tenpay.png"></a>
+                        <p>
+                            财付通账号：
+                            <input ms-attr-disabled="!editView.editTenPay" ms-duplex="payInfo.tenpayCode" type="text"
+                                   placeholder="QQ号码" class="common-input">
+                            <span class="tip" ms-if="error.pay.tenpayCode">*{{error.pay.tenpayCode}}</span>
+                        </p>
+                        <p>
+                            付款人姓名：
+                            <input ms-attr-disabled="!editView.editTenPay" ms-duplex="payInfo.tenpayUser" type="text"
+                                   placeholder="用于财付通校验全名" class="common-input">
+                            <span class="tip" ms-if="error.pay.tenpayUser">*{{error.pay.tenpayUser}}</span>
+                        </p>
+                    </div>
+                </div>
+                <p>
+                    <button ms-if="editView.editTenPay || editView.editAliPay" ms-click="updatePayInfo()"
+                            class="save account-save">保存
+                    </button>
+                </p>
+            </div>
+        </div>
+        <div id="bank_info_alert_div"></div>
+    </div>
+    <div id="bill_check_div" ms-if="tabShow.sale" ms-controller="vm_bill_check" class="commission-reconciliation">
+        <div class="account-info">
+            <!-- 账户信息 getInnCollectionAccount -->
+            <div class="clear-float">
+                <p style="float:left;">
+                    <strong ms-if="innInfo.bankAccount != null">当前收款的账号信息：
+                        {{bankType[innInfo.bankType]}}
+                        ：{{innInfo.bankCode}}/{{innInfo.bankAccount}}
+                        {{innInfo.bankName}}（{{innInfo.bankRegion}}）
+                    </strong>
+                    <strong ms-if="innInfo.bankAccount == null">当前收款的账号信息：暂无</strong>
+                </p>
+                <div class="f-right">
+                    <a ms-if="billCheckView.details" ms-click="checkDetails(1, 'export')"
+                       class="button_yuding">导出excel</a>
+                    <a ms-if="billCheckView.details" ms-click="setViews(true, false)" href="javascript:void(0)"
+                       class="back">返回</a>
+                </div>
+            </div>
+            <!-- 汇总账单 getSummaryBill -->
+            <div class="clear-float">
+                <span>剩余未结算金额<b>{{settlementInfo.incomeSettlementAmount}}</b>元，累计欠款<b>{{settlementInfo.arrearsSettlementAmount}}</b>元，合计应结金额 <b>
+                    {{settlementInfo.totalSettlementAmount}}</b>元。</span>
+                <span>番茄代销财务联系人：刘菊&nbsp;&nbsp;&nbsp;&nbsp;电话：028-85961162&nbsp;&nbsp;&nbsp;&nbsp;QQ：3090225943&nbsp;&nbsp;&nbsp;&nbsp;咨询时间：工作日9:00-18:00</span>
+            </div>
+        </div>
+        <div ms-if="billCheckView.bills" class="commission-reconciliation-body">
+            <table class="table table-bordered arrive-table">
+                <thead>
+                <tr>
+                    <th>结算周期</th>
+                    <th class="table-right">订单总数</th>
+                    <th class="table-right">订单总金额</th>
+                    <th class="table-right">应结金额</th>
+                    <th class="table-right">退款金额</th>
+                    <th class="table-right">赔付金额</th>
+                    <th class="table-right">实结金额</th>
+                    <th class="table-center">详情</th>
+                    <th class="table-center">结算进程</th>
+                    <th class="table-center">打款时间</th>
+                    <th class="table-center">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat="bills">
+                    <td>{{el.settlementTime}}</td>
+                    <td class="table-right">{{el.totalOrder}}</td>
+                    <td class="table-right">￥{{el.totalAmount}}</td>
+                    <td class="table-right">￥{{el.innSettlementAmount}}</td>
+                    <td class="table-right">￥{{el.refundAmount}}</td>
+                    <td class="table-right">￥{{el.innPayment}}</td>
+                    <td class="table-right">￥{{el.afterPaymentAmount}}</td>
+                    <td class="table-center"><a class="original-a" ms-click="checkDetails(1, '', el)">查看详情</a></td>
+                    <td class="table-center">{{el.settlementStatus}}</td>
+                    <td class="table-center">{{el.remitTime}}</td>
+                    <td class="table-center" ms-if-loop="el.confirmStatus == '未确认'"><a ms-click="comfirmOrder(el)">{{el.confirmStatus}}</a>
+                    </td>
+                    <td class="table-center default" ms-if-loop="el.confirmStatus != '未确认'">{{el.confirmStatus}}</td>
+                </tr>
+                </tbody>
+            </table>
+            <div id="bill_check_page"></div>
+        </div>
+        <div ms-if="billCheckView.details" class="commission-reconciliation-body">
+
+            <ul class="nav-tab clear-float">
+                <li class="nav-tab-active" ms-click="checkDetails(1, '', '', 1)">正常订单</li>
+                <li ms-click="checkDetails(1, '', '', 2)">赔付订单</li>
+                <li ms-click="checkDetails(1, '', '', 3)">退款订单</li>
+            </ul>
+            <table class="table table-bordered arrive-table">
+                <thead>
+                <tr>
+                    <th><select ms-change="checkDetails(1, '')" ms-duplex="data.priceStrategy">
+                        <option value="">合作模式</option>
+                        <option value="1">精品代销</option>
+                        <option value="2">普通代销</option>
+                    </select></th>
+                    <th>订单号</th>
+                    <th>客人姓名</th>
+                    <th>手机号</th>
+                    <th>房型</th>
+                    <th>房间数</th>
+                    <th>单价</th>
+                    <th>入住日期</th>
+                    <th>退房日期</th>
+                    <th>订单总价</th>
+                    <th ms-if="data.billType == 1">佣金</th>
+                    <th ms-if="data.billType == 1">结算金额</th>
+                    <th ms-if="data.billType == 2">赔付金额</th>
+                    <th ms-if="data.billType == 3">退款金额</th>
+                    <th>下单时间</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="recordDetailList" ms-repeat-order="el.orderList">
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.priceStrategy}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.channelOrderNo}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.userName}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.contact}}</td>
+                    <td>{{order.channelRoomTypeName}}</td>
+                    <td>{{order.roomTypeNums}}</td>
+                    <td>{{order.innAmount}}</td>
+                    <td>{{order.checkInAt}}</td>
+                    <td>{{order.checkOutAt}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.innAmount}}</td>
+                    <td ms-if="data.billType == 1" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.fqSettlementAmount}}
+                    </td>
+                    <td ms-if="data.billType == 1" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.innSettlementAmount}}
+                    </td>
+                    <td ms-if="data.billType == 2" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.innPayment}}
+                    </td>
+                    <td ms-if="data.billType == 3" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.innRefund}}
+                    </td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.orderTime}}</td>
+                </tr>
+                </tbody>
+            </table>
+            <div id="bill_check_details_page"></div>
+            <table id="bill_check_details_table_hide" class="table" style="display:none">
+                <thead>
+                <tr>
+                    <th>合作模式</th>
+                    <th>订单号</th>
+                    <th>客人姓名</th>
+                    <th>手机号</th>
+                    <th>房型</th>
+                    <th>房间数</th>
+                    <th>单价</th>
+                    <th>入住日期</th>
+                    <th>退房日期</th>
+                    <th>订单总价</th>
+                    <th ms-if="data.billType == 1">佣金</th>
+                    <th ms-if="data.billType == 1">结算金额</th>
+                    <th ms-if="data.billType == 2">赔付金额</th>
+                    <th ms-if="data.billType == 3">退款金额</th>
+                    <th>下单时间</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="exportList" ms-repeat-order="el.orderList">
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.priceStrategy}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.channelOrderNo}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.userName}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.contact}}</td>
+                    <td>{{order.channelRoomTypeName}}</td>
+                    <td>{{order.roomTypeNums}}</td>
+                    <td>{{order.innAmount}}</td>
+                    <td>{{order.checkInAt}}</td>
+                    <td>{{order.checkOutAt}}</td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.innAmount}}</td>
+                    <td ms-if="data.billType == 1" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.fqSettlementAmount}}
+                    </td>
+                    <td ms-if="data.billType == 1" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.innSettlementAmount}}
+                    </td>
+                    <td ms-if="data.billType == 2" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.innPayment}}
+                    </td>
+                    <td ms-if="data.billType == 3" ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">
+                        {{el.innRefund}}
+                    </td>
+                    <td ms-attr-rowspan="el.orderList.length" ms-if-loop="$index == 0">{{el.orderTime}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="bill_check_alert_div"></div>
+    </div>
+    <div id="collect_check_div" ms-if="tabShow.collection"
+         class="collecting-reconciliation">
+
+    </div>
+    <div id="handover_div" ms-if="tabShow.handover" ms-controller="vm_handover" class="relief-shift-record">
+        <div style="display: none"><input type="text" class="common-input"><input type="password" class="common-input">
+        </div>
+        <div class="finance-nav-head">
+            <h1>交接班记录</h1>
+            <!--<div class="fr">-->
+                <!--<input id="handover_from" ms-duplex="data.from" type="text" placeholder="开始时间" class="select-time">至-->
+                <!--<input id="handover_to" ms-duplex="data.to" type="text" placeholder="结束时间" class="select-time">             -->
+            <!--</div>-->
+
+            <div class="time-list-box fr">
+                <div class="time-cover big-box fr" ms-click="openHandoverTimeBox">
+                    <i></i>{{formatTime(data.from,true)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(data.to,true)}}
+                </div>
+                <div class="time-select" style="top: 47px;right: 20px;">
+                    <input id="handover_from" ms-duplex="handoverTempData.from" type="text" placeholder="开始时间" class="select-time">到
+                    <input id="handover_to" ms-duplex="handoverTempData.to" type="text" placeholder="结束时间" class="select-time"></br>
+                    <button class="btn-sure" ms-click="searchHandover">确定</button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="relief-shift-record-body">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>起始时间</th>
+                    <th>结束时间</th>
+                    <th>状态</th>
+                    <th>交班人</th>
+                    <th>接班人</th>
+                    <th class="table-center">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-repeat-el="handoverList">
+                    <td>{{el.fromDate}}</td>
+                    <td>{{el.toDate}}</td>
+                    <td ms-class-colred="setColRed(el.status)">{{handStatus(el.status)}}</td>
+                    <td>{{el.handoverMan.userCode}}({{el.handoverMan.name}})</td>
+                    <td>{{el.successorMan.userCode}}({{el.successorMan.name}})</td>
+                    <td class="table-center"><a ms-click="getDetail(el, true)" class="ui-look-detail">查看详情</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="handover_page"></div>
+        <div id="handover_alert"></div>
+    </div>
+    <div id="handover_detail" ms-if="tabShow.handoverDetail" ms-controller="vm_handover_detail">
+        <div class="handover-detail-info">
+            <div class="handover-detail-title">
+                <span ms-if="showView.snapshot == 1" ms-class-widthhalf="showView.snapshot == 1">交接时财务明细快照</span>
+                <span ms-class-widthhalf="showView.snapshot == 1"
+                      ms-class-widthall="showView.snapshot == 0">实时财务明细</span>
+            </div>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th ms-if="showView.snapshot == 1">时间</th>
+                    <th ms-if="showView.snapshot == 1">分类</th>
+                    <th ms-if="showView.snapshot == 1">项目</th>
+                    <th ms-if="showView.snapshot == 1">金额</th>
+                    <th ms-if="showView.snapshot == 1">支付方式</th>
+                    <th ms-if="showView.snapshot == 1">状态</th>
+                    <th>时间</th>
+                    <th>分类</th>
+                    <th>项目</th>
+                    <th>金额</th>
+                    <th>支付方式</th>
+                    <th>操作人</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ms-if="delList.length" ms-repeat-el="delList">
+                    <td ms-if-loop="el.pre" ms-class-colred="!el.pro">{{el.pre && el.pre.recordAt}}</td>
+                    <td ms-if-loop="el.pre" ms-class-colred="!el.pro">{{el.pre && el.pre.listTypeName}}</td>
+                    <td ms-if-loop="el.pre" ms-class-colred="!el.pro">{{itemTransform(el.pre && el.pre.item)}}</td>
+                    <td ms-if-loop="el.pre" ms-class-colred="!el.pro">{{el.pre && el.pre.cashIn-el.pre.cashOut}}</td>
+                    <td ms-if-loop="el.pre" ms-class-colred="!el.pro">{{el.pre && el.pre.pcname}}</td>
+                    <td ms-if-loop="el.pre" ms-class-colred="el.pre.status==2 || !el.pro" class="border-r-grav">
+                        {{el.pro ? el.pre && statusToString(el.pre.status):'被删除'}}
+                    </td>
+                    <td ms-if-loop="!el.pre && showView.snapshot == 1" colspan="6" class="table-center border-r-grav">
+                        原快照无记录,交接后新增
+                    </td>
+
+                    <td ms-if-loop="el.pro" ms-class-colred="el.pre.status==2 ||(!el.pre && showView.snapshot == 1)">
+                        {{el.pro.recordAt}}
+                    </td>
+                    <td ms-if-loop="el.pro" ms-class-colred="el.pre.status==2 ||(!el.pre && showView.snapshot == 1)">
+                        {{el.pro.listTypeName}}
+                    </td>
+                    <td ms-if-loop="el.pro" ms-class-colred="el.pre.status==2 ||(!el.pre && showView.snapshot == 1)">
+                        {{itemTransform(el.pro.item)}}
+                    </td>
+                    <td ms-if-loop="el.pro" ms-class-colred="el.pre.status==2 ||(!el.pre && showView.snapshot == 1)">
+                        {{el.pro.cashIn-el.pro.cashOut}}
+                    </td>
+                    <td ms-if-loop="el.pro" ms-class-colred="el.pre.status==2 ||(!el.pre && showView.snapshot == 1)">
+                        {{el.pro.pcname}}
+                    </td>
+                    <td ms-if-loop="el.pro" ms-class-colred="el.pre.status==2 ||(!el.pre && showView.snapshot == 1)">
+                        {{el.pro.operateUser}}
+                    </td>
+                    <td ms-if-loop="!el.pro" colspan="6" ms-class-colred="el.pre.status==2" class="table-center">
+                        原快照有记录,交接后被删除或修改到交接班时间段之外
+                    </td>
+                </tr>
+
+                <tr ms-if="!delList.length">
+                    <td colspan="12" style="text-align: center">暂无交接明细</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="account-book-footer handover-footer">
+            <ul>
+                <li ms-if="showView.snapshot == 1" ms-class-widthhalf="showView.snapshot == 1">
+                    <span style="float: left;margin-left: 10px">总计</span>
+                    {{tatolAmount.preTotal}}
+                </li>
+                <li ms-class-widthhalf="showView.snapshot == 1" ms-class-widthall="showView.snapshot == 0">
+                    <span style="float: left;margin-left: 10px" ms-if="showView.snapshot == 0">总计</span>
+                    {{tatolAmount.proTotal}}
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

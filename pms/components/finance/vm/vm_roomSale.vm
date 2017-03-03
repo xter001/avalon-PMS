@@ -1,0 +1,166 @@
+var CommonUtil = require('../../common/js/utils/common-util.js'),
+    Total = require('../handler/totalStyle.js');
+
+
+var vm_roomSale = avalon.define({
+    $id : 'vm_roomSale',
+    timeData : {
+        from : ''
+    },
+    roomSaleList : [],
+    cfList : [],//渠道来源
+    cnList : [],//佣金
+    urls : {
+        getRoomFeeList : '/finance/getRoomFeeList'
+    },
+    totalDatas : {
+        todayFees : 0,
+        deditFees : 0,//违约房费
+        realFees : 0//扣佣后房费
+    },
+
+    init : function (time) {
+        var vm = vm_roomSale
+        var params = tmsky.location.params
+        if (params.tab == 'roomSale' && params._time != null) {
+            vm.timeData.from = params._time
+        } else {
+            vm.timeData.from = tmsky.date.today()
+        }
+        $("#roomSale_time").datepicker({
+            onSelect : function (selectedDate) {
+                vm.timeData.from = selectedDate
+                vm.getRoomSaleList()
+            }
+        })
+    },
+    initJson:function(){
+        var vm = vm_roomSale
+        if (vm.roomSaleList.length == 0) {
+            vm.getRoomSaleList()
+        }
+    },
+
+    getRoomSaleList : function () {
+        tmsky.ui.dialog.loading()
+        var vm = vm_roomSale,
+            arrList = []
+        vm.roomSaleList = []
+        var data = {
+            from : vm.timeData.from
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(data, true),
+            url : vm.urls.getRoomFeeList,
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    rs.list.forEach(function (tr, i) {
+                        var roomnosArr = tr.roomnos.split(','),
+                            roomTypeIdsArr = tr.roomTypeIds.split(','),
+                            checkinsArr = tr.checkins.split(','),
+                            checkoutsArr = tr.checkouts.split(','),
+                            feesArr = tr.fees.split(','),
+                            orderNo = ''
+                        //订单号
+                        if (tr.otaOrderNo != null) {
+                            orderNo = tr.otaOrderNo
+                        } else {
+                            orderNo = tr.orderNo
+                        }
+
+                        var item = {
+                            customerFrom : vm.cfMap(tr.customerFromId),
+                            orderNo : orderNo,
+                            roomnos : [],
+                            contactUser : tr.contactUser,
+                            penalty : tr.penalty,
+                            orderStatus:tr.orderStatus,
+                            commissionValue : vm.cnMap(tr.customerFromId),
+                            totalFees : 0,//当日房费总计
+                            realFees : 0//扣佣后房费总计
+                        }
+                        if(tr.orderStatus==0){
+                            feesArr.forEach(function(x,i){
+                                feesArr[i]=0
+                            })
+                        }
+
+                        roomnosArr.forEach(function (xx, i) {
+                            var room = {
+                                roomNo : xx,
+                                checkin : checkinsArr[i],
+                                checkout : checkoutsArr[i],
+                                fee : feesArr[i],
+                                commissionSum : '',
+                                realFee : feesArr[i]
+                            }
+                            if (item.commissionValue != '') {
+                                room.commissionSum = (item.commissionValue / 100) * room.fee
+                                room.realFee = room.fee - room.commissionSum
+                            }
+                            item.totalFees = parseFloat(item.totalFees) + parseFloat(room.fee)
+                            item.realFees = parseFloat(item.realFees) + parseFloat(room.realFee)
+
+                            item.roomnos.push(room)
+                        })
+
+                        arrList.push(item)
+
+                    })
+                    vm.roomSaleList = arrList
+                    Total.cssInit($('#roomSale_div'), 11)
+                    vm.countFee()
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            }
+
+        })
+    },
+    //    获取渠道来源
+    cfMap : function (id) {
+        var vm = vm_roomSale,
+            cf = '';
+        if (vm.cfList.length) {
+            vm.cfList.forEach(function (x) {
+                if (x.id == id) {
+                    cf = x.$model.name
+                }
+            })
+        }
+        return cf
+    },
+    //佣金
+    cnMap : function (channelId) {
+        var vm = vm_roomSale,
+            cn = ''
+        vm.cnList.forEach(function (x) {
+            if (x.channelId == channelId) {
+                cn = x.commissionValue
+            }
+        })
+
+        return cn
+    },
+
+    countFee : function () {
+        var vm = vm_roomSale
+        vm.totalDatas.todayFees = 0
+        vm.totalDatas.deditFees = 0
+        vm.totalDatas.realFees = 0
+        if (vm.roomSaleList) {
+            vm.roomSaleList.forEach(function (x, i) {
+                vm.totalDatas.todayFees = vm.totalDatas.todayFees + x.totalFees
+                vm.totalDatas.deditFees = vm.totalDatas.deditFees + x.penalty
+                vm.totalDatas.realFees = vm.totalDatas.realFees + x.realFees
+            })
+        }
+    },
+
+})

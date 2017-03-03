@@ -1,0 +1,214 @@
+var CONST = require('../common/const.js')
+
+var vm_collect_check = avalon.define({
+    $id : 'vm_collect_check',
+    page : {pageNo : 1, pageSize : 10, totalPages : -1, totalCount : -1},
+    data : {
+        from : '',
+        to : '',
+        selectType : 'month',
+        productCode : '',
+        payChannel : -1,
+        balance : 0,
+        timeType : 'payAt'
+    },
+    urls : {
+        getCollection : '/finance/getPayRecordVos',
+        getPayRecordCount : '/finance/getPayRecordCount',
+        exportExcel : '/finance/exportPayRecordVos'
+    },
+    countInfo : {
+        unliqOrderNum : 0,
+        totalAmount : 0
+    },
+    checkTypes : [
+        {id : 'xz_order', name : '老小站下单'},
+        {id : 'checkstand', name : '快捷支付'},
+        {id : 'new_xz_order', name : '新小站下单'}
+    ],
+    checkStatus : [{id : 0, name : '未结算'}, {id : 1, name : '已结算'}],
+    payChannels : [{id : 1, name : '支付宝'}, {id : 2, name : '微信'}, {id : 3, name : '银联'}],
+    payChannelMap : {1 : '支付宝', 2 : '微信', 3 : '银联'},
+    collectionList : [],
+    dsTempTime : {
+        from : '',
+        to : ''
+    },
+    navList : {
+        noBalance : true,
+        hasBalance : false
+    },
+    innId : CommonCacheUtil.innBaseInfo.user.innId,
+
+    init : function () {
+        vm_collect_check.data.from = tmsky.date.format(new Date(), 'yyyy-MM') + '-01'
+        vm_collect_check.dsTempTime.from = tmsky.date.format(new Date(), 'yyyy-MM') + '-01'
+        vm_collect_check.data.to = tmsky.date.getLastDayOfMon(vm_collect_check.data.from)
+        vm_collect_check.dsTempTime.to = tmsky.date.getLastDayOfMon(vm_collect_check.dsTempTime.from)
+        vm_collect_check.getPayRecordCount()
+        vm_collect_check.getCollection(1)
+        return
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('collect_check_div'))
+        return this
+    },
+
+    collectNavChange : function (nav) {
+        var vm = vm_collect_check
+        var map = {
+            noBalance : false,
+            hasBalance : false
+        }
+        for (var key in map) {
+            if (key == nav) {
+                map[key] = true
+                break;
+            }
+        }
+        vm.navList = map
+        switch (nav) {
+            case 'noBalance':
+                vm.data.balance = 0
+                vm.data.timeType = 'payAt'
+                vm.getPayRecordCount()
+                vm.getCollection(1)
+                break;
+            case 'hasBalance':
+                vm.data.balance = 1
+                vm.data.timeType = 'payAt'
+                vm.getPayRecordCount()
+                vm.getCollection(1)
+                break;
+        }
+    },
+    //查询代收概览
+    getPayRecordCount : function () {
+        var vm = vm_collect_check
+        var datas = {
+            balance : vm.data.balance,
+            from : vm.data.from,
+            to : vm.data.to,
+            innId : vm.innId,
+            productCode : vm.data.productCode,
+            timeType : vm.data.timeType
+        }
+        $.get(vm.urls.getPayRecordCount, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                vm.countInfo = rs.count
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    getCollection : function (pageNo, type) {
+        var vm = vm_collect_check
+        var datas = {
+            balance : vm.data.balance,
+            from : vm.data.from,
+            to : vm.data.to,
+            innId : vm.innId,
+            pageNo : pageNo,
+            productCode : vm.data.productCode,
+            timeType : vm.data.timeType
+        }
+        $.get(vm.urls.getCollection, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                rs.list.forEach(function (el) {
+                    if (el.payAt) {
+                        el.payAt = tmsky.date.format(el.payAt, 'yyyy-MM-dd hh:mm:ss')
+                    }
+                    if (el.balanceAt) {
+                        el.balanceAt = tmsky.date.format(el.balanceAt, 'yyyy-MM-dd hh:mm:ss')
+                    }
+                })
+                vm.collectionList = rs.list
+
+                var page = {}
+                tmsky.getVm('vm_finance_main').initPage('collect_check_page', page, function () {
+                    var pageInfo = tmsky.ui.page.getParams("collect_check_page")
+                    vm.page.pageNo = pageInfo.pageNo
+                    vm.getCollection(pageInfo.pageNo)
+                })
+            }
+        })
+    },
+    dataChange : function () {
+        var vm = vm_collect_check
+        vm.getPayRecordCount()
+        vm.getCollection(1)
+    },
+    exportExcel : function () {
+        tmsky.ui.dialog.loading();
+        var vm = vm_collect_check
+        var data = {
+            balance : vm.data.balance,
+            from : vm.data.from,
+            to : vm.data.to,
+            innId : vm.innId,
+            productCode : '',
+            timeType : vm.data.timeType
+        }
+        var loadUrl = vm.urls.exportExcel
+        var $form = $('<form></form>').attr({
+            'action' : loadUrl,
+            'method' : 'GET'
+        });
+        for (prop in data) {
+            if (data.hasOwnProperty(prop)) {
+                var $input = $('<input />')
+                $input.attr('name', prop).attr('value', data[prop]).appendTo($form);
+            }
+        }
+        $form.hide().appendTo($("body")).submit();
+        tmsky.ui.dialog.loading.close();
+    },
+
+    dsOpenTimeBox : function () {
+        var vm = vm_collect_check
+        $(this).next().show()
+        $("#collect_check_from").datepicker({
+            changeMonth : true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(selectedDate, vm.dsTempTime.to))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#collect_check_to").datepicker("setDate", tmsky.date.addDays(selectedDate, 30));
+                }
+            }
+        })
+        $("#collect_check_to").datepicker({
+            changeMonth : true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(vm.dsTempTime.from, selectedDate))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#collect_check_from").datepicker("setDate", tmsky.date.addDays(selectedDate, -30));
+                }
+            }
+        })
+    },
+    searchdsList : function () {
+        var vm = vm_collect_check
+        var defTime = parseInt(tmsky.date.diffDays(vm.dsTempTime.from, vm.dsTempTime.to))
+        if (vm.data.from == vm.dsTempTime.from && vm.data.to == vm.dsTempTime.to) {
+            $(this).parent().hide()
+            return
+        }
+        if (defTime < 0) {
+            tmsky.ui.dialog.errorTips('开始日期不能大于结束日期，请重新选择！')
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.data.from = vm.dsTempTime.from
+            vm.data.to = vm.dsTempTime.to
+            vm.getPayRecordCount()
+            vm.getCollection(1)
+            $(this).parent().hide()
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的财务信息！')
+        }
+    },
+    checkTypeTransform : function (x) {
+        return CONST.CHECKTYPE[x]
+    }
+
+})

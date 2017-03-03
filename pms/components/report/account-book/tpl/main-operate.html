@@ -1,0 +1,71 @@
+
+    <div id="account_book_div" ms-if="tabShow.accountBook"  ms-controller="vm_account_book" class="account-book finance-book">
+        <div class="account-book-head">
+            <div class="fl account-book-head-fl">
+                总收入：<label class="total-income">￥{{(total.income || 0) | toFixed}}</label>
+                总支出：<label class="total-payout">￥{{(total.payout || 0) | toFixed}}</label>
+                总结余：￥{{(total.income || 0) - (total.payout || 0) | toFixed}}
+            </div>
+            <div class="fr">
+                <input id="account_from" ms-duplex="data.from" type="text" placeholder="开始时间" class="select-time">
+                至
+                <input id="account_to" ms-duplex="data.to" type="text" placeholder="结束时间" class="select-time">
+                <a ms-click="getFinanceRecords(1, 'export')" class="button_yuding">导出excel</a>
+            </div>
+        </div>
+        <div class="clear account-book-body">
+            <table class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th width="10%">时间</th>
+                        <th width="12%">房间号</th>
+                        <th width="8%">客人姓名</th>
+                        <th width="8%">类型</th>
+                        <th width="10%">
+                            <select ms-change="changeItem()">
+                                <option value="">项目</option>
+                                <option ms-repeat-el="acs" tag="ac_item" ms-attr-value="el.name">{{el.name}}</option>
+                                <option ms-repeat-el="fis" tag="fi_item" ms-attr-value="$index + 1">{{el}}</option>
+                            </select>
+                        </th>
+                        <th width="8%" class="table-right">收入</th>
+                        <th width="8%" class="table-right">支出</th>
+                        <th width="10%" class="th-select-num">
+                            <select ms-duplex="data.pcname" ms-change="getFinanceRecords(1)">
+                                <option value="">支付方式</option>
+                                <option ms-repeat-el="allpcs" ms-attr-value="el.name">{{el.name}}</option>
+                            </select>
+                        </th>
+                        <th width="15%">备注</th>
+                        <th width="10%">
+                            <select ms-duplex="data.operateUser" ms-change="getFinanceRecords(1)">
+                                <option value="">操作人</option>
+                                <option ms-repeat-el="ads" ms-attr-value="el.userCode">{{el.userCode}}</option>
+                            </select>
+                        </th>
+                        <!--<th width="10%" class="table-center">操作</th>-->
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ms-repeat-el="books">
+                        <td>{{el.recordAt}}</td>
+                        <td>{{el.roomNos}}</td>
+                        <td>{{el.consumer}}</td>
+                        <td class="td-select">{{listType[el.listType]}}</td>
+                        <td class="td-select">{{el.itemName}}</td>
+                        <td class="table-right">{{el.cashIn}}</td>
+                        <td class="table-right">{{el.cashOut}}</td>
+                        <td class="td-select-num">{{el.pcname}}</td>
+                        <td class="td-select-num">{{el.note}}</td>
+                        <td class="td-select">{{el.operateUser}}</td>
+                        <!--<td class="table-center" ms-if="el.recordType == 1"><a ms-click="getOrderInfo(el)">查看订单</a></td>-->
+                        <!--<td class="table-center" ms-if="el.recordType != 1">-->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div id="account_book_page" style="margin-bottom: 35px;"></div>
+        </div>
+        <div id="account_book_alert">
+        </div>
+    </div>

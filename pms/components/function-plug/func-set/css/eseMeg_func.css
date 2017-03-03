@@ -1,0 +1,348 @@
+body {
+    font-family: '微软雅黑';
+}
+
+/*智能短信*/
+.msg_title {
+    margin-left: 15px;
+    display: inline-block;
+}
+
+.msg_btn_list {
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+button {
+    cursor: pointer;
+}
+
+.ft-12 {
+    font-size: 12px;
+}
+
+.ft-14 {
+    font-size: 14px;
+}
+
+.msg_btn_red {
+    background-image: linear-gradient(-180deg, #ff9e56 0%, #f76b1c 100%);
+    border: 1px solid #de941a;
+    border-radius: 4px;
+    width: 70px;
+    height: 28px;
+    font-size: 12px;
+    color: #ffffff;
+    margin: 0 5px;
+}
+
+.meg_btn_wrap {
+    background-image: linear-gradient(-180deg, #ffffff 0%, #f0f0f0 100%);
+    border: 1px solid #ababab;
+    border-radius: 4px;
+    width: 94px;
+    height: 28px;
+    font-size: 12px;
+    color: #4a4a4a;
+    margin: 0 5px;
+}
+
+.u-input-num {
+    background: #ffffff;
+    border: 1px solid #d3d3d3;
+    box-shadow: inset 1px 1px 3px 0px rgba(0, 0, 0, 0.28);
+    width: 94px;
+    height: 30px;
+    text-indent: 10px;
+
+}
+
+.mg-top-30 {
+    margin-top: 30px;
+}
+
+.u-big-btn {
+    background: #87c150;
+    border-radius: 2px;
+    width: 220px;
+    height: 34px;
+    font-size: 12px;
+    color: #ffffff;
+}
+
+.enter-info-popups .ui-popups-dialog {
+    width: 400px;
+}
+
+.enter-info-popups .ui-popups-body ul li {
+    width: 50%;
+    float: left;
+    margin: 5px 0;
+}
+
+.enter-info-popups .grey {
+    color: #666;
+}
+
+.enter-info-popups .mark-info {
+    width: 100%;
+    border: 1px solid #ccc;
+    height: 60px;
+    margin: 10px 0;
+}
+
+.alipay-pay {
+    background: #7bb811;
+    color: #fff;
+    padding: 10px 40px;
+    border-radius: 4px;
+}
+
+.txt-center {
+    text-align: center !important;
+}
+
+/*短信模板*/
+.ui_msg_box {
+    background: #ffffff;
+    border: 1px solid #e6e6e6;
+    box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.17);
+    border-radius: 4px;
+    width: 300px;
+    height: 220px;
+    padding: 0 10px;
+    margin: 5px;
+}
+
+.ui_msg_title {
+    height: 30px;
+    border-bottom: 1px dashed #cbcbcb;
+    line-height: 30px;
+    font-size: 12px;
+    text-align: left;
+}
+
+.ft_bold {
+    font-weight: bold;
+}
+
+.ft_col_green {
+    color: #528626;
+}
+
+.msg_border_ft {
+    background: #ffffff;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12px;
+    text-align: center;
+    margin-left: 5px;
+}
+
+/*使用中（绿色）*/
+.border_ftcol_green {
+    color: #528626;
+    border: 1px solid #528626;
+}
+
+/*审核中（红色）*/
+.border_ftcol_red {
+    color: #d0021b;
+    border: 1px solid #d0021b;
+}
+
+.msg_opera_box {
+    background-color: #DCDCDC;
+    border-radius: 4px;
+    height: 20px;
+    position: relative;
+    top: 5px;
+}
+
+.msg_opera_box a {
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+}
+
+.msg_opera_box .msg_edit {
+    background: url("../images/icon_chajianbutton.png") no-repeat scroll left -93px;
+}
+
+.msg_opera_box .msg_edit:hover {
+    background: url("../images/icon_chajianbutton.png") no-repeat scroll right -93px;
+}
+
+.msg_opera_box .msg_del {
+    background: url("../images/icon_chajianbutton.png") no-repeat scroll left -116px;
+}
+
+.msg_opera_box .msg_del:hover {
+    background: url("../images/icon_chajianbutton.png") no-repeat scroll right -116px;
+}
+
+.ui_msg_body {
+    height: 135px;
+    padding: 10px 0;
+    font-size: 12px;
+    color: #5c5c5c;
+    border-bottom: 1px dashed #CBCBCB;
+    overflow-y: auto;
+}
+
+.ui_msg_footer {
+    line-height: 30px;
+    text-align: right;
+    color: #5c5c5c;
+}
+
+.msg_temp_on {
+    padding: 15px 10px;
+    position: relative;
+    display: none;
+}
+
+.msg_temp_on .msg_input_title {
+    background: #ffffff;
+    border: 1px solid #d3d3d3;
+    box-shadow: inset 1px 1px 3px 0px rgba(0, 0, 0, 0.28);
+    width: 100%;
+    height: 30px;
+    margin-bottom: 10px;
+    text-indent: 10px;
+}
+
+.msg_temp_on textarea {
+    background: #ffffff;
+    border: 1px solid #d3d3d3;
+    box-shadow: inset 1px 1px 3px 0px rgba(0, 0, 0, 0.28);
+    width: 264px;
+    height: 70px;
+    margin-bottom: 5px;
+    padding: 8px;
+    font-size: 12px;
+}
+
+.msg_add_name {
+    font-size: 12px;
+    color: #323231;
+    text-align: left;
+}
+
+.msg_add_name i {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: url("../images/icon_check.png") no-repeat left center;
+    background-size: 100% 100%;
+    margin-right: 4px;
+    position: relative;
+    top: 2px;
+}
+
+.msg_add_name .selected {
+    background: url("../images/icon_check_selected.png") no-repeat left center;
+    background-size: 100% 100%;
+}
+
+.msg_temp_btn {
+    background: #87c150;
+    border-radius: 2px;
+    width: 100%;
+    height: 30px;
+    color: #ffffff;
+    margin: 10px 0;
+}
+
+.msg_temp_btn:hover {
+    background: #71a810
+}
+
+.msg_icon_del {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    background: url("../../images/delete.png") no-repeat center;
+    background-size: 100% 100%;
+    position: absolute;
+    right: -25px;
+    top: -13px;
+}
+
+.msg_temp_add {
+    background: #ffffff;
+    border: 1px solid #e6e6e6;
+    box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.17);
+    border-radius: 4px;
+    width: 300px;
+    /*height: 170px;*/
+    padding: 0 10px;
+    margin: 5px;
+    text-align: center;
+    position: relative;
+}
+
+.msg_temp_add .add {
+    display: inline-block;
+    width: 80px;
+    height: 67px;
+    background: url("../images/icon_add.png") no-repeat center;
+    background-size: 100% 100%;
+    position: absolute;
+    top: 30%;
+    left: 36%;
+}
+
+.msg_edit_on .msg_send_body, .msg_group_on .msg_send_body {
+    margin-top: 10px;
+    text-align: left;
+}
+
+.msg_send_body p {
+    line-height: 25px;
+    font-size: 12px;
+    color: #5c5c5c;
+}
+
+.msg_send_body .msg_info {
+    background-color: #fbfbfb;
+    border: 1px dashed #cdcdcd;
+    border-radius: 5px;
+    padding: 5px 10px;
+    height: 95px;
+    box-sizing: border-box;
+    margin-top: 5px;
+    color: #5c5c5c;
+    overflow-y: auto;
+}
+
+.u-width-220 {
+    width: 205px;
+    height: 30px;
+    line-height: 30px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    top: 5px;
+    border-radius: 3px;
+}
+
+.msg_edit_on {
+    display: none;
+    padding: 0 15px 15px 15px;
+    position: relative;
+}
+
+.mg-btm-10 {
+    margin-bottom: 10px;
+}
+
+.msg_group_count {
+    line-height: 30px;
+}
+
+.msg_group_count span {
+    margin-left: 65px;
+}
+.msg_group_on{
+    padding: 0 15px;
+}

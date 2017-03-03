@@ -1,0 +1,72 @@
+var vm_btns = avalon.define({
+    $id : 'vm_btns',
+    topShow : false,
+    bottomLeft : BTN_ENUM.def,
+    bottomRight : BTN_ENUM.def,
+    bottomCenter : BTN_ENUM.def,
+
+    msgAct : BTN_ENUM.def,
+    printAct : BTN_ENUM.def,
+    financeAct : BTN_ENUM.def,
+    delAct : BTN_ENUM.def,
+
+    currZIndex : null,
+
+    install : function (btns) {
+        var vm = vm_btns
+        btns = btns || {}
+        var def = {text : ''}
+        vm.printAct = btns.printAct || def
+        vm.bottomLeft = btns.left || def
+        vm.bottomCenter = btns.center || def
+        vm.bottomRight = btns.right || def
+        if (Access.access(Access.AC_BOOK)) {
+            vm_btns.accessBtn.shop = true
+        }
+    },
+    click : function (fn) {
+        editor.triggerClick(fn)
+    },
+    accessBtn:{
+        shop:false
+    },
+    hasBtn : function (btn) {
+        var vm = vm_btns
+        leftBtn = vm.bottomLeft.$model, centerBtn = vm.bottomCenter.$model, rightBtn = vm.bottomRight.$model, rs = false;
+        [leftBtn, centerBtn, rightBtn].forEach(function (el) {
+            if (el.text === btn.text) {
+                rs = true
+            }
+        })
+        return rs
+    },
+    hasBookBtn : function () {
+        return vm_btns.hasBtn(BTN_ENUM.book_save)
+    },
+    hasCheckinBtn : function () {
+        return vm_btns.hasBtn(BTN_ENUM.in_save)
+    },
+    isContainArr : function (item, arr) {
+        var count = 0
+        arr.forEach(function (el, i) {
+            if (el == item) {
+                count++
+            }
+        })
+
+        if (count > 0) {
+            return true
+        } else {
+            return false
+        }
+    },
+    editorBtn : function (txt) {
+        var arr = ['取消', '取消订单', '返回','修改订单'], state = false;
+        arr.forEach(function (el) {
+            if (txt == el) {
+                state = true
+            }
+        })
+        return state
+    }
+});

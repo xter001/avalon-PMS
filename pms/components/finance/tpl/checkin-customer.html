@@ -1,0 +1,56 @@
+<!--在住客人表-->
+<div class="" ms-controller="vm_customerIn">
+    <div class="finance-nav-head">
+        <h1>在住客人表　<span>(在住客人包括今日未离店和今日仍在住的客人。)</span></h1>
+    </div>
+    <div class="finance-customerIn-content">
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>渠道来源</th>
+                <th>渠道订单号</th>
+                <th>房号（房型）</th>
+                <th>入住时间</th>
+                <th>离店时间</th>
+                <th>入住人</th>
+                <th>订单总额</th>
+                <th>已收房费</th>
+                <th>已收押金</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-if="pepList.length" ms-repeat-el="pepList">
+                <td>{{el.customerFromId}}</td>
+                <td>{{el.orderNo}}</td>
+                <td>
+                    <p ms-repeat-elem="el.roomnos">{{elem.roomNo}}</p>
+                </td>
+                <td>{{el.mainCheckIn}}</td>
+                <td>{{el.mainCheckOut}}</td>
+                <td>{{el.contactUser}}</td>
+                <td>￥{{el.totalAmount}}</td>
+                <td>￥{{el.paidAmount}}</td>
+                <td>￥{{el.paidPayment}}</td>
+            </tr>
+            <tr ms-if="!pepList.length">
+                <td colspan="9" style="text-align: center">暂无在住客人信息</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="table-footer" >
+            <ul>
+                <li>合计</li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li>￥{{totalDatas.totalAmount}}</li>
+                <li>￥{{totalDatas.paidAmount}}</li>
+                <li>￥{{totalDatas.paidPayment}}</li>
+
+            </ul>
+        </div>
+    </div>
+
+</div>

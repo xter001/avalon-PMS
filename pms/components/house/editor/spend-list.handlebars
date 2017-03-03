@@ -1,0 +1,34 @@
+<table class="table table-bordered table-striped">
+	<thead>
+		<tr>
+			<th width="10%">订单标注</th>
+			<th width="10%">房号(单价)</th>
+			<th width="20%">入住退房</th>
+			<th width="10%">房间金额</th>
+			<th width="10%">其他消费</th>
+			<th width="10%">实付金额</th>
+			<th width="10%">客人来源</th>
+			<th width="10%">所属客栈</th>
+			<th width="10%">操作人</th>
+		</tr>
+	</thead>
+</table>
+<div style="max-height: 400px; width:100%; overflow-y: auto;overflow-x: hidden;">
+	<table class="table table-bordered table-striped">
+		<tbody>
+			{{#each this}}
+			<tr>
+				<td width="10%">{{status}}</td>
+				<td width="10%">{{{roomNo}}}</td>
+				<td width="20%">{{{inOut}}}</td>
+				<td width="10%">{{totalAmount}}</td>
+				<td width="10%">{{otherCost}}</td>
+				<td width="10%">{{totalPaid}}</td>
+				<td width="10%">{{cfName}}</td>
+				<td width="10%">{{innName}}</td>
+				<td width="10%">{{userCode}}</td>
+			</tr>
+			{{/each}}
+		</tbody>
+	</table>
+</div>

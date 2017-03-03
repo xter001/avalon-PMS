@@ -1,0 +1,245 @@
+var COMMON_CONST = require('../../common/js/const.js');
+var vm_distribution = avalon.define({
+    $id : 'vm_distribution',
+    init : function () {
+        vm_distribution.initDate()
+    },
+    popupShow : {
+        fxtext : false
+    },
+    createdAt:'',
+    totalCount:0,
+    hasSure : false,
+    toggleSelect : function () {
+        if (vm_distribution.hasSure) {
+            vm_distribution.hasSure = false
+        } else {
+            vm_distribution.hasSure = true
+        }
+    },
+    kgHref:COMMON_CONST.DOMAIN.FQFX+'/?spid=',
+    kgTitle:'',
+    orders : [
+
+    ],
+    fxpInfo : {
+        spid : 0,
+        state : 0
+    },
+    search:{
+        dateType:1,
+        searchType:1,
+        orderStatus:'orderStateAll',
+        from:'',
+        to:'',
+        searchKey:'',
+        oldSerchValue:'',
+    },
+    share:{
+        wbHref:'http://v.t.sina.com.cn/share/share.php?url=',
+        qqQ:'http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=',
+        qqWbHref:'http://share.v.t.qq.com/index.php?c=share&a=index&url=',
+        dbHref:'http://shuo.douban.com/!service/share?href='
+    },
+    //搜索订单
+    searchOrders : function () {
+        if (vm_distribution.search.oldSerchValue != vm_distribution.search.searchValue) {
+            vm_distribution.filterHandler()
+        }
+    },
+    filterHandler : function () {
+        vm_distribution.search.oldSerchValue = vm_distribution.search.searchValue
+    },
+    /*开通分销*/
+    openDis : function () {
+        vm_distribution.popupShow.fxtext = true
+    },
+    /*关闭分销协议*/
+    closeFxtext : function () {
+        vm_distribution.popupShow.fxtext = false
+    },
+    tabShow : {
+        info : true,
+        order : false
+    },
+    //配置调用日期
+    initDate:function(){
+        //选择时间范围配置
+        vm_distribution.search.from = tmsky.date.today(new Date(), 'yyyy-MM-dd')
+        vm_distribution.search.to = tmsky.date.addDays(new Date(), +1, 'yyyy-MM-dd')
+        var $checkInFrom = $("#account_from"), $checkInTo = $("#account_to")
+        CommonUtil.bindingDatepickerByElement($checkInFrom, true, "#account_from", "#account_to", true,function(){
+            vm_distribution.getOrders(1)
+        });
+        CommonUtil.bindingDatepickerByElement($checkInTo, false, "#account_from", "#account_to", true,function(){
+            vm_distribution.getOrders(1)
+        })
+
+    },
+    renderPage : function (id, rs) {
+
+        tmsky.ui.page.render({
+            id : id,
+            callback :function(){
+                vm_distribution.getOrders()
+            },
+            pageNo : 1,
+            pages : rs.result.page.totalPages,
+            totalCount : rs.result.page.totalCount,
+            maxPages : 100,
+            minPageSize : 1,//default
+            maxPageSize : 100,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+
+        })
+    },
+    getOpenDis : function () {
+        if (!vm_distribution.hasSure) {
+            tmsky.ui.dialog.tips('请确定已经认真阅读并理解了该功能！', 'error')
+        } else {
+            $.ajax({
+                type : "GET",
+                url : "/distribution/open",
+                success : function (rs) {
+                    if (rs.status == 200) {
+                        tmsky.ui.dialog.tips('申请分销资格成功！', 'success')
+                        window.location.reload()
+                    } else {
+                        tmsky.ui.dialog.tips(rs.message)
+                    }
+                },
+                error : function () {
+                    tmsky.ui.dialog.tips("网络错误！")
+                }
+            })
+        }
+    },
+    getConvertData:function(pageNo){
+        var json = vm_distribution.search.$model
+        var newJson = {}
+        for(var key in json){
+            if(json[key]){
+                if(json[key]!='orderStateAll'){
+                    newJson[key] = json[key]
+                }
+            }
+        }
+        var pageInfo = tmsky.ui.page.getParams("page-div");
+        newJson.pageNo = pageNo||pageInfo.pageNo
+        return newJson
+    },
+    getOrders : function (pageNo) {
+        tmsky.ui.dialog.loading()
+        var data = vm_distribution.getConvertData(pageNo)
+        $.ajax({
+            type : "GET",
+            url : "/distribution/getSpreadOrders",
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.result.status == 200) {
+
+                    vm_distribution.orders = rs.result.page.result;
+                    var orders = []
+                    rs.result.page.result.forEach(function(el,i){
+                        if(el.order_status==2||el.order_status==4||el.order_status==6){
+
+                            var date = []
+
+
+                                date.push({
+                                    checkInAt:tmsky.date.format(el.check_in, 'yyyy-MM-dd'),
+                                    checkOutAt:tmsky.date.format(el.check_out, 'yyyy-MM-dd')
+                                })
+
+
+                            var json = {
+                                orderStatus:el.order_status,
+                                orderNo:el.ota_order_no,
+                                name:el.inn_name,
+                                roomTypeName:el.room_type_name,
+                                roomNo:el.room_type_num,
+                                date:date,
+                                personInfo:{
+                                    name:el.user_name,
+                                    tel:el.contact
+                                },
+                                totalAmount:el.total_price,
+                                payTime:tmsky.date.format(el.created_at, 'yyyy-MM-dd')
+                            }
+
+                            vm_distribution.totalCount=rs.result.page.totalCount,
+                            orders.push(json)
+                        }
+
+                    })
+
+                    vm_distribution.orders=orders
+                    avalon.nextTick(function () {
+                        vm_distribution.renderPage('page-div', rs)
+                    })
+
+                } else {
+                    tmsky.ui.dialog.tips(rs.result.message)
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("网络错误！")
+            }
+        })
+    },
+    //复制链接
+    copy:function(){
+        var str = $('.copyStr').html()
+        tmsky.util.copy2Clipboard(str)
+        tmsky.ui.dialog.tips("复制成功！")
+    },
+    getShortDate : function (date) {  //展示月日
+        if (date) {
+            return date.slice(5, 10)
+        }
+    },
+    getStateChinese:function(state){
+
+        if(state == 2){
+            return  '已预订'
+        }else
+        if(state == 4){
+            return  '已取消'
+        }else
+        if(state == 6){
+            return  '已离店'
+        }
+    },
+    //切换选项卡，目前只做闹钟提醒一块，功能保留
+    changeTabs : function (type) {
+        var map = {info : false, order : false};
+        for (var key in map) {
+            if (key == type) {
+                map[key] = true;
+                break;
+            }
+        }
+        switch (type) {
+            case 'info':
+
+                break;
+            case 'order':
+                vm_distribution.getOrders(1)
+                break;
+            default :
+                map = {info : false, order : false};
+                break;
+        }
+        vm_distribution.tabShow = map;
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    }
+})
+
+

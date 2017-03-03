@@ -1,0 +1,182 @@
+var User = require('../../../header/user.js')
+var vm_accountBook = avalon.define({
+    $id : 'vm_accountBook',
+    bookList : [],
+    inList : [],
+    outList : [],
+    addInData : [],
+    addOutData : [],
+
+
+    init : function () {
+        var vm = vm_accountBook
+        //    拖拽
+        vm.dragBook()
+
+    },
+    getAC : function (rs) {
+        var vm = vm_accountBook
+        vm.bookList = rs
+        rs.forEach(function (x, i) {
+            if (x.itemType == '1') {
+                vm.inList.push(x)
+            } else {
+                vm.outList.push(x)
+            }
+        })
+    },
+    openEdit : function () {
+
+        //$(this).css('background-image','none')
+    },
+    delBook : function (id, type, index) {
+        tmsky.ui.dialog.confirm('你确定要删除该账本吗？', function () {
+            var data = {
+                    id : id
+                },
+                url = '/inns/ajaxdeleteBookItem?t=' + new Date().getTime()
+            $.post(url, $.param(data, true)).done(function (rs) {
+                if (rs.status == 200) {
+                    if (type == '1') {
+                        avalon.Array.removeAt(vm_accountBook.inList, index)
+                    } else {
+                        avalon.Array.removeAt(vm_accountBook.outList, index)
+                    }
+                } else {
+                    tmsky.ui.dialog.errorTips(rs.errors)
+                }
+            })
+
+        })
+
+    },
+    toggleState : function (canModify, e) {
+        if (canModify == 0) {
+            $(this).find('span').show();
+            $(this).find('div').hide()
+        } else {
+            var e = e || window.event;
+            if (e.target.tagName == 'I')return
+            if ($(this).find('div').css('display') != 'block') {
+                $(this).find('span').hide();
+                $(this).find('div').show()
+                $(this).find('div').find('input').focus()
+            }
+        }
+
+    },
+//    更新账本
+    updateBook : function (id, type, name) {
+        if (name == '') {
+            tmsky.ui.dialog.tips('请填写项目名称！', 'error')
+            return false
+        }
+        tmsky.ui.dialog.loading()
+        var vm = vm_accountBook
+        var that = $(this)
+        var datas = {
+                id : id,
+                'inn.id' : User.getUserInfo().innId,
+                itemType : type,
+                name : name
+            },
+            url = '/inns/ajaxEditBookItem?t=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                that.parent().hide()
+                that.parent().prev('span').show()
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message.name)
+            }
+        })
+    },
+//    添加账本
+    addBook : function (type) {
+        if (type == 'in') {
+            vm_accountBook.addInData = [{
+                name : ''
+            }]
+            $('.addBookIn').hide()
+            $(this).prev().find('input').focus()
+        } else {
+            vm_accountBook.addOutData = [{
+                name : ''
+            }]
+            $('.addBookOut').hide()
+            $(this).prev().find('input').focus()
+        }
+    },
+    ajaxAddBook : function (type, name) {
+        if (name == '') {
+            tmsky.ui.dialog.tips('请填写项目名称！', 'error')
+            return false
+        }
+        var vm = vm_accountBook
+        var datas = {
+            itemType : type,
+            name : name
+        }, url = '/inns/ajaxSaveBookItem?t=' + new Date().getTime()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                if (type == '1') {
+                    vm.addInData = []
+                    vm.inList.push(rs.item)
+                    $('.addBookIn').show()
+
+                } else {
+                    vm.addOutData = []
+                    vm.outList.push(rs.item)
+                    $('.addBookOut').show()
+                }
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+
+//    拖拽账本
+    dragBook : function () {
+        $('#inBookSortable').sortable({
+            update : function () {
+                var inArr = []
+                $('#inBookSortable .inBook').each(function (i) {
+                    var id = $(this).attr('id')
+                    inArr.push(id + ':' + i)
+                })
+                var url = '/inns/ajaxSortBook?t=' + new Date().getTime(),
+                    data = {
+                        sortData : inArr.toString()
+                    };
+                $.post(url, $.param(data, true)).done(function (rs) {
+                    if (rs.status != 200) {
+                        tmsky.ui.dialog.tips('排序失败！', 'error');
+                        document.location.reload();
+                    }
+                })
+            }
+        });
+        $('#outBookSortable').sortable({
+            update : function () {
+                var outArr = []
+                $('#outBookSortable .outBook').each(function (i) {
+                    var id = $(this).attr('id')
+                    outArr.push(id + ':' + i)
+                })
+                var url = '/inns/ajaxSortBook?t=' + new Date().getTime(),
+                    data = {
+                        sortData : outArr.toString()
+                    };
+                $.post(url, $.param(data, true)).done(function (rs) {
+                    if (rs.status != 200) {
+                        tmsky.ui.dialog.tips('排序失败！', 'error');
+                        document.location.reload();
+                    }
+                })
+            }
+        })
+
+    }
+
+
+})

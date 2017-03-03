@@ -1,0 +1,586 @@
+<div ms-visible="!checkoutFlag">
+    <!--用户基本信息view-->
+    <div class="info fl user-base-info" ms-visible="order.hasExistPerson ?  !showInputView||hasViewShow : false">
+        <div class="info-detail-base" ms-repeat-person="user.persons"
+             ms-visible="person.isPayMan==1||(person.isPayMan==0 && user.showMultiPerson)">
+            <h2><span class="f-14"><b>{{person.name}}</b><label ms-if="person.phone">
+                &nbsp;&nbsp;{{person.phone}}</label></span><label ms-if="person.province">
+                （{{person.province}}{{person.city}}）</label></h2>
+            <p ms-if="person.cardNo">{{enums.cardTypes[person.cardType]}}：{{person.cardNo}}</p>
+            <p ms-if="person.address">{{person.nation || '汉族'}}<label>/{{person.address}}</label></p>
+            <!--<a class="right-a" ms-if="person.isPayMan">发送短信</a>-->
+        </div>
+        <div class="info-more detail-more" ms-click="user.toggleMultiPerson" ms-if="user.persons.length > 1">
+            <span>{{user.toggleMultiPersonText}}</span>
+            <i class="iconfont icon-slide-up"></i>
+        </div>
+    </div>
+
+    <!--用户基本信息-->
+    <div class="info order-user-info" ms-visible="showInputView && hasInputShow">
+        <div class="info-item-group">
+            <div class="info-item clearfix" ms-repeat-person="user.persons"
+                 ms-visible="person.isPayMan==1||(person.isPayMan==0&&user.showMultiPerson)">
+                <div class="input-group info-item-sm fl tomasky-ui-dropdown-wrapper">
+                    <label class="input-group-addon">姓名：</label>
+                    <input tabindex="1" ms-duplex="person.name" class="form-control input-condensed firstTab" maxlength="32" placeholder="姓名"
+                           type="text">
+                    <i class="iconfont icon-search info-search" ms-click="user.customerSearch(1,$index)"></i>
+                    <div class="ui-dropdown-list" ms-visible="showCustomerSearchArr[$index]"
+                         ms-mouseleave="hideCustomerSearchArr($index)">
+                        <ul ms-if="customers.length > 0">
+                            <li ms-repeat-item="customers" ms-click="customerFix(item,$outer.$index)" class="customers">
+                                <a href="javascript:void(0);">
+                                    <span ms-visible="item.name">{{item.name}}</span>
+                                    <span ms-visible="item.contact">{{item.contact}}</span>
+                                </a>
+                                <a ms-visible="item.cardNo">{{cardTypeEnum[item.cardType]}}：{{item.cardNo}}</a>
+                            </li>
+                        </ul>
+                        <div ms-if="customers.length == 0">
+                            <a href="javascript:void(0);">该用户暂未入住过</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group info-item-md fr">
+                    <label class="input-group-addon">手机：</label>
+                    <input ms-duplex="person.phone" ms-blur="memberUnion.refreshMemUnion(this.value, person.isPayMan,$index)"
+                           class="form-control input-condensed" tabindex="2" maxlength="20" placeholder="手机" type="text">
+                    <i class="iconfont icon-search info-search"></i>
+                </div>
+                <!-- 证件信息 -->
+                <div class="input-group info-item-sm fl" ms-if="plugs.hasFunc(plugs.F_CARD)">
+                    <label class="input-group-addon">
+                        <div class="tomasky-ui-dropdown" data-ui="dropdown" style="padding-left: 0">
+                            <input type="hidden" ms-duplex="person.cardType">
+                            <a href="javascript:void(0);">
+                            <span data-role="value"
+                                  ms-data-value="person.cardType">{{enums.cardTypes[person.cardType]}}</span>
+                                <i class="iconfont icon-arrowdown"></i>
+                            </a>
+                            <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                                <a href="javascript:void(0);" ms-repeat="enums.cardTypes" data-role="item"
+                                   ms-data-value="$key">{{$val}}</a>
+                            </div>
+                        </div>
+                    </label>
+                    <input ms-duplex="person.cardNo" tabindex="3" class="form-control input-condensed" maxlength="18" placeholder="证件号"
+                           type="text">
+                </div>
+                <!-- 名族住址 -->
+                <div class="input-group info-item-md fr" ms-if="plugs.hasFunc(plugs.F_ADDR)">
+                    <label class="input-group-addon">
+                        <div class="tomasky-ui-dropdown" data-ui="dropdown" style="padding-left: 0">
+                            <input type="hidden" ms-duplex="person.nation">
+                            <a href="javascript:void(0);">
+                                <span data-role="value" ms-data-value="person.nation">{{person.nation || '汉族'}}</span>
+                                <i class="iconfont icon-arrowdown"></i>
+                            </a>
+                            <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                                <a href="javascript:void(0);" data-role="item" ms-repeat="enums.nations" ms-data-value="el">{{el}}</a>
+                            </div>
+                        </div>
+                    </label>
+                    <input class="form-control input-condensed" tabindex="4" maxlength="100" placeholder="住址" type="text"
+                           ms-duplex="person.address">
+                    <em class="group-icon"></em>
+                </div>
+                <i ms-if="person.isPayMan!=1" class="iconfont icon-minus info-item-del" ms-click="$remove"></i>
+            </div>
+            <!--多人入住-->
+            <div class="info-item" ms-if="plugs.hasFunc(plugs.F_MULTI_INFO) && !plugs.hasFunc(plugs.F_ROOMTOPERSON)" >
+            <span class="add-btn" ms-click="user.add">
+                <i class="iconfont icon-add-round"></i>
+                <span>添加入住人</span>
+            </span>
+            <span class="info-more" ms-click="user.toggleMultiPerson" ms-if="user.persons.length > 1">
+                <span>{{user.toggleMultiPersonText}}</span>
+                <i class="iconfont icon-slide-up"></i>
+            </span>
+            </div>
+        </div>
+    </div>
+
+    <!--客人来源view-->
+    <div class="info fl" ms-visible="!showInputView||hasViewShow">
+        <div class="channel-detail">
+            <div ms-visible="order.customerFrom.id">渠道：{{order.customerFrom.name}}{{order.customerFrom.name}}</div>
+            <div ms-visible="customerFrom.commission">佣金：￥{{customerFrom.commission}}</div>
+            <div ms-if="plugs.hasFunc(plugs.F_ORDER_CODE) && order.orderNo!='' && order.orderNo!=null && order.orderFrom<=0">订单号：{{order.orderNo}}</div>
+            <div ms-if="plugs.hasFunc(plugs.F_ORDER_CODE) && order.otaOrderNo!='' && order.otaOrderNo!=null && order.orderFrom>0">订单号：{{order.otaOrderNo}}</div>
+        </div>
+    </div>
+
+    <!--客人来源-->
+    <div class="info" ms-visible="showInputView && hasInputShow">
+        <div class="info-box-wrap">
+            <!--  客人来源 -->
+            <div class="info-item-group">
+                <div class="info-item clearfix">
+                    <div class="tomasky-ui-dropdown fl channel oo-dropdown-width-channel" data-ui="dropdown"
+                         ms-class-disabled="customerFrom.disabled">
+                        <input type="hidden" ms-duplex="customerFrom.currId" ms-change="cgCommission">
+                        <!--<input type="hidden" ms-duplex="cfid">-->
+                        <a href="javascript:void(0);">
+                            <!--<span data-role="value" ms-data-value="cfid">{{customerFrom.datas[cfid].name}}</span>-->
+                            <!--<span data-role="value" ms-data-value="customerFrom.currId">{{customerFrom.datas[customerFrom.currId].name}}</span>-->
+                            <span data-role="value" ms-data-value="customerFrom.currId">{{customerFrom.curr.name}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list ui-dropdown-list-max-height-5" ms-if="!customerFrom.disabled">
+                            <a href="javascript:void(0);" data-role="item" ms-repeat="customerFrom.datas"
+                               ms-data-value="$val.id">{{$val.name}}</a>
+                        </div>
+                    </div>
+                    <div class="input-group info-item-md fl price">
+                        <label class="input-group-addon">佣金：</label>
+                        <input class="form-control input-condensed" tabindex="5" data-v-validator="float2" type="text" maxlength="6"
+                               ms-duplex="order.commission">
+                    </div>
+                    <div class="input-group fr order" style="display: table;" ms-if="plugs.hasFunc(plugs.F_ORDER_CODE)">
+                        <label class="input-group-addon">订单号：</label>
+                        <input class="form-control input-condensed" tabindex="6" ms-if="order.orderFrom<=0" maxlength="36" placeholder="订单号" type="text"
+                               ms-duplex="order.orderNo">
+                        <input class="form-control input-condensed" tabindex="6" ms-if="order.orderFrom>0" disabled maxlength="36" placeholder="订单号" type="text"
+                               ms-duplex="order.otaOrderNo">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!--订单信息view-->
+    <div class="info fl" ms-visible="!showInputView">
+        <a class="right-a goChangeRoom" href="javascript:void(0)"
+           ms-visible="order.subOrders[0].status == 2 || order.subOrders[0].status == 3" ms-click="goChangeRoom"
+           target="_blank">去调房>></a>
+        <div class="padtb10" ms-repeat="order.subOrders">
+            <label class="fl">
+                <!--<i class="iconfont icon-checked"></i>-->
+                   <em class="stutas-label fl"
+                    ms-class-stutas-label-book="el.status == 2"
+                    ms-class-stutas-label-in="el.status == 3"
+                    ms-class-stutas-label-out="el.status == 4"
+                    ms-class-stutas-label-cancle="el.status == 5"></em>
+                    &nbsp;
+                <span>{{el.room.roomNo}}（{{el.room.roomType.name}}）</span>
+            </label>
+            <span class="checkinUser fl" ms-if="plugs.hasFunc(plugs.CARD) || plugs.hasFunc(plugs.F_ROOMTOPERSON) || plugs.hasFunc('psb_func')">{{el.persons.length}}人在住</span>
+            <span class="fl checkin">{{el.checkInAt|date("MM-dd")}}入住</span>
+            <span class="fl checkin days">{{el.days}}晚</span>
+            <span class="fl checkin">￥{{el.roomPrice}}</span>
+            <div class="penalty f-14" ms-if="finance.penalty"> 违约房费（提前退房损失的房费）  <span class="c-red f16">￥{{finance.penalty}}</span></div>
+        </div>
+        <!--消费信息-->
+        <div ms-if="spend.goodSpends.length > 0" style="margin-top: -6px;">
+            <div class="dashed-line"></div>
+            <div class="goodSpendDiv">
+                <table class="tab-goodspend">
+                    <tr ms-repeat="spend.goodSpends">
+                        <td class="goodsTitle" style="min-width:70px">{{el.good.name}}</td>
+                        <td>￥{{el.realPrice | toFixed}} * {{el.goodNum}}</td>
+                        <td><a ms-click="houseDeleteShop(el,$index)" class="order-delete-shop">删</a><a class="order-edit-shop" ms-click="houseEditShop($index)">修</a></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!--订单信息-->
+    <div class="info fl info-orders" ms-visible="showInputView">
+        <a class="right-a goChangeRoom" href="javascript:void(0)"
+           ms-visible="order.subOrders[0].status == 2 || order.subOrders[0].status == 3" ms-click="goChangeRoom"
+           target="_blank">去调房&gt;&gt;</a>
+        <div ms-repeat="order.subOrders" class="order-operate-orders mat10">
+            <label class="fl f-14">
+                <i class="iconfont"
+                   ms-css-visibility="el.disabled ? 'hidden' : 'visible'"
+                   ms-class="{{el.active?'icon-checked':'icon-unchecked'}}"
+                   ms-click="orderHandle.toggleActive(el,$event,false)"></i>
+                <span class="pre-order"
+                    ms-class-stutas-label-book="el.status == 2"
+                    ms-class-stutas-label-in="el.status == 3"
+                    ms-class-stutas-label-out="el.status == 4"
+                    ms-class-stutas-label-cancle="el.status == 5"></span>
+                <span>{{el.room.roomNo}}（{{el.room.roomType.name}}）</span>
+            </label>
+            <span class="checkinUser-edit fl" ms-if="plugs.hasFunc(plugs.F_ROOMTOPERSON)"  ms-click="openIdcardWindow(order.subOrders,$index)">{{el.persons.length}}人在住</span>
+            <span class="fl checkin">{{el.checkInAt|date("MM-dd")}}入住</span>
+            <span class="fl checkin days" ms-visible="hasViewShow">{{el.days}}晚</span>
+            <span class="span-last" ms-visible="hasViewShow">￥{{el.roomPrice}}</span>
+
+            <div ms-class-disabled="order.icon==4||order.orderStatus == 0" class="tomasky-ui-dropdown fl width60 mgl10" data-ui="dropdown" ms-visible="hasInputShow">
+                <input type="hidden" ms-duplex="el.days" ms-change="dayChange(el,$index)">
+                <a href="javascript:void(0);">
+                    <span data-role="value" ms-data-value="el.days">{{el.days}}晚</span>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list ui-dropdown-list-max-height-5 width60">
+                    <a href="javascript:void(0);" data-role="item" ms-repeat-day="el.dayOptions" ms-data-value="day.days">{{day.text}}</a>
+                </div>
+            </div>
+            <span class="pdl10" ms-visible="hasInputShow">￥<input ms-blur="avalon.filters.validNumber(this, 'n', false, null, null, null, true)" type="text" tabindex="7" placeholder="金额" class="money" ms-on-keyup="updateAveragePrice(el)" ms-change-1="orderHandle.updateOrderInfo()"  ms-duplex="el.roomPrice"></span>
+        </div>
+        <div id="beforeCheckOutDiv">
+            <div class="penalty f-14" ms-if="finance.penalty">
+                违约房费（提前退房损失的房费）￥<input type="text" tabindex="8" class="money"  data-v-validator="float2" placeholder="金额" ms-duplex="finance.penalty">
+            </div>
+        </div>
+    </div>
+
+    <!--消费信息-->
+    <div ms-if="spend.goodSpends.length>0" class="info fl cost-nc" ms-if="plugs.hasFunc(plugs.F_SPEND)" ms-data-value="hasSpendItem" ms-visible="showInputView && hasInputShow && hasSpendItem">
+        <div class="dashed-line"></div>
+        <table class="tab-goodspend">
+            <tr ms-repeat="spend.goodSpends">
+                <td>{{el.good.name}}</td>
+                <td>￥{{el.realPrice}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!--财务信息view-->
+    <div class="info fl" style="border-bottom-style: dashed;" ms-visible="!showInputView && hasInputShow">
+        <p class="f-14">订单金额：<span>￥{{Math.abs(order.totalAmount) | toFixed}}</span></p>
+        <p class="f-14">已收金额：<span>￥{{order.paidAmount | toFixed}}</span></p>
+        <p class="f-14">已收押金：<span>￥{{order.paidPayment | toFixed}}</span></p>
+        <p class="f-14" ms-if="order.overage">需{{finance.overage > 0 ? '补' : '退'}}房费：<span class="overage-color">￥{{Math.abs(finance.overage) | toFixed}}</span></p>
+        <div class="alliance" ms-if="plugs.hasFunc(plugs.F_UNION) && memberUnion">
+            <!--<p class="f-14">联盟：{{memberUnion.currUnion.id != 0 ? memberUnion.unions[memberUnion.currUnion.id].name : '未加入客栈联盟'}}</p>-->
+            <!--<p>-->
+                <!--等级：<span>{{memberUnion.currMem.memberGrade.name}}</span>/折扣：-->
+                <!--<span ms-if="memberUnion.currMem.memberGrade.discountPercent == 100">房费无折扣</span>-->
+                <!--<span ms-if="memberUnion.currMem.memberGrade.discountPercent != 100">房费 {{memberUnion.currMem.memberGrade.discountPercent}} 折</span>-->
+            <!--</p>-->
+            <!--<p>优惠金额：<label class="f-bold">￥{{memberUnion.currMem.privilegePrice | toFixed}}</label></p>-->
+            <!-- 抵扣积分 -->
+            <ul class="guest-spend-info" ms-visible="memberUnion.currMem.currentIntegral > 0">
+                <li>
+                    <span class="c-red">注：该号码拥有 {{memberUnion.currMem.currentIntegral}} 积分，可抵扣 {{memberUnion.currMem.currentIntegral / 100 | toFixed}} 元。</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!--财务信息-->
+    <div class="info fl border-t" ms-css-padding-bottom="memberUnion.currMem.currentIntegral > 0 ? '28px' : '10px'"
+         ms-visible="showInputView">
+        <p class="f-14">订单金额：<span>￥{{Math.abs(order.totalAmount) | toFixed}}</span></p>
+        <p class="f-14">已收金额：<span>￥{{order.paidAmount}}</span></p>
+        <p class="f-14">已收押金：<span>￥{{order.paidPayment}}</span></p>
+        <p class="f-14" ms-if="order.overage">需{{finance.overage > 0 ? '补' : '退'}}房费：<span class="overage-color">￥{{Math.abs(finance.overage) | toFixed}}</span></p>
+        <div class="alliance alliance-input" ms-if="plugs.hasFunc(plugs.F_UNION) && memberUnion">
+            <!--<div style="dislay:table">-->
+                <!--<span class="fl f-14 line-h26">联盟：</span>-->
+                <!--<div class="tomasky-ui-dropdown fl member-alliance" data-ui="dropdown">-->
+                    <!--<input type="hidden" ms-duplex="memberUnion.currUnion.id" ms-change="memberUnion.changeMember">-->
+                    <!--<a href="javascript:void(0);">-->
+                        <!--<span data-role="value" ms-data-value="memberUnion.currUnion.id">{{memberUnion.unions[memberUnion.currUnion.id].name}}</span>-->
+                        <!--<i class="iconfont icon-arrowdown"></i>-->
+                    <!--</a>-->
+                    <!--<div class="ui-dropdown-list ui-dropdown-list-max-height-5">-->
+                        <!--<a href="javascript:void(0);" data-role="item" ms-repeat="memberUnion.unions" ms-data-value="$key">{{$val.name}}</a>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
+            <!--<p>-->
+                <!--等级：<span>{{memberUnion.currMem.memberGrade.name}}</span>/折扣：-->
+                <!--<span ms-if="memberUnion.currMem.memberGrade.discountPercent == 100">房费无折扣</span>-->
+                <!--<span ms-if="memberUnion.currMem.memberGrade.discountPercent != 100">房费 {{memberUnion.currMem.memberGrade.discountPercent / 10}} 折</span>-->
+            <!--</p>-->
+            <!--<p>优惠金额：<label class="f-bold">￥{{memberUnion.currMem.privilegePrice | toFixed}}</label></p>-->
+            <!-- 抵扣积分 -->
+            <ul class="guest-spend-info" ms-visible="memberUnion.currMem.currentIntegral > 0">
+                <li>
+                    <span class="c-red">注：该号码拥有 {{memberUnion.currMem.currentIntegral}} 积分，可抵扣 {{memberUnion.currMem.currentIntegral / 100 | toFixed}} 元。</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!--财务记录-->
+    <div class="info fl accountRecord">
+        <p style="margin-bottom: 10px">财务记录（<a data-ui="popups" data-target="#finance_popups" href="javascript:;" class="c-red">查看详情</a>）</p>
+        <!--应操作财务记录表单展示-->
+        <div class="accountInput" ms-visible="hasViewShow">
+            <dl class="items-area">
+                <dd class="clearfix">
+                    <div class="tomasky-ui-dropdown price-dropdown" data-ui="dropdown">
+                        <input ms-duplex="backRoomFee.financeId" type="hidden">
+                        <a href="javascript:void(0);">
+                            <span data-role="value" ms-data-value="backRoomFee.financeId">{{enums.financeEnum[backRoomFee.financeId].name}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list">
+                            <a href="javascript:;" data-value="5" data-role="item">退还房费</a>
+                            <a href="javascript:;" data-value="2" data-role="item">支付房费</a>
+                        </div>
+                    </div>
+                    <input type="text" tabindex="9" class="form-control input-amount" maxlength="8" placeholder="金额"
+                           ms-blur="avalon.filters.validNumber(this, 'n', false, null, null, null, true)"
+                           ms-duplex="backRoomFee.amount"
+                           ms-on-keyup="checkPrice(backRoomFee, $event)"/>
+                    <div class="tomasky-ui-dropdown price-dropdown" ms-css-width="95" data-ui="dropdown"
+                         ms-visible="backRoomFee.payId && backRoomFee.financeId != 11"
+                         ms-click="payEnumClick(backRoomFee, $event)">
+                        <input ms-duplex="backRoomFee.payId" type="hidden" ms-change="payChange(backRoomFee, $event)">
+                        <a href="javascript:void(0);">
+                            <span data-role="value" ms-data-value="backRoomFee.payId">{{backRoomFee.payName}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list">
+                            <a href="javascript:;" ms-repeat="payEnum" ms-data-value="el.id" ms-visible="el.show"
+                               data-role="item">{{el.name}}</a>
+                        </div>
+                    </div>
+                </dd>
+                <dd class="clearfix" ms-visible="backPayment.show">
+                    <div class="tomasky-ui-dropdown" data-ui="dropdown">
+                        <input ms-duplex="backPayment.financeId" type="hidden">
+                        <a href="javascript:void(0);">
+                            <span data-role="value" ms-data-value="backPayment.financeId">{{enums.financeEnum[backPayment.financeId].name}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list">
+                            <a href="javascript:;" data-value="6" data-role="item">退还押金</a>
+                            <a href="javascript:;" data-value="3" data-role="item">支付押金</a>
+                        </div>
+                    </div>
+                    <input type="text" tabindex="10" class="form-control input-amount" maxlength="8" placeholder="金额"
+                           data-v-validator="float2"
+                           ms-duplex="backPayment.amount"
+                           ms-on-keyup="checkPrice(backPayment, $event)"/>
+                    <div class="tomasky-ui-dropdown" ms-css-width="95" data-ui="dropdown"
+                         ms-visible="backPayment.payId && backPayment.financeId != 11"
+                         ms-click="payEnumClick(backPayment, $event)">
+                        <input ms-duplex="backPayment.payId" type="hidden" ms-change="payChange(backPayment, $event)">
+                        <a href="javascript:void(0);">
+                            <span data-role="value" ms-data-value="backPayment.payId">{{backPayment.payName}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list">
+                            <a href="javascript:;" ms-repeat="payEnum" ms-data-value="el.id" ms-visible="el.show"
+                               data-role="item">{{el.name}}</a>
+                        </div>
+                    </div>
+                </dd>
+            </dl>
+        </div>
+        <div class="fr contrBar" ms-visible="!showInputView && hasInputShow">
+            <span ms-click="deleteOrder()" class="contrBar3 fr" ms-visible="order.icon!=4 && order.orderStatus != -2 && ec_del_order && !isFromDx && !isFromOTA">删除</span>
+            <span ms-click="printClick()" class="contrBar2 fr" ms-visible="(order.orderStatus==3||order.orderStatus==4||order.orderStatus==5)&&funcPrint">打印</span>
+            <span ms-click="addNewShop()" class="contrBar1 fr" ms-visible="order.orderStatus != -2&&accessBtn.shop">商品</span>
+        </div>
+        <!--增加支付项-->
+        <div class="info-wrap" ms-repeat="finance.values" ms-visible="showInputView || hasViewShow">
+
+            <!--支付内容-->
+            <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" data-ui="dropdown">
+                <input type="hidden" ms-duplex="el.item" ms-change="itemChange(el, $event)">
+                <a href="javascript:void(0);">
+                    <span data-role="value" ms-data-value="el.item">{{finance.items[el.item].name}}</span>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                    <a href="javascript:void(0);" data-role="item" ms-repeat="finance.items"  ms-visible="!$val.isHide" ms-data-value="$key">{{$val.name}}</a>
+                </div>
+            </div>
+
+            <!--支付方式-->
+            <input type="text" tabindex="11" placeholder="金额" class="money fl" maxlength="8"
+                   ms-duplex="el.price"
+                   ms-blur="avalon.filters.validNumber(this, 'n', false, null, null, null, true)">
+            <div class="tomasky-ui-dropdown fl financial-record-detail oo-dropdown-width-channel" data-ui="dropdown"  ms-click="payEnumClick(el, $event , $index)"  ms-visible="el.item != 11">
+                <input type="hidden" ms-duplex="el.payChannel.id"  ms-change="payChange(el, $event)">
+                <a href="javascript:void(0);">
+                    <span data-role="value" ms-data-value="el.payChannel.id">{{payChannels[el.payChannel.id].name}}</span>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                    <a href="javascript:void(0);" data-role="item" ms-repeat="payChannels" ms-visible="$val.show" ms-data-value="$key">{{$val.name}}</a>
+                </div>
+            </div>
+            <div class="tomasky-ui-dropdown fl financial-record-detail oo-dropdown-width-channel" data-ui="dropdown" ms-visible="el.item == 11">
+                <a href="javascript:void(0);">
+                    <span>积分</span>
+                </a>
+            </div>
+        </div>
+        <!--添加支付项按钮-->
+    <span class="add-btn" ms-click="finance.add()" ms-visible="showInputView && hasInputShow">
+        <i class="iconfont icon-add-round"></i>
+        <span>添加支付项</span>
+    </span>
+    </div>
+
+
+    <!--财务记录详细信息-->
+    <div class="tomasky-ui-popups finance_popups" id="finance_popups" ms-controller="vm_finance_detail">
+        <div class="ui-popups-dialog">
+            <em class="close" ms-click="close"></em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">财务记录详细信息</h3>
+            </div>
+            <div class="ui-popups-body" style="padding: 5px;">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th>金额</th>
+                        <th>支付方式</th>
+                        <th>操作人</th>
+                        <th>记录时间</th>
+                        <th width="200px">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody ms-repeat="datas" ms-class-bg-table-even="$index%2==1">
+                    <!-- 订单操作 -->
+                    <tr ms-if="el.orderType">
+                        <td colspan="3" style="text-align: center;">{{el.orderType}}</td>
+                        <td>{{el.createdUser}}</td>
+                        <td>{{el.createdAt}}</td>
+                        <td></td>
+                    </tr>
+                    <tr ms-if="el.canModify" ms-visible="el.updating">
+                        <td>
+                            <div class="tomasky-ui-dropdown" data-ui="dropdown">
+                                <input type="hidden" ms-duplex="activeItem.itemId">
+                                <a href="javascript:;">
+                                    <span data-role="value" ms-data-value="el.itemId">{{el.item}}</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list">
+                                    <a href="javascript:;" ms-repeat="financeEnum" ms-visible="!$val.isHide" ms-data-value="$key" data-role="item">{{$val.name}}</a>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control input-amount" maxlength="8" placeholder="金额" ms-duplex="activeItem.price" data-v-validator="float2">
+                        </td>
+                        <td>
+                            <div class="tomasky-ui-dropdown" data-ui="dropdown">
+                                <input type="hidden" ms-duplex="activeItem.payId">
+                                <a href="javascript:;">
+                                    <span data-role="value" ms-data-value="el.payId">{{el.payName}}</span>
+                                    <i class="iconfont icon-arrowdown"></i>
+                                </a>
+                                <div class="ui-dropdown-list">
+                                    <a href="javascript:;" ms-repeat="payEnum" ms-data-value="el.id" data-role="item">{{el.name}}</a>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{el.recordUser}}</td>
+                        <td><input type="text" class="form-control input-time" readonly="readonly" ms-click="selectTime($event)" ms-duplex="activeItem.recordAt"></td>
+                        <td>
+                            <button class="btn btn-xs btn-success" ms-click="saveEdite">保存</button>
+                            <button class="btn btn-xs" ms-click="cancelEdite(el)">取消</button>
+                        </td>
+                    </tr>
+                    <!-- 信息显示 -->
+                    <tr ms-if="el.id" ms-class-del="el.operateType == 3" ms-visible="!el.updating">
+                        <td>{{el.item}}</td>
+                        <td>{{el.price | toFixed}}</td>
+                        <td>{{el.payName}}</td>
+                        <td>{{el.recordUser}}</td>
+                        <td>{{el.recordAt}}</td>
+                        <td>
+                            <button ms-visible="editeBtnVisible(el)" class="btn btn-xs btn-default" ms-click="edite(el, $event)">编辑</button>
+                            <button ms-visible="editeBtnVisible(el)" class="btn btn-xs btn-danger" ms-click="del(el)">删除</button>
+
+								<span ms-if="el.payId==1">
+									<a ms-visible="el.payStatus==0" ms-click="pay(el.id, el.payId)">
+                                        [待付款<em class="c-success">--点击重新支付</em>]
+                                    </a>
+									<span ms-visible="el.payStatus==1">[支付成功]</span>
+									<span ms-visible="el.payStatus==2" class="c-red">[支付关闭]</span>
+									<span ms-visible="el.payStatus==3" class="c-red">[支付失败]</span>
+								</span>
+								<span ms-if="el.payId==6">
+									<a ms-visible="el.payStatus==0" ms-click="pay(el.id, el.payId)">
+                                        [待付款<em class="c-success">--点击重新支付</em>]
+                                    </a>
+									<a ms-visible="el.payStatus==1" ms-click="refund(el.id, el.itemId, el.price)">
+                                        [支付成功<em class="c-success">--退款</em>]
+                                    </a>
+									<a ms-visible="el.payStatus==2" ms-click="pay(el.id, el.payId)">
+                                        [支付关闭<em class="c-success">--点击重新支付</em>]
+                                    </a>
+									<a ms-visible="el.payStatus==3" ms-click="pay(el.id, el.payId)">
+                                        [支付失败<em class="c-success">--点击重新支付</em>]
+                                    </a>
+									<span ms-visible="el.payStatus==5">[全额退款]</span>
+									<span ms-visible="el.payStatus==6">[退款成功]</span>
+								</span>
+                            <a class="toggle-btn" ms-if="el.history.size() > 0" ms-click="toggle(el)">
+                                <span ms-visible="!el.open">展开</span>
+                                <span ms-visible="el.open">收起</span>
+                                <i class="iconfont" ms-class-icon-slide-up="el.open" ms-class-icon-slide-down="!el.open"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <!-- 历史显示 -->
+                    <tr ms-visible="el.open" ms-repeat-h="el.history" class="gone">
+                        <td>{{h.item}} <span ms-visible="h.operateType">（{{h.operateType}}）</span></td>
+                        <td>{{h.price | toFixed}}</td>
+                        <td>{{h.payName}}</td>
+                        <td>{{h.recordUser}}</td>
+                        <td>{{h.recordAt}}</td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!--备注view-->
+    <!--order.icon !=0 || remark.curr.remindTime || remark.curr.content &&-->
+    <div class="info fl" ms-visible="!showInputView || hasViewShow" style="border-bottom: none">
+        <p>{{remark.curr.remindTime}}
+            <i class="iconfont"
+               ms-class-icon-plane="order.icon == 1"
+               ms-class-icon-qiche="order.icon == 2"
+               ms-class-icon-zhongyaoxiaoxi="order.icon == 3"
+               ms-class-icon-xinyong="order.icon == 4"
+               ms-class-icon-bao="order.icon == 7"></i>
+            <label ms-if="order.icon && order.icon != '0'">{{enums.orderFlags[order.icon].name}}</label>
+        </p>
+        <p class="gray">{{remark.curr.content}}</p>
+        <!--<div class="print-delete">
+            <a></a>
+            <a></a>
+        </div>-->
+    </div>
+
+    <!--备注-->
+    <div ms-visible="showInputView && hasInputShow">
+        <div class="info-box-wrap fl">
+            <textarea class="form-control remark-area fl"  tabindex="12" placeholder="备注信息" ms-duplex="remark.curr.content">{{remark.curr.content}}</textarea>
+            <div class="remark-time fl">
+                <i class="iconfont icon-clock" title="设置闹钟"></i>
+                <input type="text" id="remind_time_picker" ms-duplex="remark.curr.remindTime" placeholder="设置闹钟"
+                       class="set-clock">
+            </div>
+            <!--  订单标示 -->
+            <div class="info-item-group">
+                <div class="info-item">
+                    <div class="tomasky-ui-dropdown fr select-dropdown" data-ui="dropdown" ms-class-disabled="order.icon == 4 || order.icon == 7">
+                        <input type="hidden" ms-duplex="order.icon">
+                        <a href="javascript:void(0);">
+                            <span data-role="value" ms-data-value="order.icon">{{enums.orderFlags[order.icon].name}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                            <a href="javascript:void(0);" data-role="item" ms-repeat="enums.orderFlags"
+                               ms-data-value="$val.value" ms-if-loop="$val.value != 4 && $val.value != 7">{{$val.name}}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

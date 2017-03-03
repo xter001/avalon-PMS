@@ -1,0 +1,605 @@
+.shopCost {
+    color: #000000;
+    font-size: 12px;
+    width: 480px;
+    max-height: 550px;
+    background: #ffffff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 270px;
+}
+
+.cost-date {
+    width: 164px;
+    height: 25px;;
+    text-align: center;
+    background: #e8e8e8 url(images/date-icon.png) no-repeat 10px 5px
+}
+
+.cost-date-input {
+    background: #e8e8e8;
+    font-size: 12px;
+    border: 0;
+    height: 100%;
+    width: 124px;
+    float: right;
+    color: #000000
+}
+
+.cost-shop-title {
+    margin: 0px 0 10px 0;
+    width: 100%;
+    height: 16px;
+}
+
+.cost-shop-title ul {
+    width: 100%
+}
+
+.cost-shop-title ul li {
+    float: left;
+    color: #404040
+}
+
+.cost-shop-title1 {
+    width: 215px;
+    margin-right: 30px
+}
+
+.cost-shop-title2 {
+    width: 98px;
+    margin-right: 30px;
+    text-align: center
+}
+
+.cost-shop-title3 {
+    width: 80px;
+    text-align: center
+}
+
+.cost-shop-list {
+    width: 100%;
+}
+
+.cost-list {
+    width: 100%;
+    margin-bottom: 10px;
+    height: 32px;
+}
+
+.cost-list div {
+    float: left;
+    color: #404040;
+}
+
+.cost-list1 {
+    width: 192px;
+    margin-right: 30px
+}
+
+.cost-list1 div {
+    width: 100%;
+}
+
+.cost-list .oo-dropdown-width-channel {
+    height: 30px
+}
+
+.cost-list2 {
+    width: 113px;
+    text-align: center
+}
+
+.cost-list3 {
+    width: 83px;
+    margin-right: 30px;
+    text-align: center
+}
+
+.cost-list1 select {
+    outline: none;
+    width: 100%;
+    border: 1px #b9b9b9 solid;
+    background: #ffffff
+}
+
+.cost-j-btn {
+    cursor: pointer;
+    display: inline-block;
+    background: url(images/j_grey.png) no-repeat;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle
+}
+
+.cost-j-btn-on {
+    background: url(images/j-green.png) no-repeat;
+}
+
+.cost-add-btn {
+    cursor: pointer;
+    display: inline-block;
+    background: url(images/add-grey.png) no-repeat;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle
+}
+
+.cost-add-btn-on {
+    background: url(images/add-green.png) no-repeat;
+}
+
+.cost-num {
+    text-align: center;
+    width: 46px;
+    padding: 0 3px;
+    height: 28px;
+    line-height: 28px;
+    border: 1px #b9b9b9 solid;
+    margin: 0 5px;
+    vertical-align: middle
+}
+
+.cost-list3 span {
+    vertical-align: middle;
+    display: inline-block;
+    height: 30px;
+    line-height: 30px;
+}
+
+.cost-add-cost {
+    margin: 5px 0 15px 0;
+    display: inline-block;
+    cursor: pointer;
+    padding-left: 22px;
+    background: url(images/add-red.png) no-repeat left center;
+    height: 16px;
+    color: #cd2f16
+}
+
+.cannotinput {
+    background: #f4f4f4;
+    border: 1px #e5e5e5 solid;
+}
+
+.cost-radio {
+    margin-bottom: 15px;
+    width: 100%;
+    height: 46px;
+    line-height: 46px;
+    border-top: 1px #dcdcdc solid;
+    border-bottom: 1px #dcdcdc solid
+}
+
+.cost-radio span {
+    display: inline-block;
+    margin-right: 100px;
+    cursor: pointer;
+    padding-left: 22px;
+    background: url(images/radio1.png) no-repeat left center;
+    height: 100%;
+}
+
+.cost-radio span.cost-radio-on {
+    background: url(images/radio1_on.png) no-repeat left center;
+}
+
+.f14 {
+    font-size: 14px;
+}
+
+.cost-enter {
+    width: 230px;
+    border-radius: 2px;
+    border: 1px #7db628 solid;
+    background: #7db628;
+    color: #fff;
+}
+
+.cost-enter:hover {
+    color: #ffffff;
+    background: #71a810
+}
+
+#shopCost .cost-cancel {
+    width: 230px;
+    border-radius: 2px;
+}
+
+.payWay {
+    position: absolute;
+    bottom: 0px;
+    right: 5px;
+}
+
+.contrBar {
+    display: inline-block;
+    width: 144px;
+}
+
+.contrBar span {
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 16px;
+    width: 28px;
+    height: 28px;
+    padding-top: 29px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.contrBar span:hover {
+    color: #d40100
+}
+
+.contrBar1 {
+    background: url("images/shop.png") no-repeat;
+}
+
+.contrBar1:hover {
+    background: url("images/shop_On.png") no-repeat;
+}
+
+.contrBar2 {
+    background: url("images/print.png") no-repeat;
+}
+
+.contrBar2:hover {
+    background: url("images/print_on.png") no-repeat;
+}
+
+.contrBar3 {
+    background: url("images/delete.png") no-repeat;
+}
+
+.contrBar3:hover {
+    background: url("images/delete_on.png") no-repeat;
+}
+
+.payWay .tomasky-ui-dropdown {
+    width: 100px
+}
+
+.tomasky-ui-dropdown .ui-dropdown-list-max-height-4 {
+    max-height: 120px !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.cost-list .oo-dropdown-width-channel a, .cost-list .oo-dropdown-width-channel input {
+    height: 30px;
+    line-height: 30px
+}
+
+.noShopList {
+    width: 100%;
+}
+
+.noShopList h2 {
+    color: #504f4f;
+    font-size: 14px;
+    font-weight: 600;
+    padding-bottom: 8px;
+}
+
+.noShopList h3 {
+    color: #404040;
+    font-size: 12px;
+    padding-bottom: 8px;
+}
+
+.btn-good-history {
+    float: right;
+    color: #658bac;
+}
+
+.btn-good-history:hover {
+    text-decoration: none;
+    cursor: pointer;
+    color: #658bac;
+}
+
+.main-part {
+    background: #FFFFFF;
+    border: 1px solid #C8C8C8;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    padding: 0 10px 10px 10px;
+}
+
+.tomasky-ui-popups .main-part .ui-popups-foot {
+    padding: 14px 0 4px 0;
+    overflow: hidden;
+    zoom: 1
+}
+
+#shopCost.tomasky-ui-popups .ui-popups-body {
+    padding: 15px;
+}
+
+.main-top-tips {
+    background: #FFFBEE;
+    border: 1px solid #C8C8C8;
+    border-bottom: 0;
+    padding: 5px 8px;
+    width: 100%;
+    overflow: hidden;
+    zoom: 1;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    color: #5B492B;
+    letter-spacing: .01em;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+.main-top-tips a {
+    color: #196BCA;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.main-top-menu {
+    width: 100%;
+    padding: 0;
+}
+
+.main-top-menu ul {
+    display: inline-block;
+    width: 200px;
+}
+
+.main-top-menu ul li {
+    background: #FFFFFF;
+    border: 1px solid #C8C8C8;
+    border-radius: 2px 2px 0px 0px;
+    color: #646464;
+    display: inline-block;
+    margin-right: 2px;
+    padding: 4px 6px;
+    border-bottom: 0;
+    cursor: pointer;
+}
+
+.main-top-menu ul li.on {
+    background: #E84544;
+    border: 1px solid #E84544;
+    color: #ffffff;
+    border-bottom: 0;
+}
+
+.totalPay {
+    position: absolute;
+    bottom: 0px;
+    left: 5px;
+}
+
+/*支出*/
+.ui-spent-item {
+    width: 192px;
+    color: #404040;
+    margin-right: 7px;
+}
+
+.ui-spent-item .tomasky-ui-dropdown {
+    width: 100%;
+    height: 30px;
+    padding: 2px 18px 2px 10px;
+}
+
+.ui-spent-money {
+    width: 90px;
+    margin-right: 10px;
+}
+
+.ui-spent-money input {
+    width: 100%;
+    text-align: left;
+}
+
+.ui-spent-pay {
+    width: 144px;
+    color: #404040;
+    margin-right: 6px;
+}
+
+.ui-spent-pay .tomasky-ui-dropdown {
+    width: 100%;
+    height: 30px;
+    padding: 2px 18px 2px 10px;
+}
+
+.ui-item-del {
+    color: #d7d7d7;
+    cursor: pointer;
+}
+
+.ui-item-del:hover {
+    color: #cf2d01;
+}
+
+.ui-spent-earn {
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #C8C8C8;
+    margin-top: 9px;
+}
+
+.ui-spent-earn:last-child {
+    border-bottom: 0;
+}
+
+.ui-textarea {
+    background: #FFFFFF;
+    border: 1px solid #C8C8C8;
+    resize: none;
+    width: 458px;
+    padding: 5px;
+    margin-top: 4px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+#tem-shop {
+    padding-top: 10px;
+}
+
+.main-part .saveBtn {
+    line-height: normal;
+    font-size: 14px;
+}
+
+.tipsImg {
+    margin: 10px auto;
+    width: 305px;
+    display: block;
+}
+
+#tem-spent .shopCost {
+    padding-bottom: 10px;
+}
+
+/*引导图*/
+
+.ui-guide-back {
+    background: #ffffff;
+    border: 3px solid #f19715;
+    box-shadow: 0px 0px 7px 0px rgba(0, 0, 0, 0.33);
+    border-radius: 0px 0px 0px 8px 8px 8px 8px;
+    padding: 18px 14px;
+    font-size: 12px;
+    color: #787878;
+    z-index: 11;
+    border-radius: 6px;
+}
+
+.textc {
+    text-align: center;
+}
+
+.ui-guide-back h4 {
+    font-size: 14px;
+    color: #f19715;
+    font-weight: 400;
+    padding-bottom: 7px;
+}
+
+.ui-guide-back p {
+    padding-bottom: 7px;
+}
+
+.ui-guide-back .ui-guide-btn {
+    background: #f19715;
+    border-radius: 2px;
+    width: 204px;
+    height: 30px;
+    color: #ffffff;
+    font-size: 12px;
+    line-height: 30px;
+    text-align: center;
+    cursor: pointer;
+    display: block;
+    margin: 10px auto 0;
+}
+
+.ui-guide-triangle {
+    width: 10px;
+    height: 24px;
+    position: absolute;
+    top: 26px;
+    left: -9px;
+    display: block;
+    background: url('images/ui-trangle.png') no-repeat;
+}
+
+.ui-guide-triangle-top {
+    width: 24px;
+    height: 9px;
+    position: absolute;
+    top: -9px;
+    left: 26px;
+    display: block;
+    background: url('images/ui-trangle-top.png') no-repeat;
+}
+
+.ui-guide-triangle-right {
+    width: 9px;
+    height: 24px;
+    position: absolute;
+    top: 50%;
+    right: -9px;
+    margin-top: -12px;
+    display: block;
+    background: url('images/ui-trangle-right.png') no-repeat;
+}
+
+.ui-guide-icon {
+    color: #528626;
+    font-size: 14px;
+    padding-bottom: 7px;
+    display: inline-block;
+}
+
+.ui-guide-icon i {
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    top: -2px;
+    height: 20px;
+    width: 20px;
+    margin-right: 6px;
+}
+
+.ui-guide-step1 {
+    position: fixed;
+    top: 71px;
+    left: 165px;
+}
+
+.ui-guide-step2 {
+    position: absolute;
+    left: 170px;
+    top: 91px;
+}
+
+.ui-guide-step3 {
+    position: absolute;
+    left: 170px;
+    top: 280px;
+}
+
+.ui-guide-step4 {
+    position: absolute;
+    left: 170px;
+    top: 365px;
+}
+
+.ui-guide-step5 {
+    position: absolute;
+    top: 74px;
+    right: 266px;
+}
+
+.ui-guide-step6 {
+    position: absolute;
+    right: 532px;
+    top: 0;
+    z-index: 1001;
+    white-space: nowrap;
+}
+
+.ui-guide-step7 {
+    position: absolute;
+    left:532px;
+    top: 28px;
+    z-index: 1001;
+    white-space: nowrap;
+}
+
+#shopCost .ui-popups-dialog {
+    position: relative;
+}

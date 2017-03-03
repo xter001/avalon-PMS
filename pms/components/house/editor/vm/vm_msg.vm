@@ -1,0 +1,156 @@
+/**
+ * 短信
+ */
+
+
+var _DEFALUT_TPL_TITLE_ = '手写模板',
+    _MSG_MAX_LENGTH_ = 191,
+    $sensitive = require('../../../common/js/sensitive.js');
+
+var vm_msg = avalon.define({
+    $id : 'vm_msg',
+    remainNum : _MSG_MAX_LENGTH_,
+    name : '',
+    phone : '',
+    msgLogs : [],
+    sendType : {
+        1 : '手动发送',
+        2 : '群体发送',
+        3 : '智能发送'
+    },
+    msgAuthFlag : true,
+    tpls : [
+        // {title: _DEFALUT_TPL_TITLE_, content: ''}
+    ],
+    datas : {
+        from : '',
+        to : '',
+        mainId : ''
+    },
+    activeItem : {
+        selected : 0,
+        msgId : null,
+        title : _DEFALUT_TPL_TITLE_,
+        content : ''
+    },
+    //统计字数
+    countWords : function (e) {
+        var vm = vm_msg,
+            str = '',
+            wordsNum = 0
+
+        str = e ? e.target.value : vm.tpls.$model[vm.activeItem.selected] ? vm.tpls.$model[vm.activeItem.selected].content : ""
+        str = str + ''
+        vm.remainNum = _MSG_MAX_LENGTH_ - str.length
+    },
+    //初始化模板
+    initEnum : function (temps) {
+        var vm = vm_msg
+
+        if (!temps || temps.length === 0) {
+            return;
+        }
+        if (temps) {
+            var copyArr = temps.map(function (el) {
+                return {
+                    'id' : el.id,
+                    'title' : el.msgTitle,
+                    'content' : el.msgContent,
+                    'status' : el.status
+                }
+            })
+            var _tpls = vm.tpls.$model.concat(copyArr)
+            _tpls.forEach(function (_this, i) {
+                if (_this.status == 2) {
+                    vm.tpls.push(_this)
+                }
+            })
+            vm.countWords()
+        }
+    },
+    initMsgAuth : function (msgSendAuth) {
+        var vm = vm_msg
+        if (msgSendAuth == undefined || msgSendAuth == 2) {
+            return;
+        }
+        if (msgSendAuth == 1) {
+            vm.msgAuthFlag = false;
+        } else {
+            vm.msgAuthFlag = true;
+        }
+    },
+    submit : function () {
+        var vm = vm_msg,
+            g_mainOrder = vm_orders.$g_mainOrder,
+            activeItem = vm.activeItem
+        postData = {
+            msgId : activeItem.msgId || 0,
+            mobile : vm.phone,
+            names : vm.name,
+            content : activeItem.content,
+            statusId : g_mainOrder.id, //主订单id
+            orderType : g_mainOrder.orderStatus, //主订单类型
+            title : activeItem.title
+        },
+            innId = User.getUserInfo().innId
+
+        // 校验短信内容是否含有敏感词
+        var message = $sensitive.filter(activeItem.content)
+        if (message) {
+            tmsky.ui.dialog.tips('您的短信内容包含以下敏感词：\r\n' + message, 'error')
+            return
+        }
+
+        tmsky.ui.dialog.loading()
+        $.post('/inns/' + innId + '/msg/sendMsg', postData)
+            .done(function (rs) {
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('发送成功', 'success')
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            })
+            .always(function () {
+                tmsky.ui.dialog.loading.close()
+                $('#msg_popups').popups('hide');
+            })
+    },
+    getMsgLogs : function (mainId) {
+        if (tmsky.isEmpty(mainId)) {
+            return;
+        }
+        var datas = {};
+        var url = '/msg/' + mainId + '/history';
+        tmsky.ui.dialog.loading('加载中...');
+        $.get(url, datas).done(function (rs) {
+            if (rs.status == 200) {
+                vm_msg.msgLogs = rs.list;
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(tmsky.ui.dialog.loading.close);
+    },
+    reset : function () {
+        var vm = vm_msg
+
+        // vm.activeItem.title = _DEFALUT_TPL_TITLE_
+        // vm.activeItem.content = ''
+        // vm.activeItem.msgId = null
+        vm.activeItem.selected = 0
+
+        // vm.remainNum = _MSG_MAX_LENGTH_
+    }
+})
+
+vm_msg.activeItem.$watch("selected", function (val) {
+    var vm = vm_msg
+    var tplItem = vm.tpls.$model[val]
+
+    if (tplItem) {
+        vm.activeItem.msgId = tplItem.id
+        vm.activeItem.title = tplItem.title
+        vm.activeItem.content = tplItem.content
+        vm.countWords()
+    }
+
+})

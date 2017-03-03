@@ -1,0 +1,153 @@
+<div id="account_book_popups" class="tomasky-ui-popups" style="display:none">
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="clearAccount()" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">{{accountBook.operate}}账本{{streamType[accountBook.streamType]}}</h3>
+            <input type="hidden" ms-duplex="accountBook.streamType" />
+            <input type="hidden" ms-duplex="accountBook.id" />
+        </div>
+        <div class="ui-popups-body">
+            <div class="spend-item">
+                <p>日&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;期：<input id="account_time" type="text" ms-duplex="accountBook.accountTime" placeholder="请选择日期"></p>
+                <p>
+                    选择项目：
+                    <select id="ac_item_select" ms-change="changeSelect('item')" ms-duplex="accountBook.item">
+                        <option value="">未选择</option>
+                        <option ms-repeat-el="acs" ms-if-loop="el.itemType == accountBook.streamType" ms-attr-selected="accountBook.item == el.name" ms-attr-value="el.name">{{el.name}}</option>
+                    </select>
+                </p>
+                <p>数&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;量：<input maxlength="4" type="text" ms-duplex="accountBook.nums"></p>
+                <p>{{streamType[accountBook.streamType]}}金额：<input maxlength="8" type="text" ms-duplex="accountBook.streamMoney"></p>
+                <p>
+                    支付方式：
+                    <select id="ac_pc_select" ms-change="changeSelect('payChannelName')" ms-duplex="accountBook.payChannelName">
+                        <option ms-repeat-el="pcs" ms-attr-selected="accountBook.payChannelName == el.name" ms-attr-value="el.name">{{el.name}}</option>
+                    </select>
+                </p>
+                <p>
+                    <span class="mark">备&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;注：</span>
+                    <textarea maxlength="2000" ms-duplex="accountBook.notes"></textarea>
+                </p>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <button ms-click="saveAccountBook(accountBook)" class="spend-item-enter">确认</button>
+        </div>
+    </div>
+</div>
+
+<div id="account_book_list_popups" class="tomasky-ui-popups" style="display:none;">
+    <div class="ui-popups-dialog" id="popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">批量记账</h3>
+        </div>
+        <div class="ui-popups-body">
+            <div style="width:580px;">
+                <p class="date-title">记账日期 <input id="account_book_list_date" ms-duplex="data.accountDate" type="text" value="" class="date" /></p>
+                <ul class="tab-title">
+                    <li>收入明细</li>
+                    <li>金额</li>
+                    <li>备注</li>
+                    <li>支出明细</li>
+                    <li>金额</li>
+                    <li>备注</li>
+                </ul>
+                <div class="book-div">
+                    <table class="book-tab">
+                        <tbody>
+                        <tr ms-repeat-et="accountBooks" ms-if-loop="et.streamType == 1 && et.canModify == 0">
+                            <td>{{et.item}}</td>
+                            <td><input ms-duplex="et.streamMoney" ms-on-blur="countAccountBooks(true)" type="text" class="account" maxlength="8"></td>
+                            <td><input ms-duplex="et.notes" type="text" maxlength="2000" class="addMsg"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="book-div">
+                    <table class="book-tab">
+                        <tbody>
+                        <tr ms-repeat-et="accountBooks" ms-if-loop="et.streamType == 2 && et.canModify == 0">
+                            <td>{{et.item}}</td>
+                            <td><input ms-duplex="et.streamMoney" ms-on-blur="countAccountBooks(false)" type="text" class="account" maxlength="6"></td>
+                            <td><input ms-duplex="et.notes" type="text" maxlength="2000" class="addMsg"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+                <ul class="total-count clear">
+                    <li>合计<input ms-duplex="total.income" type="text" class="moneytotal fr" readonly="readonly"></li>
+                    <li>合计<input ms-duplex="total.payout" type="text" class="moneytotal fr" readonly="readonly"></li>
+                </ul>
+            </div>
+        </div>
+        <div class="ui-popups-foot dialog-foot">
+            <button ms-click="saveAccountBooks()" class="btn btndefault enter">确定</button>
+            <button class="btn btnsuccess cancel" data-dismiss="popups">取消</button>
+        </div>
+    </div>
+</div>
+
+<div id="order_info_popups" class="tomasky-ui-popups" style="display:none;">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">查看详情</h3>
+        </div>
+        <div class="ui-popups-body" style="width:900px">
+            <table id="order_info_table" class="table table-bordered arrive-table">
+                <thead>
+                <tr>
+                    <th>客人来源</th>
+                    <th>订单号</th>
+                    <th>房号</th>
+                    <th>入住时间</th>
+                    <th>退房时间</th>
+                    <th>订单金额</th>
+                    <th>已收金额</th>
+                    <th>已收押金</th>
+                    <th>联系人</th>
+                    <th>手机号</th>
+                    <th>操作时间</th>
+                    <th>操作人</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>{{orderInfo.customerFromName}}</td>
+                    <td>{{orderInfo.orderNo}}</td>
+                    <td class="white-pre-line">{{orderInfo.roomNos}}</td>
+                    <td class="white-pre-line">{{orderInfo.checkins}}</td>
+                    <td class="white-pre-line">{{orderInfo.checkouts}}</td>
+                    <td>{{orderInfo.orderFee}}</td>
+                    <td>{{orderInfo.paidAmount}}</td>
+                    <td>{{orderInfo.paidPayment}}</td>
+                    <td>{{orderInfo.name}}</td>
+                    <td>{{orderInfo.contact}}</td>
+                    <td>{{orderInfo.updatedAt}}</td>
+                    <td>{{orderInfo.updatedUser}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="no_item_tip_popups" class="tomasky-ui-popups edit-expend-popups">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">温馨提示</h3>
+        </div>
+        <div class="ui-popups-body" style="width:540px">
+            <p>您还没有设置收入项目和支出项目，可以点击下方的设置按钮进行添加和编辑。</p>
+            <p>您也可以通过客栈管理-功能库-客栈账本进行设置</p>
+        </div>
+        <div class="ui-popups-foot">
+            <a target="_blank" href="/public/views/1/functions-plug.html#tab=accountBook_plug" class="btn btndefault immediately-set">立即设置</a>
+            <a data-dismiss="popups" class="set-up-later">稍后设置</a>
+        </div>
+    </div>
+</div>
+

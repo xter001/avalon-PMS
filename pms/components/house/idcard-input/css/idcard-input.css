@@ -1,0 +1,310 @@
+.ui-no-checkin {
+    text-align: center;
+    padding: 20px 0;
+    display: none;
+}
+
+.ui-no-checkin img {
+    margin-top: 10px;
+}
+
+.ft-12 {
+    font-size: 12px !important;
+}
+
+.ft-14 {
+    font-size: 14px;
+}
+
+.ft-16 {
+    font-size: 16px;
+}
+
+.ft-18 {
+    font-size: 18px;
+}
+
+.col-86 {
+    color: #868686;
+}
+
+.clr-31 {
+    color: #323231;
+}
+
+.fr {
+    float: right;
+}
+
+.fl {
+    float: left;
+}
+
+.ui-checkin-toolbar {
+    line-height: 44px;
+    margin-top: -5px;
+}
+
+.ui-checkin-toolbar .btn-tool {
+    background-image: linear-gradient(-180deg, #FFFFFF 0%, #F2F2F2 100%);
+    border-radius: 2px;
+}
+
+.checkin-list-dialog .ui-popups-foot, .edit-msg-dialog .ui-popups-foot {
+    background-color: #f2f2f2;
+    overflow: hidden;
+    padding: 10px 20px;
+}
+
+.checkin-list-dialog .btn-add, .edit-msg-dialog .btn-add {
+    background-image: linear-gradient(-180deg, #FFFFFF 0%, #F2F2F2 100%);
+    border: 1px solid #D2D2D2;
+    border-radius: 2px;
+    width: 130px;
+    font-size: 12px;
+}
+
+.checkin-list-dialog .btn-save, .edit-msg-dialog .btn-save {
+    background: #D9534F;
+    border-radius: 2px;
+    color: #ffffff;
+    width: 130px;
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+.checkin-list-dialog .btn-cancel, .edit-msg-dialog .btn-cancel {
+    background-image: linear-gradient(-180deg, #FFFFFF 0%, #F2F2F2 100%);
+    border: 1px solid #D2D2D2;
+    width: 105px;
+    color: #323231;
+    font-size: 12px;
+}
+
+.ui-has-checkin {
+    height: 250px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 10px;
+}
+
+.ui-has-checkin ul {
+    border: 1px solid #d2d2d2;
+}
+
+.ui-has-checkin li {
+    border-bottom: 1px solid #d2d2d2;
+    padding: 8px 10px;
+    line-height: 24px;
+}
+
+.ui-has-checkin li:hover {
+    background-color: #f4f4f4;
+}
+
+.ui-has-checkin li:last-child {
+    border-bottom: none;
+}
+
+.ui-has-checkin .btns button {
+    width: 43px;
+    height: 24px;
+    font-size: 12px;
+    background: #FFFFFF;
+    border: 1px solid #D2D2D2;
+    border-radius: 2px;
+}
+
+.ui-has-checkin li .btn-modify:hover {
+    background: #58BA57;
+    border: 1px solid #58BA57;
+    border-radius: 2px;
+    color: #ffffff;
+}
+
+.ui-has-checkin li .btn-del:hover {
+    background: #D9534F;
+    border: 1px solid #D9534F;
+    border-radius: 2px;
+    color: #ffffff;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+
+/*选择录入方式*/
+
+.input-type-list {
+    overflow: hidden;
+}
+
+.input-type-list li {
+    width: 172px;
+    height: 98px;
+    float: left;
+    background-size: 100% 100%;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.input-type-list li:nth-of-type(2n+1) {
+    margin-right: 20px;
+}
+
+.input-hand {
+    background: url("../images/hand_def.png") no-repeat center;
+}
+
+.input-hand:hover {
+    background: url("../images/hand_hover.png") no-repeat center;
+}
+
+.input-card {
+    background: url("../images/card_def.png") no-repeat center;
+}
+
+.input-card:hover {
+    background: url("../images/card_hover.png") no-repeat center;
+}
+
+.no-card {
+    background: url("../images/no_card.png") no-repeat center;
+}
+
+
+/*录入证件信息*/
+
+.ui-edit-top .check-img {
+    width: 105px;
+    height: 130px;
+    background: #FFFFFF;
+    border: 1px solid #DBDBDB;
+    margin: 0 auto;
+    position: relative;
+}
+
+.ui-edit-top .check-img-foot {
+    background-image: linear-gradient(-180deg, #FFFFFF 0%, #F4F4F4 100%);
+    height: 20px;
+    color: #323231;
+    font-size: 10px;
+    text-align: center;
+    line-height: 20px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-top: 1px solid #DBDBDB;
+}
+
+.check-img img {
+    display: inline-block;
+    width: 100%;
+}
+
+.edit-msg-centent {
+    margin-top: 15px;
+}
+
+.edit-msg-centent li {
+    margin-bottom: 15px;
+}
+
+.edit-msg-centent label {
+    width: 60px;
+    display: inline-block;
+}
+
+.edit-msg-centent input {
+    background: #FFFFFF;
+    border: 1px solid #D2D2D2;
+    border-radius: 2px;
+    height: 30px;
+    box-sizing: border-box;
+    padding: 5px;
+}
+
+.edit-msg-centent .margin-left {
+    margin-left: 10px;
+}
+
+.ui-edit-hint {
+    line-height: 31px;
+    float: left;
+    font-size: 12px;
+    color: #323231;
+}
+
+.edit-msg-dialog .btn-add {
+    margin-right: 5px;
+}
+
+.msg-area {
+    display: inline-block;
+    width: 70px;
+    color: #323231;
+}
+
+.msg-area:hover {
+    color: #323231;
+}
+
+.msg-area i {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background: url("../images/icon_radio.png") no-repeat center;
+    background-size: 100% 100%;
+    margin-right: 5px;
+    position: relative;
+    top: 2px;
+}
+
+.msg-area.checked i {
+    background-size: 100% 100%;
+    background: url("../images/icon_radio_check.png") no-repeat center;
+}
+
+.edit-msg-dialog .ui-popups-body {
+    padding-bottom: 10px;
+}
+
+.msg-grey-border {
+    /*background-image: linear-gradient(-180deg, #FFFFFF 0%, #F3F3F3 100%);*/
+    border: 1px solid #FF6000;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #FF6000;
+    display: inline-block;
+    padding: .5px 4px;
+    cursor: pointer;
+    font-weight: 400;
+}
+.order-idcard-nation{
+    width: 100px;
+    border: 1px solid #e0e0e0;
+    height: 30px;
+    margin-left: 2px;
+}
+.order-idcard-addr{
+    width: 223px;
+    border: 1px solid #e0e0e0;
+    height: 30px;
+    margin-left: 2px;
+}
+.order-idcard-nation>a{
+    margin-top: 3px;
+}
+.order-idcard-addr>a{
+    margin-top: 3px;
+}
+.idcard-input-select2{
+    max-height: 200px;
+    overflow: auto;
+}
+
+.idcard-birthday{
+    width: 105px;
+    margin:0px;
+}

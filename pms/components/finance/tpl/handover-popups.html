@@ -1,0 +1,95 @@
+<div ms-controller="vm_handover" id="handover_detail_popups" class="tomasky-ui-popups">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">交接详情</h3>
+        </div>
+        <div class="ui-popups-body" style="width:800px;">
+            <p class="relief-shift-time">
+                <i class="iconfont icon-clock"></i>
+                <!--<span>{{handover.fromDate}}</span>至<span>{{handover.toDate}}</span>-->
+
+                <input id="global_handover_from" ms-duplex="handover.fromDate" type="text"
+                       ms-attr-placeholder="{{handover.fromDate}}"
+                       class="select-time">至
+                <input id="global_handover_to" ms-duplex="handover.toDate" type="text" ms-attr-placeholder="{{handover.toDate}}"
+                       class="select-time">
+                <span class="colred" ms-visible="isColRed">
+                    <i class="iconfont icon-warning"></i>
+                    交接后财务记录有修改
+                </span>
+
+                <a ms-click="jumpHandoverLog()" class="blue fr">交接历史</a>
+            </p>
+            <div class="relief-shift-info">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>项目</th>
+                        <th class="table-right" ms-repeat="payChannels">{{el}}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>房费</td>
+                        <td class="table-right" ms-repeat="payChannels">{{totalFee[el] | toFixed}}</td>
+                    </tr>
+                    <tr>
+                        <td>押金</td>
+                        <td class="table-right" ms-repeat="payChannels">{{deposit[el] | toFixed}}</td>
+                    </tr>
+                    <tr>
+                        <td>商品</td>
+                        <td class="table-right" ms-repeat="payChannels">{{goods[el] | toFixed}}</td>
+                    </tr>
+                    <tr>
+                        <td>账本</td>
+                        <td class="table-right" ms-repeat="payChannels">{{account[el] | toFixed}}</td>
+                    </tr>
+                    <tr>
+                        <td>合计</td>
+                        <td class="table-right" ms-repeat="payChannels">{{totalCount[el] | toFixed}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="relief-shift-nameinfo">
+                <span ms-if="handoverEdit.hasHandoverMan">交班人：{{handover.handoverMan.userCode}} <em>({{handover.handoverName}})</em></span>
+                <span ms-if="handoverEdit.hasSuccessorMan">接班人：{{handover.successorMan.userCode}} <em>({{handover.successorName}})</em></span>
+                <a ms-click="jumpAcDetail()" class="blue fr">账目明细</a>
+            </p>
+            <div class="relief-shift-record-mark">
+                <textarea maxlength="2000" ms-attr-disabled="handoverEdit.isDisabled" ms-duplex="handover.note"
+                          placeholder="请输入备注信息"></textarea>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <div class="jiaojie">
+                <button ms-if="handoverEdit.isEdit" data-ui="popups" ms-click="handover_login">交接</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div ms-controller="vm_handover" id="handover_login_popups" class="tomasky-ui-popups" ms-visible="handover_login_popups">
+    <div class="ui-popups-dialog">
+        <em class="close" data-dismiss="popups" ms-click="close_handover_login">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">接班账号登录</h3>
+        </div>
+        <div class="ui-popups-body" style="width:300px;">
+            <div class="relief-shift-login">
+                <p>
+                    账号：<input ms-duplex="data.userCode" type="text" class="common-input">
+                </p>
+                <p>
+                    密码：<input ms-duplex="data.password" type="password" class="common-input">
+                </p>
+                <p class="login-warm red">注：交接后上一班数据不能修改</p>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <button ms-click="saveHandover()" class="relief-shift-loginbar">登录</button>
+        </div>
+    </div>
+</div>

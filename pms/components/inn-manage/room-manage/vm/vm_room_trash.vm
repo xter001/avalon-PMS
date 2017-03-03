@@ -1,0 +1,61 @@
+var vm_room_trash = avalon.define({
+    $id : 'vm_room_trash',
+    rooms : [],
+
+    init : function () {
+        tmsky.ui.dialog.loading()
+        $.get('/room/getRooms/0').done(function (rs) {
+            if (rs.status == 200) {
+                var list = rs.innRooms, item
+                for (var i in list) {
+                    item = {
+                        roomId : list[i].id,//房间id
+                        roomNo : list[i].roomNo,//房间号
+                        roomTypeId : list[i].roomType.id,//房型id
+                        roomtypeName : list[i].roomType.name,//房型名
+                        roomtypePrice : list[i].roomType.normalPrice//价格
+                    }
+                    vm_room_trash.rooms.push(item)
+                }
+                ;
+            }
+        }).always(function () {
+            tmsky.ui.dialog.loading.close()
+        })
+
+    },
+    //还原
+    restore : function (index) {
+        var _this = vm_room_trash.rooms[index].$model
+        tmsky.ui.dialog.confirm('确定要还原此房间吗？', function () {
+            var room = {
+                    id : _this.roomId,
+                    roomNo : _this.roomNo,
+                    status : 1
+                },
+                datas = {
+                    id : _this.roomTypeId,
+                    name : _this.roomtypeName,
+                    normalPrice : _this.roomtypePrice,
+                    innRooms : [room]
+                }
+
+            $.post('/inns/roomtype/saveOrUpdate', tmsky.ajax.serialize(datas), function (rs) {
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('操作成功！', 'success')
+                    vm_room_trash.rooms.splice(index, 1)
+                } else {
+                    tmsky.ui.dialog.tips('操作失败！', 'error')
+                }
+            }).always(function () {
+                tmsky.ui.dialog.loading.close()
+            })
+        })
+
+    },
+    navigateToRoomType : function () {
+        avalon.router.navigate('/room/type/')
+        document.location.reload();
+    }
+
+})

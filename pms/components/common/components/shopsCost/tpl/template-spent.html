@@ -1,0 +1,54 @@
+<div class="noShopList" ms-visible="acsData.length==0">
+    <h2 ms-visible="tabIndex==1">您还没有添加支出项目！</h2>
+    <h3 ms-visible="tabIndex==1">请在功能库“记一笔”中添加支出项目，添加完之后，您就可以在这里添加支出了.</h3>
+    <img class="tipsImg" style="width:148px;" ms-visible="tabIndex==1" src="../images/noOutImg.png">
+
+    <h2 ms-visible="tabIndex==2">您还没有添加收入项目！</h2>
+    <h3 ms-visible="tabIndex==2">请在功能库“记一笔”中添加收入项目，添加完之后，您就可以在这里添加收入了.</h3>
+    <img class="tipsImg" style="width:107px;" ms-visible="tabIndex==2" src="../images/noInImg.png">
+</div>
+<div class="shopCost" ms-visible="acsData.length>0">
+    <div class="ui-spent-earn" ms-repeat="spentList">
+        <div class="ui-spent-item fl">
+            <div class="tomasky-ui-dropdown oo-dropdown-width-channel" data-ui="dropdown">
+                <input ms-change="changeItem(el)" ms-duplex="el.itemIndex" type="hidden">
+                <a href="javascript:void(0);">
+                    <span data-role="value">{{el.item}}</span>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list ui-dropdown-list-max-height-5">
+                    <em class="tomasky-ui-dropdown-search-in">
+                        <input old-value="" placeholder="搜索.." data-role="search" class="tomasky-ui-dropdown-search-input-in">
+                    </em>
+                    <a href="javascript:;" ms-repeat="acsData" ms-data-value="$index" data-role="item">{{el.name}}</a>
+                </div>
+            </div>
+        </div>
+        <div class="ui-spent-money fl">
+            <input maxlength="8" type="text" class="cost-num" ms-duplex="el.streamMoney" ms-attr-disabled="el.itemIndex==-1" placeholder="￥金额">
+        </div>
+        <i ms-click="deleteItem(el,$index)" class="iconfont icon-minus ui-item-del fr"></i>
+        <div class="ui-spent-pay fr">
+            <div class="tomasky-ui-dropdown fl oo-dropdown-width-channel" data-ui="dropdown">
+                <input ms-change="changePay(el)" ms-duplex="el.payIndex" type="hidden">
+                <a href="javascript:void(0);">
+                    <span data-role="value">{{el.payChannelName}}</span>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                    <a href="javascript:;" ms-repeat-item="costPayList" ms-data-value="$index"
+                       data-role="item">{{item.name}}</a>
+                </div>
+            </div>
+        </div>
+        <textarea ms-duplex="el.note" class="ui-textarea" placeholder="备注"></textarea>
+    </div>
+    <span class="cost-add-cost" ms-click="addPayItem()" ms-visible="spentList.length<5&&!editing&&tabIndex == 1">费用支出</span>
+    <span class="cost-add-cost" ms-click="addPayItem()" ms-visible="spentList.length<5&&!editing&&tabIndex == 2">其他收入</span>
+</div>
+<div class="ui-popups-foot">
+    <button class="btn btndefault saveBtn cost-enter fl" data-ui="popups" ms-visible="acsData.length>0" ms-click="saveSpent()">记录</button>
+    <button class="btn btndefault cost-cancel fr" data-ui="popups" ms-visible="acsData.length>0" ms-click="cancelShopCost()">取消</button>
+    <button class="btn btndefault saveBtn cost-enter fl" data-ui="popups" ms-visible="acsData.length==0" onclick="window.location.href = '/public/views/1/functions-plug.html#tab=accountBook_plug'">现在去添加>></button>
+    <button class="btn btndefault cost-cancel fr" ms-class="cancel" data-ui="popups" ms-click="cancelShopCost()" ms-visible="acsData.length==0">稍后</button>
+</div>

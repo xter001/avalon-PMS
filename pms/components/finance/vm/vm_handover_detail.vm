@@ -1,0 +1,161 @@
+var UrlDecoder = require('../handler/urlDecoder.js'),
+    User = require('../../header/user.js'),
+    Report_consts = require('../../report/common/js/const.js')
+
+var vm_handover_detail = avalon.define({
+    $id : 'vm_handover_detail',
+    params : {
+        innId : '',
+        snapshot : '',
+        handoverId : '',
+        from : '',
+        to : ''
+    },
+    showView : {snapshot : 1},
+    delList : [],
+    handoverDelList : [],
+    kzList : [],
+    preList : [],
+    proList : [],
+    tatolAmount : {
+        preTotal : '',//快照总金额
+        proTotal : ''//当前总金额
+    },
+    urls : {
+        getPreList : '/finance/getHandoverRecords',
+        getProList : '/innBook/getNewAccounts',
+    },
+
+    init : function () {
+        vm_handover_detail.getUrlDatas()
+    },
+
+    getUrlDatas : function () {
+        var vm = vm_handover_detail
+        vm.params.innId = User.getUserInfo().innId
+        vm.showView.snapshot = UrlDecoder.decodeToJson().snapshot
+        vm.params.handoverId = UrlDecoder.decodeToJson().handoverId
+        vm.params.from = decodeURI(UrlDecoder.decodeToJson().from)
+        vm.params.to = decodeURI(UrlDecoder.decodeToJson().to)
+        vm.getPreList(1)
+    },
+    getPreList : function (pageNo) {
+        var vm = vm_handover_detail
+        var url = vm.urls.getPreList
+        var data = {
+            handoverId : vm.params.handoverId,
+            pageNo : pageNo,
+            pageSize : '20'
+        }
+        $.get(url, data).done(function (rs) {
+            if (rs.status == 200) {
+                vm.preList = vm.preList.$model.concat(rs.page.result)
+                if (pageNo == rs.page.totalPages) { //开始获取当前财务明细
+                    vm.getProList(1)
+                } else {
+                    vm.getPreList(pageNo + 1)
+                }
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+        });
+    },
+    getProList : function (pageNo) {
+        var vm = vm_handover_detail
+        var url = vm.urls.getProList
+        var data = {
+            innId : vm.params.innId,
+            from : vm.params.from,
+            to : vm.params.to,
+            detailDate : '1',//1：是 为空/不传 后台自动补全时间尾
+            pageNo : pageNo,
+            pageSize : '20'
+        }
+        $.get(url, data).done(function (rs) {
+            if (rs.status == 200) {
+                vm.proList = vm.proList.$model.concat(rs.page.result)
+                if (pageNo == rs.page.totalPages) { //开始计算前后差异
+                    var detailMap = vm.initDetailMap(vm.preList.$model, vm.proList.$model)
+                    vm.delList = vm.initDetailList(detailMap)
+                    vm.getTotalFee()
+                } else {
+                    vm.getProList(pageNo + 1)
+                }
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+        });
+    },
+    initDetailMap : function (preList, proList) {
+        var detailMap = {}
+        for (var i = 0; i < preList.length; i++) {
+            var pre = preList[i]
+            var key = pre.id + '_' + pre.recordType
+            var obj = (detailMap[key]) ? detailMap[key] : {pre : '', pro : '', date : ''}
+            obj.pre = pre
+            obj.date = (obj.date == '') ? pre.recordAt : obj.date
+            detailMap[key] = obj
+        }
+        for (var i = 0; i < proList.length; i++) {
+            var pro = proList[i]
+            var key = pro.id + '_' + pro.recordType
+            var obj = (detailMap[key]) ? detailMap[key] : {pre : '', pro : '', date : ''}
+            obj.pro = pro
+            obj.date = (obj.date == '') ? pro.recordAt : obj.date
+            detailMap[key] = obj
+        }
+        return detailMap
+    },
+    initDetailList : function (map) {
+        var list = []
+        for (var key in map) {
+            list.push(map[key])
+        }
+        list.sort(vm_handover_detail.sortByRecordAt)
+        return list
+    },
+    sortByRecordAt : function (obj1, obj2) {
+        return (obj1.date > obj2.date);
+    },
+
+    getTotalFee : function () {
+        var vm = vm_handover_detail
+        var datas = {
+            id : vm.params.handoverId,
+            innId : vm.params.innId
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(datas, true),
+            url : '/finance/getTotalFee',
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    vm.tatolAmount.preTotal = rs.preTotal
+                    vm.tatolAmount.proTotal = rs.proTotal
+                }
+            }
+        })
+
+    },
+    statusToString : function (x) {
+        if (x == '1') {
+            return '正常'
+        } else if (x == 2) {
+            return '被修改'
+        }
+    },
+    itemTransform : function (x) {
+        var item = Report_consts.FINANCE_ITEM[x]
+        if (item == null || item == undefined) {
+            item = x
+        }
+        return item
+    }
+
+
+})

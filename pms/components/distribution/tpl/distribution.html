@@ -1,0 +1,42 @@
+<!--开通分销平台-->
+<div>
+    <div class="openDis">
+        <img src="../images/banner.png">
+        <a class="btn-red" ms-click="openDis()">开通分销平台</a>
+    </div>
+
+    <div class="tomasky-ui-popups" ms-visible="popupShow.fxtext">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog">
+            <em class="close" ms-click="closeFxtext()" data-dismiss="popups">X</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">开通协议</h3>
+            </div>
+            <div class="ui-popups-body tomasky-hidden-x">
+                <div class="container">
+                    <div class="textList">
+                        <i class="textNum">1</i>
+                        <p>对接方式：客栈认真阅读并同意该协议后可通过登录青芒果的</p>
+                    </div>
+                    <div class="textList">
+                        <i class="textNum">2</i>
+                        <p>对接效果：系统会将客栈实时的空房量提供给青芒果，房量充足的订单会自动接受。（所以请即时将最新房态更新到番茄来了，以免造成订单冲突。）</p>
+                    </div>
+                    <div class="textList">
+                        <i class="textNum">3</i>
+                        <p>其他功能：客栈可在番茄来了系统中设定提供给青芒果的价格，如果可将需自留的房间针对青芒果锁房。</p>
+                    </div>
+                    <div class="textList">
+                        <i class="textNum">4</i>
+                        <p>番茄来了会自动把最近120天的空余房量、价格提供给青芒果。（所以请提前设定好这段时间的价格和房量，以免造成不必要的损失。）</p>
+                    </div>
+
+                    <div class="dis-select"><i ms-click="toggleSelect" class="select" ms-class-select_on="hasSure"></i>我确定已经认真阅读并理解了该功能</div>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="btn btndefault saveBtn" ms-click="getOpenDis()" ms-class="enter" data-ui="popups">点击开通</button>
+            </div>
+        </div>
+    </div>
+</div>

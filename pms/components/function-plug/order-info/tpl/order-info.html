@@ -1,0 +1,371 @@
+<!--客人来源-->
+<div ms-visible="funcBool.origin_plug"  class="radius0 background_f">
+    <div class="ui_fun_contenter" ms-controller="vm_order_info" id="subFunSet">
+        <h1 class="u_border_left" style="margin: 0">子功能设置
+            <span class="ui_select ui_select_funcid" funcid="7" ms-class-on="getOnOff(7)" style="padding-left: 38px;"><i></i>录入订单号</span>
+            <span class="ui_select ui_select_funcid" funcid="25" ms-class-on="getOnOff(25)" style="padding-left: 38px;"><i></i>退房后，渠道颜色一同变灰</span>
+        </h1>
+    </div>
+    <div class="ui_fun_contenter" ms-controller="vm_order_info" id="defaultChannels">
+        <h1 class="u_border_left">默认渠道<span class="color_40">（不可修改颜色）</span></h1>
+        <div class="qd_part">
+            <ul>
+                <li ms-repeat="cf_origin" ms-attr-fromid="el.id"><span class="qd_name" ms-css-background="el.colorValue">{{el.name}}</span><a ms-click="openYjSet()" class="qd_btn">设置佣金</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="ui_fun_contenter" style="overflow: inherit; position: relative;margin-bottom: 80px;" ms-controller="vm_order_info">
+        <h1 class="u_border_left">自定义渠道</h1>
+        <div class="qd_part">
+            <ul id="origin_head_iol">
+                <li class="qd_delete" ms-repeat="cf_z" ms-attr-fromid="el.id" ms-attr-index="el.serialNo">
+                    <div>
+                        <span ms-css-background="el.colorValue" class="qd_name">
+                        <label>{{el.name}}</label>
+                        <i ms-click="canDelete(el,$index)"></i>
+                        </span>
+                        <span class="ui_inblock_add" style="margin: 0; display: none;width:185px;">
+                            <input ms-duplex="el.name" type="text">
+                            <a ms-click="editQd(el)">确定</a>
+                        </span>
+                        <div class="qd_color">
+                            <p>设置渠道颜色</p>
+                            <ul>
+                                <li background="#9E9E9E" ms-click="changeColor(el)"></li>
+                                <li class="color_green" background="#81b829" ms-click="changeColor(el)"></li>
+                                <li class="color_green2" background="#30b8c8" ms-click="changeColor(el)"></li>
+                                <li class="color_blue1" background="#4e91f3" ms-click="changeColor(el)"></li>
+                                <li class="color_blue2" background="#297bab" ms-click="changeColor(el)"></li>
+                                <li class="color_blue3" background="#2568c2" ms-click="changeColor(el)"></li>
+                                <li class="color_purple" background="#856cbf" ms-click="changeColor(el)"></li>
+                                <li class="color_pink" background="#e7508b" ms-click="changeColor(el)"></li>
+                                <li class="color_orange" background="#f8653c" ms-click="changeColor(el)"></li>
+                                <li class="color_red" background="#d2503b" ms-click="changeColor(el)"></li>
+                                <li class="color-set" ms-visible="!isMac()">
+                                    <input style="position:absolute;left:3000px;" type="color" id="colorBox" ms-change="saveColor(el)" />
+                                    <button class="setColor" ms-click="setColor">自定义</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <a ms-click="openYjSet()" class="qd_btn">设置佣金</a>
+
+                </li>
+                <li ms-visible="bool.addQd" class="cancelClick">
+                    <span class="ui_inblock_add" style="margin: 0">
+                        <input ms-duplex="addQdInfo.name" type="text">
+                        <a ms-click="addAjaxQd()"  id="confirmChannel">确定</a>
+                    </span>
+                </li>
+                <li style="width:130px;min-width:130px; margin-top: 0;z-index:1" class="ui_inblock_grey add cancelClick addNewQd" ms-click="addQd(true)" id="addChannel">+ 新增渠道</li>
+            </ul>
+        </div>
+    </div>
+    <div id="origin_paychannel_popups" class="tomasky-ui-popups" ms-controller="vm_order_info" ms-visible="bool.deleteNo"><div class="tomasky-ui-popups-backdrop"></div>
+        <div id="origin_paychannel_dialog" class="ui-popups-dialog">
+            <em class="close" data-dismiss="popups" ms-click="closeBool()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">删除渠道</h3>
+            </div>
+            <div class="ui-popups-body" style="overflow: inherit;">
+                <div id="content-wrap" style="text-align: center">
+                    <div>该<label class="desc">渠道</label>已被使用，删除<label id="oper-name">银行卡</label><label class="desc">渠道后，该渠道下的所有订单将归属到：</label></div>
+                    <div class="tomasky-ui-dropdown" style="width:130px; margin: 20px auto 0;" data-ui="dropdown">
+                        <input type="hidden" class="deleteId">
+                        <a href="javascript:;">
+                            <span data-role="value" class="qdNoSelect">请选择渠道</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list ui-dropdown-list-max-height-5 canPayWay">
+                            <a ms-repeat="allCF" ms-data-value="el.id" data-role="item">{{el.name}}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <div class="ui-dialog-btns" data-dom="buttons">
+                    <button class="ui-dialog-btn ui-dialog-btn-on" ms-click="deleteCF('replace')" callback="ok">确定</button>
+                    <button class="ui-dialog-btn" ms-click="closeBool()" callback="cancel">取消</button>
+                </div>
+                <div id="error" class="error"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--设置佣金-->
+<div class="tomasky-ui-popups" ms-visible="bool.yj" ms-controller="vm_order_info">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="toggleYj(false)" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">设置佣金比例</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x" style="padding: 0">
+            <div class="container" style="width: 400px">
+                <ul id="commission-type-ul">
+                    <li><input ms-click="changeYjType(0)" ms-attr-checked="yjCheck[0]" name="commission" type="radio">按照固定比例计算佣金</li>
+                    <li><input ms-click="changeYjType(1)" ms-attr-checked="yjCheck[1]"  name="commission" type="radio">按照固定金额计算佣金</li>
+                </ul>
+                <div class="yj_bili" ms-visible="yjCheck[0]">
+                    <span>佣金比例：</span>
+                    <input ms-duplex="yjInfoType1.commissionValue" id="commission-ratio-input" class="commission-ratio-input" type="text" onkeyup="value=value.replace(/[^\-?\d.]/g,'')">
+                    <span>%</span>
+                </div>
+                <div class="yj_bili hide"  ms-visible="yjCheck[1]">
+                    <div  class="commission-input">
+                        <ul id="commission-quota-ul">
+                            <li ms-repeat="yjType2"><span class="room-name">{{el.name}}</span><span>固定佣金金额：</span><span><input maxlength="6" class="commission-ratio-input" ms-duplex="el.yj"  onkeyup="value=value.replace(/[^\-?\d.]/g,'')" type="text"></span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <button class="btn btndefault yj_ok" ms-click="saveYj()" data-ui="popups" style="display: inline-block;">确定</button>
+        </div>
+    </div>
+</div>
+
+<!--多人登记-->
+<div ms-visible="funcBool.peopleRegister_plug">
+    <div class="ui_fun_contenter">
+        <h1 class="u_border_left">功能说明</h1>
+        <div class="ui_fun_wrap">
+            <h5>·开启后，在办理预订、入住时，一个订单可以录入多个客人的信息。</h5>
+            <div class="border-b"></div>
+            <img class="des_1" src="../images/des_1.png">
+        </div>
+    </div>
+</div>
+
+<!--身份证记录-->
+<div ms-visible="funcBool.card_plug">
+    <!--注释部分为：未对接PSB前的代码-->
+    <!--开启前-->
+    <!--<div class="ui_fun_contenter" ms-visible="!hasSubOn" ms-controller="vm_order_info">
+        <h1 class="u_border_left">功能说明</h1>
+        <div class="ui_fun_wrap">
+            <h5>·“按订单记录身份证信息”、“按房间记录身份证信息”、“对接公安系统（PSB）”三种方式供您选择！ </h5>
+            <h5>·连接身份证阅读器还可直接读取客人信息并自动录入番茄中，省去手动录入的麻烦。</h5>
+            <div class="ui_yellow_part">
+                <h4>安装条件：</h4>
+                <h5>身份证阅读器可正常使用；360安全浏览器7.1及其以上版本。</h5>
+                <div class="border-b-dashed"></div>
+                <h4>安装方法：</h4>
+                <h5> 1、根据安装指南自主安装，请点击<a href="http://note.youdao.com/share/?id=a11e81a81a11fa4bc909b636bd9d1f23&amp;type=note" target="_blank">《阅读器浏览器安装指南》</a>。</h5>
+                <h5>2、联系番茄客服为您免费远程安装，客服QQ：1070375586。</h5>
+                <h5>3、联系您的市场经理上门安装。</h5>
+            </div>
+            &lt;!&ndash;<div class="border-b" style="margin-top:20px"></div>
+            <img class="des_1" src="../images/des_2.png">&ndash;&gt;
+        </div>
+    </div>-->
+    <!--开启后-->
+    <!--<div class="ui_fun_contenter" ms-visible="hasSubOn" ms-controller="vm_order_info" style="background: #ffffff;border: 1px solid #ffffff;">-->
+    <div class="ui_fun_contenter" ms-controller="vm_order_info" style="background: #ffffff;border: 1px solid #ffffff;">
+        <div class="psb_new_add">
+            <ul>
+                <li ms-class-disabled="psbType[31].onoff">
+                    <h3 class="color5c5c5c">按订单记录入住人</h3>
+                    <h4 class="color999">最简化记录</h4>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">适用店家：</p>
+                    <p class="color999">不需要导出身份证信息的店家</p>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">系统存储信息：</p>
+                    <div class="psb_new_add_star">
+                        <ul>
+                            <li>入住人姓名</li>
+                            <li>入住人电话</li>
+                            <li class="full-line">身份证号码（需手动开启）</li>
+                            <li class="full-line">民族/地址（需手动开启）</li>
+                        </ul>
+                    </div>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">更多功能：</p>
+                    <p class="psb_bew_add_footer">可安装身份证读卡器。</p>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">请选择启用的功能：</p>
+                    <div class="psb-orderlog-warper">
+                        <div class="psb-orderlog-box">
+                            <label class="psb_new_add_label" for="psb_new_add_input1"><input id="psb_new_add_input1" type="checkbox" name="9" ms-checked="psbType[9].onoff" ms-change="psbTypeChange(9)">可录入多个入住人信息</label>
+                            <label class="psb_new_add_label" for="psb_new_add_input2"><input id="psb_new_add_input2" type="checkbox" name="1" ms-checked="psbType[1].onoff" ms-change="psbTypeChange(1)">开启录入证件号码</label>
+                            <label class="psb_new_add_label" for="psb_new_add_input3"><input id="psb_new_add_input3" type="checkbox" name="20" ms-checked="psbType[20].onoff" ms-change="psbTypeChange(20)">开启“民族、住址”记录功能</label>
+                        </div>
+                    </div>
+                    <div class="psb_card_btn_warper">
+                        <div class="psb_bew_add_button" ms-visible="!psbType[31].onoff"><button class="color5c5c5c" ms-class-psb-open="psbStatus" ms-class-disabled="psbDisabled"  ms-click="psbNewSeve(true)"><span ms-if="!psbStatus">启用该记录方式</span><span ms-if="psbStatus">取消使用...</span></button></div>
+                        <div class="psb_bew_add_button1" ms-visible="psbType[31].onoff"><button class="color5c5c5c">启用该记录方式</button></div>
+                    </div>
+                </li>
+                <li ms-class-disabled="psbType[31].onoff">
+                    <h3 class="color5c5c5c">按房间记录入住人(推荐)</h3>
+                    <h4 class="color999">单联系人多入住人，记录更准确</h4>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">适用店家：</p>
+                    <p class="color999">需要导出身份证信息的店家</p>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">系统存储信息：</p>
+                    <div class="psb_new_add_star">
+                        <ul>
+                            <li>入住人姓名</li>
+                            <li>性别</li>
+                            <li>证件照片</li>
+                            <li>证件类型</li>
+                            <li>证件号码</li>
+                            <li>民族</li>
+                            <li>地址</li>
+                            <!--<li>境内、境外</li>-->
+                        </ul>
+                    </div>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">更多功能：</p>
+                    <p class="psb_bew_add_footer">可安装身份证读卡器。</p>
+                    <p class="psb_bew_add_footer">可查看入住客人信息表。</p>
+                    <p class="psb_bew_add_footer">可导出Excel 入住人信息表。</p>
+                    <div class="psb_card_btn_warper">
+                        <div class="psb_bew_add_button" ms-visible="!psbType[31].onoff"><button class="color5c5c5c" ms-class-psb-open="psbType[30].onoff" ms-click="psbNewSeve(false)"><span ms-if="!psbType[30].onoff">启用该记录方式</span><span ms-if="psbType[30].onoff">取消使用...</span></button></div>
+                        <div class="psb_bew_add_button1" ms-visible="psbType[31].onoff"><button class="color5c5c5c">启用该记录方式</button></div>
+                    </div>
+                </li>
+                <li>
+                    <div class="psb_bew_add_img" ms-visible="psbType[31].onoff"><img src="../images/sanjiao.png" alt=""></div>
+                    <h3 class="color5c5c5c">对接公安系统(PSB)</h3>
+                    <h4 class="color999">按房间记录入住人，信息实时上传</h4>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">适用店家：</p>
+                    <p class="color999">需要导出身份证信息的店家</p>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">系统存储信息：</p>
+                    <div class="psb_new_add_star">
+                        <ul>
+                            <li>入住人姓名</li>
+                            <li>性别</li>
+                            <li>证件照片</li>
+                            <li>证件类型</li>
+                            <li>证件号码</li>
+                            <li>民族</li>
+                            <li>地址</li>
+                            <!--<li>境内、境外</li>-->
+                        </ul>
+                    </div>
+                    <div class="psb_bew_add_dotted"></div>
+                    <p class="psb_bew_add_title color5c5c5c">更多功能：</p>
+                    <p class="psb_bew_add_footer">可安装身份证读卡器。</p>
+                    <p class="psb_bew_add_footer">可查看入住客人信息表。</p>
+                    <div class="psb_bew_add_left">
+                        <p>联系您的市场经理申请对接</p>
+                        <div>番茄热线 <span>4000-230-190</span></div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <!--<h1 class="u_border_left">子功能设置
+            <span class="ui_select ui_select_funcid" funcid="20" ms-class-on="getOnOff(20)" style="padding-left: 38px;"><i></i>开启“民族、住址”记录功能</span>
+        </h1>
+        <div class="border-b" style="margin: 20px 0"></div>
+        <h1 class="u_border_left">功能说明</h1>
+        <div class="ui_fun_wrap">
+            <h5>·“按订单记录身份证信息”、“按房间记录身份证信息”、“对接公安系统（PSB）”三种方式供您选择！ </h5>
+            <h5>·连接身份证阅读器还可直接读取客人信息并自动录入番茄中，省去手动录入的麻烦。</h5>
+            <div class="ui_yellow_part">
+                <h4>安装条件：</h4>
+                <h5>身份证阅读器可正常使用；360安全浏览器7.1及其以上版本。</h5>
+                <div class="border-b-dashed"></div>
+                <h4>安装方法：</h4>
+                <h5> 1、根据安装指南自主安装，请点击<a href="http://note.youdao.com/share/?id=a11e81a81a11fa4bc909b636bd9d1f23&amp;type=note" target="_blank">《阅读器浏览器安装指南》</a>。</h5>
+                <h5>2、联系番茄客服为您免费远程安装，客服QQ：1070375586。</h5>
+                <h5>3、联系您的市场经理上门安装。</h5>
+            </div>
+        </div>-->
+    </div>
+</div>
+
+<!--打印-->
+<div ms-visible="funcBool.print_plug">
+    <!--开启前-->
+    <div class="ui_fun_contenter" style="overflow: inherit;" ms-visible="!hasSubOn" ms-controller="vm_print">
+        <h1 class="u_border_left">开启打印功能须知</h1>
+        <div class="ui_fun_wrap">
+            <h5>·目前仅支持A4打印机和宽度为5厘米的热敏纸打印机。（不可打印其它尺寸或类别的纸张）</h5>
+            <h5>·购买打印机时，请清楚了解打印机接口类型，确保自己的电脑支持该接口类型。注意区分打印机串口、USB口、并口<a class="ui_a lookImg">（查看图解）<i></i></a></h5>
+            <h5>·经番茄研发人员测试的打印机型号有：Epson TM-U120IIP打印机<a class="ui_a lookImg" href="http://s.taobao.com/search?q=Epson+TM-U120IIP%B4%F2%D3%A1%BB%FA&amp;commend=all&amp;ssid=s5-e&amp;search_type=item&amp;sourceId=tb.index&amp;spm=1.7274553.1997520841.1&amp;initiative_id=tbindexz_20140522" target="_blank" class="ui_a">（淘宝链接）</a>、芯烨XP-58IIH打印机<a class="ui_a lookImg" href="http://s.taobao.com/search?initiative_id=staobaoz_20140522&amp;js=1&amp;q=%D0%BE%EC%C7XP-58IIH%B4%F2%D3%A1%BB%FA&amp;stats_click=search_radio_all%3A1" target="_blank">（淘宝链接）</a></h5>
+            <div class="ui_yellow_part" style="margin-top: 10px;width:712px">
+                <h4>温馨提示：</h4>
+                <h5>1、如果您需要打印复写功能的热敏纸，请向打印机商家说明，避免购买错误。</h5>
+                <h5>2、理论上番茄来了系统支持Epson和芯烨所有型号的热敏纸打印机，但我们真机测试的型号有限，请尽量购买我们推荐的型号，其他型号我们不确保一定能兼容。</h5>
+                <h5>3、如果您的热敏纸打印机与番茄来了系统不兼容，可将打印机快递至番茄来了研发部，我们实现了兼容后再发回给您。</h5>
+            </div>
+        </div>
+    </div>
+    <!--开启后-->
+    <div class="ui_fun_contenter" ms-visible="hasSubOn" ms-controller="vm_print" style="background: #ffffff">
+        <h1 class="u_border_left">设置打印方案</h1>
+        <div class="ui_fun_wrap">
+            <h5>·保存打印方案后，可点击订单详情页的上方的打印按钮开始打印 <a class="ui_a"  href="http://help.fanqiele.com/hc/kb/article/224269" target="_blank">查看打印功能浏览器设置教程>></a></h5>
+        </div>
+        <div class="border-b" style="margin:10px 0"></div>
+        <div class="ui_fun_wrap print-part">
+            <div>
+                <span class="f14 ver_m">·请选择打印纸张规格：</span>
+                <div class="tomasky-ui-dropdown ver_m" data-ui="dropdown" id="paper_selector">
+                    <input type="hidden" ms-change="printTemChange(this.value)">
+                    <a href="javascript:;">
+                        <span data-role="value">{{printTem[printTemOn].text}}</span>
+                        <i class="iconfont icon-arrowdown"></i>
+                    </a>
+                    <div class="ui-dropdown-list">
+                        <a ms-repeat="printTem" ms-data-value="el.id" data-role="item">{{el.text}}</a>
+                    </div>
+                </div>
+                <div class="tomasky-ui-dropdown ver_m" data-ui="dropdown" id="num_selector">
+                    <input type="hidden" ms-duplex="printNumOn">
+                    <a href="javascript:;">
+                        <span>{{printNumEnum[printNumOn].text}}</span>
+                        <i class="iconfont icon-arrowdown"></i>
+                    </a>
+                    <div class="ui-dropdown-list">
+                        <a ms-repeat="printNumEnum" ms-data-value="$key" data-role="item">{{$val.text}}</a>
+                    </div>
+                </div>
+                <span class="ver_m saveBtn" ms-click="savePrintTemplate()">保存打印方案</span>
+            </div>
+            <div class="width100percent" ms-repeat="printTemplate">
+                <div class="g-left">
+                    <div ms-if="el.printType==3" class="print-type">{{$index+1}}.入住凭证打印设置（注：确认入住后打印该模板）</div>
+                    <div ms-if="el.printType==4" class="print-type">{{$index+1}}、结账账单打印设置（注：退房后打印该模板）</div>
+                    <div class="print-con">
+                        <span class="print-text">打印项目：</span>
+                        <ul class="print-ul">
+                            <li>房型和房间号</li>
+                            <li>入住/退房日期</li>
+                            <li>订单总金额</li>
+                            <li>已付金额</li>
+                            <li>已付押金             （以上均为必选项）</li>
+                        </ul>
+                        <span class="print-text"></span>
+                        <ul class="print-ul print-no-circle">
+                            <li style="width:100%"><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',0,el.printItem)" data-id="0"><i></i>多人打印（勾选后可打印订单内的全部入住人）</span></li>
+                            <li><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',4,el.printItem)" data-id="4"><i></i>客人来源</span></li>
+                            <li><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',6,el.printItem)" data-id="6"><i></i>订单号</span></li>
+                            <li><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',1,el.printItem)" data-id="1"><i></i>客人姓名</span></li>
+                            <li><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',2,el.printItem)" data-id="2"><i></i>客人手机号</span></li>
+                            <li><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',3,el.printItem)" data-id="3"><i></i>客人证件号</span></li>
+                            <li><span class="ui_select ui_select_toggle" ms-class-on="isContains('s',5,el.printItem)" data-id="5"><i></i>客人地址</span></li>
+                        </ul>
+                        <span class="print-text">凭证标题：</span>
+                        <input class="print-input" ms-duplex="el.printTitle">
+                        <br><br>
+                        <span class="print-text">凭证备注：</span>
+                        <textarea class="print-textarea" placeholder="凭证备注" ms-duplex="el.printContent"></textarea>
+                    </div>
+                </div>
+                <div class="g-right" ms-class-g-part2="el.printType==4">
+                    <div class="print-title2" ms-if="el.printType==3">入住凭证预览</div>
+                    <div class="print-title2" ms-if="el.printType==4">结账账单预览</div>
+                    <div ms-class="print-tem{{getSelectTem()}}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

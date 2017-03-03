@@ -1,0 +1,125 @@
+var COMMON = require('../../../common/js/const.js')
+var vm_idcard_main = avalon.define({
+    $id: 'vm_idcard_main',
+    init: function () {
+        vm_idcard_main.getFuncs()
+    },
+    scan: function () {
+        avalon.scan();
+        return this
+    },
+    //身份证记录类型
+    idcardType: {
+        card_func: false, //默认
+        roomToPerson_func: false, //入住人关联房间号
+        psb_func: false //上传psb
+    },
+    //获取身份证记录类型
+    getFuncs: function () {
+        $.ajax({
+            type: 'GET',
+            url: '/plug/getPlugs',
+            error: function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success: function (rs) {
+                if (rs.status == 200) {
+                    var cardType = {
+                        card_func: false, //默认
+                        roomToPerson_func: false, //入住人关联房间号
+                        psb_func: false //上传psb
+                    }
+                    rs.openCodes.forEach(function (el, i) {
+                        for (var item in cardType) {
+                            if (item == el) {
+                                cardType[item] = true
+                            }
+                        }
+                    })
+                    vm_idcard_main.idcardType = cardType
+                } else {
+                    tmsky.ui.dialog.alert(rs.message || '获取身份证记录类型失败！')
+                }
+            }
+
+        })
+    },
+    subOrders: [],
+    orderIndex: 0,
+    from: 'house',
+    personsList: [],
+    //打开身份证录入弹窗
+    openIdcardWindow: function (orders, index, from) {
+        vm_idcard_main.orderIndex = index;
+        if (from) {
+            vm_idcard_main.from = from;
+        }
+        var orders = $.extend(true, [], orders.$model),
+            order = orders[index],
+            persons = []
+        if (order.persons != undefined && order.persons != null) {
+            persons = order.persons
+        }
+        persons = vm_idcard_main.mappingIDcard2PSB(persons);
+        avalon.vmodels.vm_idcard_input.persons.clear();
+        avalon.vmodels.vm_idcard_input.persons.pushArray(persons);
+        avalon.vmodels.vm_idcard_input.orderIndex = index
+        avalon.vmodels.vm_idcard_input.checkinListDialog = true
+    },
+    mappingIDcard2PSB: function (persons) {
+        var map = {
+            1: 11,
+            2: 90,
+            3: 518,
+            4: 93,
+            5: 99,
+        };
+        persons.forEach(function (person) {
+            // psb的cardType >10的
+            if (person.cardType < 10) {
+                person.cardType = map[person.cardType];
+            }
+        })
+        return persons;
+    },
+    getAllPersons: function () {
+        var subOrders = vm_idcard_main.subOrders.$model,
+            persons = []
+        subOrders.forEach(function (el) {
+            if (el.persons && el.persons.length != 0) {
+                persons.push(el.persons)
+            }
+        })
+        vm_idcard_main.personsList = persons
+    },
+    convertPersonInSubOrders: function (orders) {
+        orders.forEach(function (el) {
+            if (!el.persons) {
+                el.persons = []
+            }
+        })
+        vm_idcard_main.subOrders = orders
+        vm_idcard_main.getAllPersons()
+    },
+    validBeforeSave: function () {
+        if (vm_idcard_main.idcardType.roomToPerson_func || vm_idcard_main.idcardType.psb_func) {
+            var orders = vm_idcard_main.subOrders.$model,
+                isNeedTips = false,
+                tipsStr = ''
+            orders.forEach(function (el) {
+                if (el.persons.length == 0) {
+                    //没有关联入住人
+                    if (isNeedTips) return
+                    isNeedTips = true
+                    tipsStr = el.roomNo + '（' + el.roomtypeName + '）' + '尚未添加入住人！'
+                }
+            })
+            if (isNeedTips) {
+                tmsky.ui.dialog.alert(tipsStr)
+                return false
+            }
+        }
+        return true
+    }
+});
+

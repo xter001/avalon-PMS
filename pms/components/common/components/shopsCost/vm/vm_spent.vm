@@ -1,0 +1,179 @@
+var CommonUtil = require('../../../js/utils/common-util.js');
+var COMMON_CONST = require('../../../js/const.js')
+var Plug = require('../../../../header/plug.js');
+var Controller = require('../../../../house/js/control.js')
+var vm_spent = avalon.define({
+    $id : 'vm_spent',
+    init : function () {
+        vm_spent.reset()
+    },
+    acs : [],
+    acsData : [],
+    spentList : [{
+        accountBookId : '',
+        note : '',//备注
+        streamMoney : '',
+        payIndex : 0,
+        payChannelName : '现金',
+        itemIndex : -1,
+        item : avalon.vmodels.vm_shopcost.tabIndex == 1 ? '费用支出项目' : '其他收入项目'
+    }],
+    editing : false,
+    changeData : function () {
+        var acs = $.extend(true, [], vm_spent.acs), results = [],
+            type = avalon.vmodels.vm_shopcost.tabIndex == 1 ? 2 : 1 //1 收入  2 支出
+        acs.forEach(function (item, i) {
+            if (type == item.itemType) {
+                results.push(item)
+            }
+        })
+        vm_spent.acsData = results
+    },
+    addPayItem : function () {
+        //取最后一个支出项目校验
+        var isAdd = vm_spent.validLastPayItem()
+        if (!isAdd)return
+        vm_spent.spentList.push({
+            note : '',
+            streamMoney : '',
+            payIndex : 0,
+            payChannelName : '现金',
+            itemIndex : -1,
+            item : avalon.vmodels.vm_shopcost.tabIndex == 1 ? '费用支出项目' : '其他收入项目'
+        })
+    },
+    deleteItem : function (el, i) {
+        if (vm_spent.spentList.length == 1) {
+            tmsky.ui.dialog.tips('不能删除最后一条！', 'error')
+            return
+        }
+        avalon.Array.removeAt(vm_spent.spentList, i)
+    },
+    validLastPayItem : function () {
+        var spent = vm_spent.spentList[vm_spent.spentList.length - 1]
+        //change没有改变item，最后一步改变
+        var acsData = vm_spent.acsData
+        if (spent.itemIndex != -1) {
+            spent.item = acsData[spent.itemIndex].name
+        }
+
+        var message = vm_spent.validAccountBook(spent)
+        if (message) {
+            tmsky.ui.dialog.tips(message, 'error')
+            return false
+        }
+        return true
+    },
+    changePay : function (el) {
+        var payList = avalon.vmodels.vm_shopcost.costPayList
+        el.payChannelName = payList[el.payIndex].name
+    },
+    changeItem : function (el) {
+        var acsData = vm_spent.acsData
+        el.item = acsData[el.itemIndex].name
+    },
+    saveSpent : function () {
+        var spents = vm_spent.spentList
+        var isCanSave = 0
+        var message = ''
+        var acsData = vm_spent.acsData
+        spents.forEach(function (el, i) {
+            var data = {
+                id : '',
+                accountTime : avalon.vmodels.vm_shopcost.costDate,
+                item : el.item,
+                notes : el.notes,
+                nums : 1,
+                payChannelName : el.payChannelName,
+                streamMoney : el.streamMoney,
+                streamType : vm_spent.getStreamType()
+            }
+            //change没有改变item，最后一步改变
+            if (el.itemIndex != -1) {
+                el.item = data.item = acsData[el.itemIndex].name
+            }
+            message = vm_spent.validAccountBook(data)
+            if (message) {
+                //没通过验证
+                isCanSave++
+            }
+        })
+        if (isCanSave > 0) {
+            tmsky.ui.dialog.tips(message, 'error')
+            return
+        }
+        //var validLast = vm_spent.validLastPayItem()
+        //if (!validLast)return
+        spents.forEach(function (el, i) {
+            vm_spent.ajaxSaveSpent(el)
+        })
+    },
+    getStreamType : function () {
+        return avalon.vmodels.vm_shopcost.tabIndex == 1 ? 2 : 1//1 收入  2 支出
+    },
+    ajaxSaveSpent : function (el) {
+        var url = '/innBook/saveAccountBook'
+        var data = {
+            id : el.accountBookId || '',
+            accountTime : avalon.vmodels.vm_shopcost.costDate,
+            item : el.item,
+            notes : el.note,
+            nums : 1,
+            payChannelName : el.payChannelName,
+            streamMoney : el.streamMoney,
+            streamType : vm_spent.getStreamType()
+        }
+        tmsky.ui.dialog.loading();
+        $.post(url, data).done(function (rs) {
+            if (rs.status == 200) {
+                tmsky.ui.dialog.tips('操作成功', 'success');
+                vm_spent.reset()
+                avalon.vmodels.vm_shopcost.cancelShopCost()
+                if (avalon.vmodels.vm_inCome) {
+                    var vm_inCome = avalon.vmodels.vm_inCome
+                    if (vm_inCome.tab.orderDetail) {
+                        vm_inCome.getOrderFiDetail()
+                    }
+                    if (vm_inCome.tab.costList) {
+                        vm_inCome.getOrderAcDetail()
+                    }
+                }
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+            tmsky.ui.dialog.loading.close();
+        });
+        // 百度统计
+        _hmt.push(['_trackEvent', 'finance', 'click', data.streamType == 1 ? '其他收入' : '费用支出'])
+    },
+    validAccountBook : function (data) {
+        var message = '', item = avalon.vmodels.vm_shopcost.tabIndex == 1 ? '费用支出项目' : '其他收入项目'
+        if (data.item == item) {
+            message = '请选择' + item + '！'
+            return message
+        }
+        if (!data.streamMoney) {
+            message = '请填写' + item + '金额！'
+            return message
+        }
+        if (!tmsky.isNoLessZero(data.streamMoney)) {
+            message = '金额必须是非负数！'
+            return message
+        }
+    },
+    reset : function () {
+        vm_spent.spentList = [{
+            accountBookId : '',
+            note : '',//备注
+            streamMoney : '',
+            payIndex : 0,
+            payChannelName : '现金',
+            itemIndex : -1,
+            item : avalon.vmodels.vm_shopcost.tabIndex == 1 ? '费用支出项目' : '其他收入项目'
+        }]
+        vm_spent.changeData()
+        vm_spent.editing = false
+    }
+})
+

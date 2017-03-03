@@ -1,0 +1,220 @@
+var vm_bank_info = avalon.define({
+    $id : 'vm_bank_info',
+    page:{pageNo:1,pageSize:10,totalPages:-1,totalCount:-1},
+    data:{from : '', to : ''},
+    bankInfo : {bankType : '', bankAccount : '', bankCode : '', bankName : '', bankRegion : '', bankProvince: '', bankCity: ''},
+    payInfo: {alipayCode : '', alipayUser : '', tenpayCode : '', tenpayUser : ''},
+    editView: {editBank: true, editAliPay: true, editTenPay: true, agreeClause: false},
+    regions: [],
+    inns : [],
+    cities: [],
+    provinces: [],
+    cityMap: {},
+    codeMap: {},
+    error: {
+        bank: {bankType : '', bankAccount : '', bankCode : '', bankName : '', bankRegion : '', bankProvince: '', bankCity: ''},
+        pay: {alipayCode : '', alipayUser : '', tenpayCode : '', tenpayUser : ''}
+    },
+    urls:{
+        getInnInfo : '/api/client/getBaseInfo',
+        updateBankInfo : '/inns/ajaxSaveBankAccount',
+        updatePayInfo : '/inns/ajaxSaveOnlineAccount'
+    },
+    init : function () {
+        $('#bank-province').on('change', function(e){
+            var code = $(this).val();
+            vm_bank_info.initCitySelect2(code);
+        })
+        return this
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('bank_info_div'))
+        return this
+    },
+    metalWork : function () {
+        vm_bank_info.bankInfo.bankCode = (vm_bank_info.bankInfo.bankCode) ? vm_bank_info.bankInfo.bankCode.replace(/[\s]/g, '').replace(/(\d{4})(?=\d)/g, "$1 ")
+            : vm_bank_info.bankInfo.bankCode
+        $('#bankCode').val(vm_bank_info.bankInfo.bankCode).focus()
+    },
+    getInnInfo : function () {
+        tmsky.ui.dialog.loading();
+        var url = vm_bank_info.urls.getInnInfo + '/' + CommonCacheUtil.innBaseInfo.user.innId + "/true" + tmsky.util.generateUrlEndStr()
+        var data = {}
+        $.get(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                var pay = {
+                    alipayCode : rs.innAdmin.inn.alipayCode,
+                    alipayUser : rs.innAdmin.inn.alipayUser,
+                    tenpayCode : rs.innAdmin.inn.tenpayCode,
+                    tenpayUser : rs.innAdmin.inn.tenpayUser
+                }
+                var bank = {
+                    bankType : rs.innAdmin.inn.bankType,
+                    bankAccount : rs.innAdmin.inn.bankAccount,
+                    bankCode : rs.innAdmin.inn.bankCode,
+                    bankName : rs.innAdmin.inn.bankName,
+                    bankProvince : rs.innAdmin.inn.bankProvince,
+                    bankCity : rs.innAdmin.inn.bankCity,
+                    bankRegion : rs.innAdmin.inn.bankRegion
+                }
+                bank.bankCode = (bank.bankCode) ? bank.bankCode.replace(/[\s]/g, '').replace(/(\d{4})(?=\d)/g, "$1 ") : bank.bankCode
+                vm_bank_info.editView.agreeClause = (bank.bankType && bank.bankAccount && bank.bankCode && bank.bankName
+                && bank.bankProvince && bank.bankCity && bank.bankRegion)
+                vm_bank_info.editView.editAliPay = (pay.alipayCode && pay.alipayUser)?false:true
+                vm_bank_info.editView.editTenPay = (pay.tenpayCode && pay.tenpayUser)?false:true
+                vm_bank_info.editView.editBank = vm_bank_info.judgeInfo(bank)
+                vm_bank_info.initSelect2Json('bankName', tmsky.banks, '选择银行');
+                if(bank.bankName){
+                    $('#bankName').select2('val', bank.bankName);
+                }
+                vm_bank_info.payInfo = pay
+                vm_bank_info.bankInfo = bank
+                vm_bank_info.regions = rs.regions
+                vm_bank_info.initCities(rs)
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error')
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    initCities: function(rs){
+        vm_bank_info.provinces = rs.provinces;
+        vm_bank_info.cities = rs.city;
+        vm_bank_info.initSelect2Json('bank-province', rs.provinces, '选择省份');
+        vm_bank_info.initSelect2Json('bank-city', rs.city, '选择城市');
+        vm_bank_info.initCityMap(rs.provinces);
+        vm_bank_info.initCityMap(rs.city);
+        vm_bank_info.initCodeMap(rs.provinces, 1);
+        vm_bank_info.initCodeMap(rs.city, 2);
+        if(vm_bank_info.bankInfo.bankProvince && vm_bank_info.bankInfo.bankCity) {
+            $('#bank-province').select2('val', vm_bank_info.codeMap[vm_bank_info.bankInfo.bankProvince + 1]);
+            $('#bank-city').select2('val', vm_bank_info.codeMap[vm_bank_info.bankInfo.bankCity + 2]);
+            vm_bank_info.bankInfo.bankProvince = vm_bank_info.codeMap[vm_bank_info.bankInfo.bankProvince + 1];
+            vm_bank_info.bankInfo.bankCity = vm_bank_info.codeMap[vm_bank_info.bankInfo.bankCity + 2];
+        }
+    },
+    updateBankInfo: function() {
+        tmsky.ui.dialog.loading()
+        var url = vm_bank_info.urls.updateBankInfo
+        var data = vm_bank_info.bankInfo.$model
+        data.bankCity = vm_bank_info.cityMap[$('#bank-city').val()] || vm_bank_info.bankInfo.bankCity
+        data.bankProvince = vm_bank_info.cityMap[$('#bank-province').val()] || vm_bank_info.bankInfo.bankProvince
+        data.innId = CommonCacheUtil.innBaseInfo.user.innId
+        data.bankCode = (data.bankCode) ? data.bankCode.replace(/\s/g, '') : data.bankCode
+        $.post(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                vm_bank_info.editView.editBank = vm_bank_info.judgeInfo(data)
+                vm_bank_info.error.bank = {}
+            } else {
+                if (tmsky.isString(rs.message)){
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }else{
+                    vm_bank_info.error.bank = rs.message
+                }
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    updatePayInfo: function() {
+        var url = vm_bank_info.urls.updatePayInfo
+        var data = vm_bank_info.payInfo.$model
+        var message = vm_bank_info.updatePayInfoValid(data)
+        if(message){
+            return
+        }
+        data.innId = CommonCacheUtil.innBaseInfo.user.innId
+        tmsky.ui.dialog.loading()
+        $.post(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                vm_bank_info.editView.editAliPay = (data.alipayCode && data.alipayUser)?false:true
+                vm_bank_info.editView.editTenPay = (data.tenpayCode && data.tenpayUser)?false:true
+                vm_bank_info.error.pay = {alipayCode : '', alipayUser : '', tenpayCode : '', tenpayUser : ''}
+            } else {
+                if (tmsky.isString(rs.message)){
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }else{
+                    vm_bank_info.error.pay = rs.message
+                }
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    updatePayInfoValid : function (data) {
+        var message = ''
+        if(!data.alipayCode){
+            vm_bank_info.error.pay.alipayCode = '支付宝账号不能为空'
+            message = '支付宝账号不能为空'
+        }
+        if(!data.alipayUser){
+            vm_bank_info.error.pay.alipayUser = '付款人姓名不能为空'
+            message = '付款人姓名不能为空'
+        }
+        if((data.tenpayCode || data.tenpayUser) && !(data.tenpayCode && data.tenpayUser)){
+            if(!data.tenpayCode){
+                vm_bank_info.error.pay.tenpayCode = '财付通账号不能为空'
+                message = '财付通账号不能为空'
+            }
+            if(!data.tenpayUser){
+                vm_bank_info.error.pay.tenpayUser = '付款人姓名不能为空'
+                message = '付款人姓名不能为空'
+            }
+        }
+        return message
+    },
+    agreeClause : function () {
+        vm_bank_info.editView.agreeClause = true
+        $('#bank_info_clause_popups').popups('hide')
+    },
+    judgeInfo : function (map) { //判断json中是否存在某一项的值为空
+        var flag = false
+        for (var key in map){
+            if(!map[key]){
+                flag = true
+                break
+            }
+        }
+        return flag
+    },
+    initCitySelect2: function(code){
+        var list = vm_bank_info.getCityByCode(code);
+        vm_bank_info.initSelect2Json('bank-city', list, '选择城市');
+    },
+    getCityByCode: function(code){
+        var list = [];
+        for (var i = 0; i < vm_bank_info.cities.length; i++) {
+            var city = vm_bank_info.cities[i];
+            if(city.code.substring(0, 2) == code.substring(0, 2)){
+                var tmp = {name:city.name,code:city.code};
+                list.push(tmp);
+            }
+        }
+        return list;
+    },
+    initCityMap: function(list){
+        for (var i = 0; i < list.length; i++) {
+            var city = list[i];
+            vm_bank_info.cityMap[city.code] = city.name;
+        }
+    },
+    initCodeMap: function(list, type){
+        for (var i = 0; i < list.length; i++) {
+            var city = list[i];
+            vm_bank_info.codeMap[city.name+type] = city.code;
+        }
+    },
+    initSelect2Json : function(listId, jsonList, defaultMsg) {
+        var userdata = [];
+        $(jsonList).each(function(i, obj) {
+            userdata[i] = {};
+            userdata[i].id = obj.code || obj;
+            userdata[i].text = obj.name || obj;
+        });
+        $("#" + listId).select2({
+            placeholder : defaultMsg,
+            data : userdata
+        });
+    }
+})

@@ -1,0 +1,112 @@
+<div class="sidebar">
+    <ul>
+        <li class="info" ms-class-active="tabShow.info" ms-click="changeTabs('info')">分销信息</li>
+        <li class="order" ms-class-active="tabShow.order" ms-click="changeTabs('order')">订单管理</li>
+    </ul>
+</div>
+<div class="dis-content" ms-visible="tabShow.info">
+    <div class="dis-part">
+        <div class="dis-info-text">
+            <label>分销商编码：</label>
+            <span>{{fxpInfo.spid}}</span>
+        </div>
+        <div class="dis-info-text">
+            <label>账 号 状 态：</label>
+            <span ms-class="{{fxpInfo.state==1?'c-green':'c-red'}}">{{fxpInfo.state==1?"正常":"失效"}}</span>
+        </div>
+        <div class="dis-info-text">
+            <label>开 通 日 期：</label>
+            <span>{{createdAt}}</span>
+        </div>
+    </div>
+    <div class="dis-line"></div>
+    <div class="dis-part">
+        <div>将链接分享到：</div>
+        <ul>
+            <!--<li title="分享到微信"><img  src="../images/weixin.png"></li>-->
+            <li title="分享到新浪微博"><a ms-attr-href="{{share.wbHref+kgHref+fxpInfo.spid+'&title='+kgTitle}}" target="_blank"><img src="../images/sinaweibo.png"></a></li>
+            <li title="分享到qq空间"><a ms-attr-href="{{share.qqQ+kgHref+fxpInfo.spid+'&title='+kgTitle}}" target="_blank"><img src="../images/qqQ.png"></a></li>
+            <li title="分享到腾讯微博"><a ms-attr-href="{{share.qqWbHref+kgHref+fxpInfo.spid+'&title='+kgTitle}}" target="_blank"><img src="../images/qqweibo.png"></a></li>
+            <li title="分享到豆瓣"><a ms-attr-href="{{share.dbHref+kgHref+fxpInfo.spid+'&name='+kgTitle}}" target="_blank"><img src="../images/db.png"></a></li>
+            <!--<li title="分享到qq"><a ms-attr-href="{{share.qq}}" target="_blank"><img src="../images/qq.png"></a></li>-->
+        </ul>
+    </div>
+    <div class="dis-part2">
+        <div class="dis-part2-1 fl">推广链接：</div>
+        <div class="dis-part2-2 fl">
+            <a class="c-blue copyStr">{{kgHref+fxpInfo.spid}}</a>
+            <div class="dis-tips">通过上述链接产生的预定交易，在用户离店后都会计入您的分销业绩。</div>
+            <span class="btn-green" ms-click="copy">复制链接</span>
+        </div>
+        <div class="dis-part2-3 fl">
+            <div>手机扫描分享</div>
+            <img ms-attr-src="http://oss.fanqiele.com/qrcode?s=8&l=H&t={{kgHref+fxpInfo.spid}}">
+        </div>
+    </div>
+</div>
+
+<div class="dis-content" ms-visible="tabShow.order">
+    <div class="dis-part">
+        <div class="table-tip">共<span class="f16 c-red">{{totalCount}}</span>个订单</div>
+        <div class="right search-wrapper">
+            <div class="more-search">
+                <select ms-duplex="search.dateType"  ms-change="getOrders(1)">
+                    <option value="1">下单日期</option>
+                    <option value="2">离店日期</option>
+                </select>
+                <input type="text" id="account_from" ms-duplex="search.from" class="select-time"
+                       placeholder="请选择日期">至
+                <input type="text" id="account_to" ms-duplex="search.to" class="select-time" placeholder="请选择日期">
+            </div>
+            <select ms-duplex="search.searchType" style="border: 0">
+                <option value="1">按姓名搜索</option>
+                <option value="2">按手机号搜索</option>
+                <option value="3">按订单号搜索</option>
+            </select>
+            <input id="searchValue" type="search" class="search-value" ms-duplex="search.searchKey" placeholder="">
+            <button id="searchBtn" class="search-btn search" ms-click="getOrders(1)">搜索</button>
+        </div>
+        <div class="clear"></div>
+        <table ms-css-border-bottom="0" class="marT20 table clear-float table-bordered arrive-table table-hover table-th">
+            <thead>
+            <tr>
+                <th style="width:110px">
+                    <select ms-change="getOrders(1)" ms-duplex="search.orderStatus">
+                        <option value="orderStateAll">订单状态</option>
+                        <option value="2">已预订</option>
+                        <option value="4">已取消</option>
+                        <option value="6">已离店</option>
+                    </select>
+                </th>
+                <th style="width: 150px">订单号</th>
+                <th style="width: 300px">客栈名称</th>
+                <th>房型房间</th>
+                <th class="textc" style="width: 50px">房间数</th>
+                <th class="textc" style="width: 90px">入离日期</th>
+                <th class="textc">客人姓名</th>
+                <th class="textc">手机号</th>
+                <th style="width:70px;" class="textc">总价</th>
+                <th style="width:80px" class="textc">下单时间</th>
+            </tr>
+            </thead>
+        </table>
+        <table  class="table table-bordered arrive-table table-hover table-tb">
+            <tbody>
+            <tr ms-visible="orders==''"><td cowspan="9" style="text-align: center">暂时没有订单</td></tr>
+            <tr ms-repeat="orders" ms-visible="orders!=''">
+                <td style="width:110px">{{getStateChinese(el.orderStatus)}}</td>
+                <td class="c-blue" style="width: 150px">{{el.orderNo}}</td>
+                <td style="width: 300px">{{el.name}}</td>
+                <td>{{el.roomTypeName}}</td>
+                <td class="textc" style="width: 50px">{{el.roomNo}}</td>
+                <td class="textc" style="width: 90px"><div ms-repeat="el.date">{{getShortDate(el.checkInAt)+'~'+getShortDate(el.checkOutAt)}}</div></td>
+                <td>{{el.personInfo.name}}</td>
+                <td>{{el.personInfo.tel}}</td>
+                <td style="width:70px;" class="textc f16 c-orange">￥{{el.totalAmount}}</td>
+                <td style="width:80px" class="textc">{{el.payTime}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="page-div"></div>
+</div>

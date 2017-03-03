@@ -1,0 +1,73 @@
+.guide-top-cover {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    z-index: 999;
+    height: 50px;
+}
+.guide-left-cover {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 999;
+    height: 100%;
+    width: 220px;
+}
+.add-channel-border {
+    position: absolute;
+    top: -9px;
+    left: -9px;
+    width: 139px;
+    height: 46px;
+}
+.guide-add-channel {
+    width:314px;
+    height:170px;
+    top: 72px;
+    left: 0;
+}
+.triangle-up-channel {
+    left: 45px;
+    top: -19px;
+}
+.triangle-up-white-channel {
+    left: 47px;
+    top: -14px;
+}
+.channel {
+    width:314px;
+    left: 246px;
+    top: 195px;
+    z-index:999;
+}
+.finish-inn-create {
+    height: 322px;
+    background: url("../images/finishInnCreate.png") no-repeat center center;
+}
+.finish-inn-dialoag {
+    border-radius: 12px !important;
+    width: 462px;
+    box-shadow: 0px 2px 8px 0px #ccc !important;
+}
+.go-mana-house {
+    background:#5cb85c;
+    border-radius:4px;
+    width:210px;
+    height:36px;
+    margin-bottom: 15px;
+    color: #fff;
+}
+.old-user {
+    background:#ffffff;
+    border:1px solid #acacac;
+    border-radius:4px;
+    width:208px;
+    height:34px;
+    color: #818181;
+}
+.guide-p-channel {
+    padding: 0;
+    text-align: left;
+    padding-left: 26px;
+}

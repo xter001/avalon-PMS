@@ -1,0 +1,92 @@
+<div ms-controller="vm_collect_check">
+    <div class="collecting-reconciliation-top">
+        <ul class="fl collect-nav">
+            <li ms-class-selected="navList.noBalance" ms-click="collectNavChange('noBalance')">未结算</li>
+            <li ms-class-selected="navList.hasBalance" ms-click="collectNavChange('hasBalance')">已结算</li>
+        </ul>
+        <div class="collecting-reconciliation-time fr">
+            <select class="date3" ms-duplex="data.timeType" ms-visible="navList.hasBalance"
+                    ms-change="dataChange()">
+                <option value="payAt">支付时间</option>
+                <option value="balanceAt">结算时间</option>
+
+            </select>
+            <a ms-click="exportExcel()" class="button_yuding import-excel fr">导出excel</a>
+            <span ms-visible="navList.noBalance" style="display: inline-block;line-height: 30px">支付时间：</span>
+            <div class="time-list-box fr" style="position: relative;margin-right: 10px">
+                <div class="time-cover small-box fr" ms-click="dsOpenTimeBox()">
+                    <i></i>{{formatTime(data.from)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(data.to)}}
+                </div>
+                <div class="time-select small-time-select" style="top: 32px;right: 0px;">
+                    <input type="text" id="collect_check_from" ms-duplex="dsTempTime.from" class="select-time"
+                           placeholder="请选择日期" style="padding: 0">到
+                    <input type="text" id="collect_check_to" ms-duplex="dsTempTime.to" class="select-time"
+                           placeholder="请选择日期" style="padding: 0">
+                    <button class="btn-sure" ms-click="searchdsList">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--未结算-->
+    <div class="collecting-reconciliation-head">
+        <a ms-visible="navList.noBalance">
+            截止所选时间段，共有<span class="u-stand-out">{{countInfo.unliqOrderNum}}</span>个订单，
+            结算总金额为<span class="u-stand-out">{{countInfo.unliqPaidAmount | toFixed}}</span>元.
+        </a>
+        <a ms-visible="navList.hasBalance">
+            截止所选时间段，共有<span class="u-stand-out">{{countInfo.totalOrderNum-countInfo.unliqOrderNum}}</span>个订单，
+            结算总金额为<span class="u-stand-out">{{countInfo.paidAmount | toFixed}}</span>元.
+        </a>
+        <i class="icon-help"></i>
+        <div class="collecting-dialog-help">
+            <p>结算时间说明：</p>
+            <p>番茄代收对账将在每周五下午进行款项结算，结算内容为上次结算周期后至本周四晚24点期间的所有支付订单款项。目前老小站下单的结算时间为空，新小站才有结算日期。</p>
+            <p>(小站下单按照支付日期周结)</p>
+        </div>
+    </div>
+
+    <div class="collecting-reconciliation-body">
+        <table class="table table-hover table-bordered">
+            <thead>
+            <tr>
+                <th style="width: 11%">
+                    <select ms-duplex="data.productCode" ms-change="dataChange(1)" style="width: 90px">
+                        <option value="">对账类型</option>
+                        <option ms-repeat="checkTypes" ms-attr-value="el.id">{{el.name}}</option>
+                    </select>
+                </th>
+                <th style="width: 10%">订单号</th>
+                <th style="width: 15%">交易流水号</th>
+                <th style="width: 25%">订单信息</th>
+                <th style="width: 6%">订单金额</th>
+                <th style="width: 6%">折扣金额</th>
+                <th style="width: 6%">实付金额</th>
+                <th style="width: 6%">手续费</th>
+                <th style="width: 6%">结算金额</th>
+                <th style="width: 15%">支付时间</th>
+                <th style="width: 15%" ms-visible="navList.hasBalance" style="min-width:50px">结算时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-visible="collectionList.length" ms-repeat-el="collectionList">
+                <td>{{checkTypeTransform(el.productCode)}}</td>
+                <td>{{el.orderCode}}</td>
+                <td>{{el.tradeNo}}</td>
+                <td>{{el.payDesc}}</td>
+                <td>￥{{(el.payPrice+el.deductPrice)}}</td>
+                <td>￥{{el.deductPrice}}</td>
+                <td>￥{{el.payPrice}}</td>
+                <td>￥{{parseFloat(el.payPrice*el.poundageRatio).toFixed(2)}}</td>
+                <td>￥{{parseFloat(el.payPrice-el.payPrice*el.poundageRatio).toFixed(2)}}</td>
+                <td>{{el.payAt}}</td>
+                <td ms-visible="navList.hasBalance">{{el.balanceAt}}</td>
+            </tr>
+            <tr ms-visible="!collectionList.length">
+                <td colspan="10" ms-visible="navList.noBalance" style="text-align: center">暂无结算信息！</td>
+                <td colspan="11" ms-visible="navList.hasBalance" style="text-align: center">暂无结算信息！</td>
+            </tr>
+            </tbody>
+        </table>
+        <div id="collect_check_page"></div>
+    </div>
+</div>

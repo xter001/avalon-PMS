@@ -1,0 +1,1914 @@
+select {
+    border-radius: 0;
+}
+
+.finance-list-item {
+    position: fixed;
+    width: 150px;
+    height: 100%;
+    background: #eee;
+    box-shadow: 1px 1px 1px #cdcdcd;
+    z-index: 99;
+}
+
+.finance-main-info {
+    position: relative;
+}
+
+.items-info {
+    height: 100%;
+    padding: 15px 1% 10px 170px;
+    box-sizing: border-box;
+}
+
+.finance-list-item ul li {
+    padding: 10px;
+    padding-left: 40px;
+    color: #000;
+    font-size: 14px;
+    cursor: pointer;
+    position: relative;
+    background-repeat: no-repeat;
+    background-position: 20px 12px;
+}
+
+.finance-list-item ul li.accountBook {
+    background-image: url(images/accountBook.png);
+}
+
+.finance-list-item ul li.accountBook:hover {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-image: url(images/accountBook-hover.png);
+}
+
+.finance-list-item ul li.list-account-book {
+    background-image: url(images/accountBook-hover.png);
+}
+
+.finance-list-item ul li.inn-gathering-info {
+    background-image: url(images/inn-gathering-info.png);
+}
+
+.finance-list-item ul li.inn-gathering-info:hover {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-image: url(images/inn-gathering-info-hover.png);
+}
+
+.finance-list-item ul li.list-inn-gathering-info {
+    background-image: url(images/inn-gathering-info-hover.png);
+}
+
+.finance-list-item ul li.commission-reconciliation {
+    background-image: url(images/commission-reconciliation.png);
+}
+
+.finance-list-item ul li.commission-reconciliation:hover {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-image: url(images/commission-reconciliation-hover.png);
+}
+
+.finance-list-item ul li.list-commission-reconciliation {
+    background-image: url(images/commission-reconciliation-hover.png);
+}
+
+.finance-list-item ul li.collecting-reconciliation {
+    background-image: url(images/collecting-reconciliation.png);
+}
+
+.finance-list-item ul li.collecting-reconciliation:hover {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-image: url(images/collecting-reconciliation-hover.png);
+}
+
+.finance-list-item ul li.list-collecting-reconciliation {
+    background-image: url(images/collecting-reconciliation-hover.png);
+}
+
+.commission-reconciliation .contact {
+    margin-bottom: 10px;
+    color: #c54b4c;
+    border-left: 2px solid #c54b4c;
+}
+
+.commission-reconciliation .contact span,
+.commission-reconciliation .contact a {
+    font-weight: bold;
+    padding-left: 20px;
+    color: #c54b4c;
+}
+
+.commission-reconciliation .contact a:hover {
+    text-decoration: underline;
+}
+
+.finance-list-item ul li.relief-shift-record {
+    background-image: url(images/relief-shift-record.png);
+}
+
+.finance-list-item ul li.relief-shift-record:hover {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-image: url(images/relief-shift-record-hover.png);
+}
+
+.finance-list-item ul li.list-relief-shift-record {
+    background-image: url(images/relief-shift-record-hover.png);
+}
+
+/*交接明细*/
+.finance-list-item ul li.hand-account-detail {
+    background-image: url(images/hand-account-detail.png);
+}
+
+.finance-list-item ul li.hand-account-detail:hover {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-image: url(images/hand-account-detail-hover.png);
+}
+
+.finance-list-item ul li.list-hand-account-detail {
+    background-image: url(images/hand-account-detail-hover.png);
+}
+
+.finance-list-item ul li.active {
+    color: #d40010;
+    background-color: #fff;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+}
+
+.account-book-head {
+    float: left;
+    width: 100%;
+    min-width: 1170px;
+    margin-bottom: 15px;
+
+}
+
+.account-book-footer {
+    position: fixed;
+    width: 90.4%;
+    bottom: 0;
+}
+
+.account-book-footer ul {
+    width: 100%;
+}
+
+.account-book-footer ul li {
+    float: left;
+    width: 11.11%;
+    /*padding: 10px 0;*/
+    text-align: center;
+    background: #dcdcdc;
+    border: 1px solid #c9c9c9;
+    border-right: none;
+    box-sizing: border-box;
+    font-size: 20px;
+    font-weight: bold;
+    color: #404040;
+    height: 40px;
+    line-height: 40px;
+}
+
+.account-book-footer ul li.red {
+    color: red;
+}
+
+.account-book-footer ul li:last-child {
+    border-right: 1px solid #c9c9c9;
+}
+
+a.book-income,
+a.book-spend,
+a.batch-account {
+    width: 100px;
+    height: 28px;
+    font-size: 12px;
+    color: #fff;
+    line-height: 28px;
+    text-align: center;
+    display: block;
+    float: left;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+a.batch-account span {
+    position: absolute;
+    left: -2px;
+    top: -2px;
+    width: 45px;
+    height: 30px;
+    background: url(images/batch-account.png) no-repeat;
+}
+
+a.book-income {
+    background: url(images/income.png) no-repeat 15px center #7ea800;
+}
+
+a.book-spend {
+    background: url(images/spend.png) no-repeat 15px center #db3323;
+}
+
+a.batch-account {
+    background: #f6ab0a;
+    position: relative;
+}
+
+select.select-account-type {
+    width: 87px;
+    height: 30px;
+    border-color: #ccc;
+    vertical-align: middle;
+}
+
+a.button_yuding {
+    height: 30px;
+    line-height: 30px;
+    font-weight: 100;
+    margin-left: 5px;
+    /*background: #7ea800;*/
+    background: url(../common/images/tomasky.png) no-repeat 20px -1596px #7ea800;
+    padding: 0 20px 0 38px;
+    color: #fff;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.select-time {
+    width: 123px;
+    height: 28px;
+    padding: 0 10px;
+    margin: 0 5px;
+    border: 1px solid #ccc;
+    vertical-align: middle;
+}
+
+.account-book-body {
+    /*padding-top: 20px;*/
+    min-width: 1170px;
+}
+
+.finance-book .table a {
+    color: #4a90E2;
+    text-decoration: underline;
+}
+
+.table .edit,
+.table .delete {
+    width: 44px;
+    height: 20px;
+    border-radius: 2px;
+    display: inline-block;
+    color: #555;
+    border: 1px solid #ccc;
+    line-height: 20px;
+    margin-right: 5px;
+    text-decoration: none;
+}
+
+tr.account-book-modify td {
+    padding-top: 6px !important;
+    padding-bottom: 5px !important;
+}
+
+.table .edit:hover {
+    background: #7ea800;
+    color: #fff;
+    border-color: #7ea800;
+}
+
+.table .delete:hover {
+    background: #CA0207;
+    color: #fff;
+    border-color: #CA0207;
+}
+
+.collecting-reconciliation-top {
+    width: 100%;
+    height: 32px;
+}
+
+.collecting-reconciliation-time .date3 {
+    height: 30px;
+    vertical-align: middle;
+    border: 1px solid #ccc;
+}
+
+.collecting-reconciliation-head {
+    position: relative;
+}
+
+.commission-reconciliation-head,
+.collecting-reconciliation-head {
+    padding: 10px;
+    border: 1px solid #facd89;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    background: #fffbf0;
+    font-size: 12px;
+}
+
+.collecting-reconciliation-head .import-excel {
+    position: absolute;
+    right: 30px;
+    top: 14px;
+}
+
+.commission-reconciliation-body {
+    margin-top: 15px;
+}
+
+.collecting-reconciliation-body th:nth-of-type(1) {
+    width: 123px;
+}
+
+.collecting-reconciliation-body th:nth-of-type(2) {
+    width: 150px;
+}
+
+.collecting-reconciliation-body th:nth-of-type(3) {
+    width: 220px;
+}
+
+.collecting-reconciliation-body th:nth-of-type(4) {
+    width: 388px;
+}
+
+.collecting-reconciliation-body th:nth-of-type(10) {
+    width: 150px;
+}
+
+.relief-shift-record-head {
+    margin-bottom: 10px;
+}
+
+.bank-account-receipt-info h3 {
+    height: 50px;
+    line-height: 50px;
+    padding: 10px 0 10px 80px;
+    background: url('images/bank-account-info.png') no-repeat 0 15px;
+}
+
+.bank-info-body {
+    padding-left: 80px;
+}
+
+#bank_info_div .tip{
+    color: red;
+}
+
+.bank-info-body p {
+    padding: 10px 0;
+}
+
+.bank-info-body p label {
+    padding-left: 20px;
+    vertical-align: middle;
+}
+
+.bank-info-body p label input {
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.common-input,
+.select-input-bank,
+.province,
+.city {
+    width: 240px;
+    height: 32px;
+    line-height: 32px;
+    border: 1px solid #d5d5d5;
+    box-sizing: border-box;
+    text-indent: 10px;
+    margin-left: 20px;
+}
+
+.select2-container {
+    border: none;
+}
+
+.select-input-bank {
+    margin-left: 18px;
+}
+
+.province,
+.city {
+    width: 84px;
+}
+
+.city,
+.detail-address {
+    margin-left: 5px;
+}
+
+.save {
+    width: 140px;
+    height: 42px;
+    background: #7bb811;
+    color: #fff;
+    border-radius: 2px;
+    cursor: pointer;
+    margin-left: 82px;
+}
+
+.account-save {
+    margin: 20px 0 20px 165px;
+}
+
+.third-party-account-info {
+    width: 100%;
+    display: table;
+    margin-top: 30px;
+}
+
+.third-party-account-info div {
+    position: relative;
+    padding-left: 80px;
+    display: table-cell;
+}
+
+.third-party-account-info div a {
+    position: absolute;
+}
+
+.alipay,
+.tenpay {
+    left: -10px;
+    top: 10px;
+}
+
+.third-party-account-info div p {
+    padding: 10px 0;
+}
+
+.third-party-account-info .common-input {
+    margin-left: 12px;
+}
+
+.question {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    vertical-align: middle;
+    background: url("images/questions.png") no-repeat 10px 5px;
+    position: relative;
+}
+
+.question:hover > span {
+    display: inline-block;
+}
+
+.question span {
+    position: absolute;
+    width: 180px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border-radius: 3px;
+    padding: 10px 12px;
+    left: 10px;
+    top: 30px;
+    display: none;
+}
+
+/* 批量计账弹出框样式 */
+/*滚动条样式*/
+div::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #f0f0f0;
+}
+
+div::-webkit-scrollbar-button,
+div::-webkit-scrollbar-track,
+div::-webkit-scrollbar-track-piece {
+    display: none;
+}
+
+div::-webkit-scrollbar-thumb {
+    background: #bbb;
+}
+
+div::-webkit-scrollbar-corner {
+    background: #f0f0f0;
+}
+
+/**/
+.date {
+    width: 150px;
+    height: 26px;
+    border: 1px solid #ccc;
+    text-indent: 10px;
+    margin-left: 5px;
+}
+
+.date-title {
+    padding-bottom: 10px;
+    margin-top: -5px;
+    font-weight: bold;
+}
+
+.tab-title {
+    width: 100%;
+    float: left;
+    height: 30px;
+    line-height: 30px;
+    background: #f2f2f2;
+}
+
+.total-count {
+    width: 500px;
+    height: 30px;
+    line-height: 30px;
+}
+
+.total-count {
+    background: #fff3b2;
+}
+
+.tab-title li,
+.total-count li {
+    float: left;
+    text-indent: 5px;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.tab-title li:nth-of-type(3n+1) {
+    width: 100px;
+}
+
+.tab-title li:nth-of-type(3n+2) {
+    width: 85px;
+}
+
+.tab-title li:nth-of-type(3n+3) {
+    width: 105px;
+}
+
+.total-count li {
+    width: 50%;
+}
+
+.book-div {
+    width: 50%;
+    float: left;
+    max-height: 231px;
+    overflow-y: scroll;
+}
+
+.book-tab {
+    width: 100%;
+    float: left;
+}
+
+.book-tab thead td, .book-tab tbody td {
+    padding: 5px;
+    font-size: 12px;
+    border: 1px solid #d7d7d7;
+}
+
+.book-tab thead td:first-child, .book-tab tbody td:first-child {
+    border-right: 1px dashed #d7d7d7;
+}
+
+.book-tab thead td:first-child, .book-tab tbody td:first-child {
+    width: 30%;
+}
+
+.book-tab thead td:nth-of-type(2), .book-tab tbody td:nth-of-type(2) {
+    width: 28%;
+}
+
+.book-tab thead td:nth-of-type(3), .book-tab tbody td:nth-of-type(3) {
+    width: 42%;
+}
+
+.book-tab:nth-of-type(2) td:first-child {
+    border-left: none;
+}
+
+.account {
+    width: 55px;
+    border: 1px solid #ccc;
+    height: 20px;
+    text-indent: 10px;
+}
+
+.addMsg {
+    width: 88px;
+    height: 20px;
+    text-indent: 10px;
+    border: 1px solid #ccc;
+}
+
+.moneytotal {
+    width: 90px;
+    height: 30px;
+    line-height: 30px;
+    background: none;
+}
+
+.tomasky-ui-popups .ui-popups-foot {
+    text-align: center;
+}
+
+.enter,
+.cancel {
+    width: 150px;
+}
+
+.enter {
+    background: #749A01;
+    color: #fff;
+}
+
+.cancel {
+    margin-left: 15px;
+}
+
+.enter:hover {
+    color: #fff;
+}
+
+/* 收入对话框 */
+.spend-item p {
+    padding: 5px 0;
+}
+
+.spend-item p input,
+.spend-item p select,
+.spend-item p textarea {
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, 0);
+    width: 196px;
+    height: 36px;
+    text-indent: 10px;
+    margin-left: 5px;
+}
+
+.spend-item p textarea {
+    width: 196px;
+    height: 100px;
+    padding-top: 10px;
+}
+
+.spend-item p:last-child {
+    position: relative;
+    padding-left: 60px;
+}
+
+.mark {
+    position: absolute;
+    left: 0;
+}
+
+.spend-item p select {
+    margin-left: 2px;
+}
+
+.spend-item-enter {
+    border-radius: 3px;
+    background-color: #7bb811;
+    width: 262px;
+    height: 40px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.enter-info .info-defail h3 {
+    padding: 0 0 10px 0;
+    border-bottom: 1px dashed #ccc;
+    margin-bottom: 5px;
+}
+
+.enter-info .info-defail p {
+    padding: 5px 0;
+}
+
+.enter-info .info-defail p span {
+    color: #888789;
+    padding-right: 8px;
+}
+
+.enter-info .info-defail p:last-child {
+    color: #f05600;
+}
+
+.info-isnot-all .warm p {
+    text-align: center;
+    padding: 5px 0;
+    color: #454646;
+}
+
+.enter-info .info-defail h3 {
+    padding: 0 0 10px 0;
+    border-bottom: 1px dashed #ccc;
+    margin-bottom: 5px;
+}
+
+.enter-info .info-defail p {
+    padding: 5px 0;
+}
+
+.enter-info .info-defail p span {
+    color: #888789;
+    padding-right: 8px;
+}
+
+.enter-info .info-defail p:last-child {
+    color: #f05600;
+}
+
+.info-isnot-all .warm p {
+    text-align: center;
+    padding: 5px 0;
+    color: #454646;
+}
+
+.inn-gathering-info .explain {
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+.inn-gathering-info .explain h3 {
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+.inn-gathering-info .explain p {
+    color: #160d08;
+}
+
+.inn-gathering-info .inn-btn-s {
+    background-color: #7bb811;
+    color: #fff;
+    width: 138px;
+    height: 38px;
+    line-height: 38px;
+    border-radius: 3px;
+    font-size: 16px;
+}
+
+.inn-gathering-info .open-fanqiedaishou-p {
+    margin-top: 15px;
+}
+
+/*编辑支出对话框*/
+.edit-expend-popups .ui-popups-body p {
+    text-align: center;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.edit-expend-popups .immediately-set {
+    width: 240px;
+    background: #7EA800;
+    color: #fff;
+}
+
+.edit-expend-popups .set-up-later {
+    position: absolute;
+    bottom: 30px;
+    margin-left: 10px;
+    color: #3366bb;
+    text-decoration: underline;
+}
+
+/*交接详情弹框*/
+.relief-shift-info {
+    width: 800px;
+    overflow-x: auto;
+}
+
+.relief-shift-info .table {
+    width: 800px;
+    overflow-x: auto;
+}
+
+.relief-shift-info thead tr th, .relief-shift-info tbody tr td {
+    border-right: 1px solid #e0e0e0;
+    text-align: center !important;
+    box-sizing: border-box;
+    table-layout: fixed;
+    width: 73px !important;
+}
+
+.relief-shift-info thead tr th.table-right, .relief-shift-info tbody tr td.table-right {
+    text-align: center !important;
+    border-right: 1px solid #e0e0e0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box;
+
+}
+
+#content {
+    position: absolute;
+    top: 50px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-width: 1280px;
+    box-sizing: border-box;
+}
+
+.min-width {
+    min-width: 1280px !important;
+}
+
+/*账户信息*/
+.account-info > div:first-child > p {
+    line-height: 35px;
+}
+
+.account-info .warming {
+    vertical-align: middle;
+    margin-right: 3px;
+    margin-bottom: 5px;
+}
+
+.original-a {
+    color: #4a90E2;
+    text-decoration: underline;
+}
+
+.original-a:hover {
+    color: #4a90E2;
+    text-decoration: underline;
+}
+
+.account-info > div:last-child > p {
+    line-height: 25px;
+}
+
+.account-info > div:last-child {
+    background: #fffbf0;
+    border: 1px solid #facd89;
+    font-size: 12px;
+    line-height: 38px;
+    padding: 0px 5px;
+}
+
+.account-info > div:last-child > span:first-child {
+    float: left;
+}
+
+.account-info > div:last-child > span:first-child > b {
+    font-size: 18px;
+    color: #d40010;
+    padding: 0 5px;
+}
+
+.account-info > div:last-child > span:last-child {
+    float: right;
+    /*color: #848484;*/
+}
+
+.clear-float:after {
+    display: block;
+    clear: both;
+    content: '';
+    visibility: hidden;
+    height: 0;
+}
+
+.f-right {
+    float: right;
+}
+
+.account-info .back {
+    width: 102px;
+    height: 28px;
+    line-height: 27px;
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #b5b5b5;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.account-info .back:hover {
+    border-color: #7bb811;
+    color: black;
+}
+
+.nav-tab {
+    box-sizing: border-box;
+    height: 46px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #b5b5b5;
+    line-height: 46px;
+}
+
+.nav-tab li {
+    float: left;
+    padding: 0 15px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.nav-tab-active {
+    border-bottom: 3px solid #d40010;
+    color: #d40010;
+}
+
+.nav-tab li:hover {
+    border-bottom: 3px solid #d40010;
+    color: #d40010;
+}
+
+.colred {
+    color: #f20100 !important;
+}
+
+.icon-warning {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background: url("images/icon_warning.png") no-repeat center;
+    background-size: 100% 100%;
+    position: relative;
+    top: 3px;
+    margin-right: 3px;
+    margin-left: 10px;
+}
+
+/*交接班明细*/
+.handover-detail-title {
+    background-color: #D2D2D2;
+    border-top: 1px solid #e0e0e0;
+    border-left: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.handover-detail-title span {
+    display: inline-block;
+    float: left;
+    width: 50%;
+    height: 40px;
+    line-height: 40px;
+    box-sizing: border-box;
+    text-align: center;
+    font-weight: bold;
+}
+
+.handover-detail-title span:first-child {
+    border-right: 1px solid #dcdcdc;
+}
+
+.handover-detail-info thead tr th:nth-child(10n+6), .handover-detail-info tbody tr td:nth-child(10n+6) {
+    border-right: 1px solid #e0e0e0;
+}
+
+#global_handover_from, #global_handover_to {
+    border: none;
+    color: #7cb70d;
+    width: 150px;
+}
+
+#global_handover_from::-webkit-input-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_from:-moz-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_from::-moz-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_from:-ms-input-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_to::-webkit-input-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_to:-moz-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_to::-moz-placeholder {
+    color: #7cb70d;
+}
+
+#global_handover_to:-ms-input-placeholder {
+    color: #7cb70d;
+}
+
+/*<!--2016/6/27 新增财务报表-->*/
+/*首页*/
+.financeIndex_div .finance-index {
+    overflow-x: auto;
+}
+
+.finance-list-item ul li.finance-index {
+    background-image: url('images/finance-index.png');
+}
+
+.finance-list-item ul li.finance-index:hover {
+    background-color: #fff;
+    background-image: url('images/finance-index-active.png');
+    color: #d40010;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+}
+
+.finance-list-item ul li.finance-index-active {
+    background-image: url('images/finance-index-active.png');
+}
+
+/*房费日销售表*/
+.finance-roomSale-content {
+    /*min-width: 1185px;*/
+}
+
+.finance-roomSale-content .table-footer {
+    /*min-width: 1185px;*/
+}
+
+.finance-list-item ul li.day-sale-room {
+    background-image: url('images/day-sale-room.png');
+}
+
+.finance-list-item ul li.day-sale-room:hover {
+    color: #d40010;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-color: #fff;
+    background-image: url('images/day-sale-room-active.png');
+}
+
+.finance-list-item ul li.day-sale-room-active {
+    background-image: url('images/day-sale-room-active.png');
+}
+
+/*商品如销售表*/
+.finance-list-item ul li.day-sale-good {
+    background-image: url('images/day-sale-good.png');
+}
+
+.finance-list-item ul li.day-sale-good:hover {
+    color: #d40010;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-color: #fff;
+    background-image: url('images/day-sale-good-active.png');
+}
+
+.finance-list-item ul li.day-sale-good-active {
+    background-image: url('images/day-sale-good-active.png');
+}
+
+/*日收支流水表*/
+.finance-list-item ul li.day-list-income {
+    background-image: url('images/day-list-income.png');
+}
+
+.finance-list-item ul li.day-list-income:hover {
+    color: #d40010;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-color: #fff;
+    background-image: url('images/day-list-income-active.png');
+}
+
+.finance-list-item ul li.day-list-income-active {
+    background-image: url('images/day-list-income-active.png');
+}
+
+/*在住客人表*/
+.finance-list-item ul li.checkin-customer {
+    background-image: url('images/checkin-customer.png');
+}
+
+.finance-list-item ul li.checkin-customer:hover {
+    color: #d40010;
+    box-shadow: 2px 0 2px #fff, 0 1px 1px #cdcdcd;
+    min-width: 90px;
+    background-color: #fff;
+    background-image: url('images/checkin-customer-active.png');
+}
+
+.finance-list-item ul li.checkin-customer-active {
+    background-image: url('images/checkin-customer-active.png');
+}
+
+.finance-nav-head {
+    font-size: 14px;
+    margin: 0 0 15px;
+    line-height: 20px;
+    overflow: hidden;
+}
+
+.finance-nav-head h1 {
+    font-weight: bold;
+    float: left;
+    padding: 0 12px;
+    border-left: 3px solid #cf2d01;
+    line-height: 15px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+.finance-nav-head h1 span {
+    color: #666665;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.finance-nav-head .time_input {
+    background-color: #E8E8E8;
+    position: relative;
+    height: 28px;
+    width: 130px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.finance-nav-head .time_input input {
+    border: none;
+    background-color: #E8E8E8;
+    padding: 0;
+    margin: 0 0 0 35px;
+    width: 90px;
+    line-height: 28px;
+    cursor: pointer;
+}
+
+.finance-nav-head .time_input:before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    background: url("images/icon_calendar.png") no-repeat center left;
+    background-size: 100%;
+    position: absolute;
+    top: 20%;
+    left: 10px;
+}
+
+/*合计*/
+.table-footer ul {
+    overflow: hidden;
+    background-color: #ebebeb;
+    border: 1px solid #e0e0e0;
+    height: 40px;
+}
+
+.fixedBottom {
+    position: fixed;
+    bottom: 0;
+}
+
+.table-footer ul li {
+    float: left;
+    border-right: 1px solid #e0e0e0;
+    height: 40px;
+    line-height: 40px;
+    text-indent: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.table-footer ul li:last-child {
+    border-right: none;
+}
+
+/*日收支流水表*/
+.account-book-head-fl {
+    height: 30px;
+    line-height: 30px;
+    font-weight: bold;
+}
+
+.account-book-head-fl label {
+    margin-right: 30px;
+}
+
+.account-book-head-fl label.total-income {
+    color: #4d61b7;
+}
+
+.account-book-head-fl label.total-payout {
+    color: #A9221C;
+}
+
+/*首页*/
+.finance-index-title {
+    border: 1px solid #F9C6AB;
+    background-color: #FDFBE6;
+    height: 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin-left: 5px;
+    min-width: 1111px;
+}
+
+.finance-index-title:hover {
+    background-color: #fff3d0;
+}
+
+.finance-index-title a {
+    width: 100%;
+    height: 100%;
+    line-height: 40px;
+    display: inline-block;
+    color: #836042;
+    margin-left: 20px;
+}
+
+.f-border-left {
+    font-weight: bold;
+    padding: 0 20px 0 12px;
+    border-left: 3px solid #cf2d01;
+    font-size: 14px;
+    margin-left: 20px;
+    margin-bottom: 15px;
+    line-height: 15px;
+}
+
+.finance-index-content {
+    overflow: auto;
+    margin: 0;
+    padding: 15px 5px;
+    min-width: 1175px;
+}
+
+.finance-index .content-box {
+    border: 1px solid #DBDBDB;
+    border-radius: 3px;
+    padding: 15px 0;
+    box-shadow: 1px 1px 5px #dbdbdb, -1px -1px 5px #dbdbdb
+}
+
+.finance-index-content .info-left {
+    width: 386px;
+    height: 250px;
+    margin-right: 30px;
+}
+
+.finance-index-content .info-right {
+    width: 740px;
+    height: 250px;
+}
+
+.finance-index-content .info-left-list {
+    padding: 10px 0 10px 30px;
+    background-color: #F4F4F4;
+    line-height: 25px;
+    margin: 7px 0;
+}
+
+.u-stand-out {
+    font-size: 18px;
+    color: #d40010;
+    padding: 0 5px;
+}
+
+.finance-index .list-flag {
+    color: #4a90E2;
+    text-decoration: underline;
+    font-weight: normal;
+}
+
+.finance-index .f-16 {
+    font-size: 16px;
+    margin: 0 5px;
+}
+
+.finance-index-state {
+    padding: 20px 0;
+    border-bottom: 1px dashed #DBDBDB;
+    min-width: 1111px;
+}
+
+.finance-index-state h1 {
+    font-size: 12px;
+    color: #404040;
+    font-weight: bold;
+    line-height: 30px;
+}
+
+.finance-index-state p {
+    font-size: 12px;
+    color: #797878;
+    line-height: 20px;
+}
+
+.finance-index-state:last-child {
+    border: none;
+}
+
+.bg-grav {
+    background-color: #f2f2f2;
+}
+
+.finance-main-info .table thead {
+    font-family: '微软雅黑';
+    background-color: #f9f9f9;
+    font-size: 12px;
+    font-weight: bold;
+    color: #5f5f5f;
+}
+
+.finance-main-info .table thead th {
+    font-weight: bold !important;
+}
+
+.ui-look-detail {
+    font-size: 12px;
+    color: #4a90e2;
+}
+
+.icon-clock {
+    color: #2e2e2e;
+}
+
+#handover_detail .table {
+    margin-bottom: 50px;
+}
+
+#handover_detail .handover-footer {
+    width: 90.4%;
+}
+
+.handover-footer .widthhalf {
+    width: 50%;
+}
+
+/*时间选择*/
+.time-list-box {
+    margin-left: 10px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.time-list-box .time-cover {
+    height: 30px;
+    line-height: 30px;
+    background: #ffffff;
+    border: 1px solid #c1c1c1;
+    border-radius: 2px;
+    position: relative;
+    padding-left: 35px;
+    cursor: pointer;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.time-list-box .time-cover i {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    background: url("images/icon_calendar.png") no-repeat center left;
+    background-size: 100%;
+    position: absolute;
+    top: 25%;
+    left: 10px;
+}
+
+.time-list-box .small-box {
+    width: 195px;
+}
+
+.time-list-box .big-box {
+    width: 275px;
+}
+
+.time-list-box .time-select {
+    border: 1px solid #c1c1c1;
+    border-radius: 3px;
+    padding: 10px 5px;
+    position: absolute;
+    text-align: center;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    display: none;
+    z-index: 999;
+}
+
+.time-select input {
+    width: 105px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid #ccc;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.time-select input:first-child {
+    margin-left: 0;
+}
+
+.time-select input:last-of-type {
+    margin-right: 0;
+}
+
+.time-list-box .small-time-select input {
+    width: 90px;
+}
+
+.time-list-box .small-time-select .btn-sure {
+    width: 212px;
+}
+
+.time-list-box .btn-sure {
+    width: 285px;
+    height: 30px;
+    background-color: #ca0207;
+    text-align: center;
+    color: #ffffff;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/*番茄代收对账*/
+.collect-nav {
+    overflow: hidden;
+}
+
+.collect-nav li {
+    width: 100px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    color: #4a4a4a;
+    background: #f5f5f5;
+    border: 1px solid #d7d7d7;
+    float: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.collect-nav .selected {
+    background: #ca0207;
+    color: #ffffff;
+    border: 1px solid #ca0207;
+}
+
+.icon-help {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: url("images/help.png") no-repeat center;
+    background-size: 100% 100%;
+    float: right;
+    cursor: pointer;
+}
+
+.icon-help:hover + .collecting-dialog-help {
+    display: block;
+}
+
+.collecting-dialog-help {
+    display: none;
+    width: 300px;
+    padding: 10px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    border: 1px solid #dddddd;
+    font-size: 12px;
+    box-shadow: 1px 1px 5px #dbdbdb, -1px -1px 5px #dbdbdb;
+    position: absolute;
+    right: 45px;
+    top: 0px;
+    background-color: #ffffff;
+}
+
+.collecting-dialog-help:after {
+    content: '\25B6';
+    font-size: 1.5rem;
+    color: #ffffff;
+    position: absolute;
+    right: -11px;
+    top: 1%;
+}
+
+.collecting-reconciliation-head a:hover {
+    color: #000000;
+}
+
+/*收支流水表*/
+.income-part1 {
+    background: #F9F9F9;
+    border: 1px solid #D2D2D2;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #646464;
+    padding: 4px 0;
+    width: 100%;
+    float: left;
+    margin: 10px 0;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+.income-part1 ul li {
+    width: 19%;
+    float: left;
+    text-align: center;
+    height: 30px;
+    line-height: 30px;
+    position: relative;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -o-box-sizing: border-box;
+    border-right: 1px solid #D2D2D2;
+}
+
+.income-part1 ul li span {
+    cursor: pointer;
+}
+
+.income-part1 ul li:last-child {
+    border-right: 0;
+}
+
+.income-part1 i {
+    background: url('images/income-icon.png') no-repeat;
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 7px;
+    position: relative;
+    top: -1px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.income-part2 {
+    margin: 10px 0;
+    float: left;
+    width: 100%;
+    overflow: hidden;
+    zoom: 1;
+    position: relative;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+.income-part2-l {
+    width: 200px;
+    background: #F9F9F9;
+    overflow: hidden;
+    zoom: 1;
+    border: 1px solid #d2d2d2;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.income-part2-l ul {
+    float: left;
+    width: 100px;
+    border-right: 1px solid #d2d2d2;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+.income-part2-l li {
+    font-size: 12px;
+    color: #646464;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    border-bottom: 1px solid #d2d2d2;
+}
+
+.income-part2-r {
+    position: absolute;
+    right: 0;
+    top: 0;
+    left: 201px;
+    height: 149px;
+    overflow-y: hidden;
+    border-bottom: 1px solid #d2d2d2;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+.income-part2-r table tr th {
+    width: 190px;
+    font-size: 12px;
+    color: #646464;
+}
+
+.income-part2 .table > tbody > tr > td, .income-part2 .table > thead > tr > th {
+    text-align: center;
+    height: 36px;
+    line-height: 36px;
+    padding: 0;
+    font-size: 12px;
+    color: #646464;
+    width: 99px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.income-part2 .table > tbody > tr:last-child > td {
+    background: #fffbee;
+}
+
+.back-yellow {
+    background: #fffbee;
+}
+
+.income-title {
+    width: 100%;
+    position: relative;
+}
+
+.income-title a.button_yuding {
+    position: absolute;
+    right: 0px;
+    top: -10px;
+}
+
+.income-part3 {
+    border-top: 1px #e8e8e8 solid;
+    padding: 20px 0;
+    width: 100%;
+    float: left;
+    margin-top: 20px;
+    color: #646464
+}
+
+.income-part3 .table > tbody > tr > td, .income-part3 .table > thead > tr > th {
+    text-align: center;
+    font-size: 12px;
+    color: #646464;
+    position: relative;
+}
+
+.income-part3-title {
+    width: 100%;
+    position: relative;
+    color: #646464;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.income-part3-title span {
+    margin: 10px;
+    padding: 3px 5px;
+    cursor: pointer;
+}
+
+.income-part3-title span.on {
+    color: #cf2d01;
+    border-bottom: 2px #cf2d01 solid;
+}
+
+.income-part3-title label {
+    font-size: 12px;
+    color: #646464;
+    cursor: pointer;
+}
+
+.income-part3-title i, .income-list b {
+    background: #fdfdfd;
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    border: 1px #cf2d01 solid;
+}
+
+.income-part3-title .income-seleted i, .income-list .income-seleted b {
+    border: none;
+    width: 14px;
+    height: 14px;
+    background: url(images/income-icon-2.png) no-repeat;
+}
+
+.income-part3 .table > tbody > tr > td.color-green {
+    color: #618100;
+}
+
+.income-part3 .table > tbody > tr > td.color-red {
+    color: #d0021b;
+}
+
+.income-part3 tr {
+    position: relative;
+}
+
+.income-part3 .table a.income-edit {
+    background: #f9f9f9;
+    border: 1px solid #d2d2d2;
+    border-radius: 2px;
+    line-height: 21px;
+    height: 21px;
+    padding: 0 10px;
+    display: inline-block;
+    margin: 0 5px;
+    cursor: pointer;
+    color: #646464;
+    text-decoration: none;
+}
+
+.income-part3 .table a.income-edit:hover {
+    color: #646464
+}
+
+.ui-item-del {
+    color: #d7d7d7;
+    cursor: pointer;
+}
+
+.ui-item-del:hover {
+    color: #cf2d01;
+}
+
+.delete-line > td:not(:last-child) {
+    /*position: absolute;*/
+    /*content: "";*/
+    /*left: 0;*/
+    /*top: 18px;*/
+    /*width: 100%;*/
+    /*border-bottom: 1px solid #cbcbcb;*/
+    text-decoration: line-through;
+    color: #cbcbcb
+}
+
+/*.delete-line > td:last-child:after {*/
+/*position: static;*/
+/*border: none;*/
+/*}*/
+
+.income-part3 .table .delete-line td {
+    color: #cbcbcb;
+}
+
+.income-list {
+    position: absolute;
+    width: 100%;
+    top: 34px;
+    left: 0;
+    background: #F9F9F9;
+    border: 1px solid #D2D2D2;
+    z-index: 2;
+    display: none;
+}
+
+.income-list dl {
+    width: 100%;
+    max-height: 230px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.income-list dd {
+    border-bottom: 1px solid #D2D2D2;
+    padding: 5px 0;
+    width: 100%;
+    text-align: left;
+    text-indent: 25%;
+    cursor: pointer;
+}
+
+.income-list label, .income-list b {
+    cursor: pointer;
+}
+
+.income-list-bar {
+    background: #ebebeb;
+    text-align: left;
+    text-indent: 10px;
+}
+
+.income-search, .income-search:hover {
+    background: #c83405;
+    border-radius: 2px;
+    line-height: 21px;
+    height: 21px;
+    padding: 1px 16px;
+    display: inline-block;
+    margin: 0 18px;
+    cursor: pointer;
+    color: #ffffff;
+    text-decoration: none;
+    position: relative;
+    top: 4px;
+    text-indent: 0;
+}
+
+.income-search-disabled, .income-search-disabled:hover {
+    background: #BDBDBD;
+    border-radius: 2px;
+    line-height: 21px;
+    height: 21px;
+    padding: 1px 16px;
+    display: inline-block;
+    margin: 0 18px;
+    text-decoration: none;
+    position: relative;
+    top: 4px;
+    text-indent: 0;
+    cursor: default;
+}
+
+.ui-red-circle {
+    background: #dd4931;
+    width: 8px;
+    height: 8px;
+    border-radius: 100%;
+    display: inline-block;
+    position: relative;
+    left: 3px;
+    top: -6px;
+}
+
+.ui-tips-new {
+    background: url('images/ui-tips-new.png') no-repeat;
+    width: 16px;
+    height: 19px;
+    display: inline-block;
+    position: absolute;
+    right: 21px;
+    top: 2px;
+}
+
+.account_book_tips {
+    width: 98%;
+    background: #FCFBE5;
+    border: 1px solid #F6C7A9;
+    padding: 7px 1%;
+    margin-bottom: 18px;
+    cursor: pointer;
+}
+
+.account_book_tips a, .account_book_tips a:hover {
+    color: #84613F;
+    font-size: 12px;
+}
+
+.account_book_tips span {
+    font-size: 16px;
+    color: #CF1400;
+    letter-spacing: -0.67px;
+}
+
+.tb-bg-fd{
+    background: #fdfdfd;
+}
+
+.income-part3 .table > tbody > tr:hover > td.tb-bg-fd{
+    background: #f4f4f4;
+}
+
+@media screen and (max-width: 1600px) {
+    .income-list dd {
+        text-indent: 20%;
+    }
+}
+
+@media screen and (max-width: 1366px) {
+    .income-list dd {
+        text-indent: 15px;
+    }
+}

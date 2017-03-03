@@ -1,0 +1,107 @@
+<div class="top-box">
+	<div class="top-box-panel">
+		<div class="top-box-panel">
+			<div class="date-panel-wrap">
+				<i id="prev_month" class="iconfont icon-arrowleft"></i>
+				<span class="date-panel" id="date_range"></span>
+				<i id="next_month" class="iconfont icon-arrowright"></i>
+			</div>
+			<div class="filter-panel" id="filter-panel"></div>
+		</div>
+	</div>
+	<div class="top-box-grid">
+		<!-- 横版房态 -->
+		<ul class="table-date-grid" id="room_grid">
+			{{#if isFold}}
+				{{#each roomtypes}}
+				<li roomtype-cell={{id}}>
+					<dl class="room-cell">
+						<dt roomtype={{id}} foldhandle="off" class="room-num-stat xy_off_openTishi">{{name}}</dt>
+						{{#each rooms}}
+						<dd>
+							<div markroom="{{id}}" class="room-num-section">
+								<span>{{roomNo}}</span>
+								<em class="tag-zang" style="display: none;"></em>
+							</div>
+						</dd>
+						{{/each}}
+					</dl>
+				</li>
+				<li class="hide" roomtype-folder={{id}}>
+					<dl class="room-cell room-cell-folder room-num-stat xy_on_openTishi">
+						<dt roomtype={{id}} foldhandle="on" style="height: 54px;line-height: 54px"><span class="">{{name}}</span></dt>
+						<!--<dd><div class="room-num-section">剩余/总量</div></dd>-->
+					</dl>
+				</li>
+				{{/each}}
+			{{else}}
+				{{#each rooms}}
+				<li>
+					<dl class="room-cell" roomtype-cell={{roomtype.id}}>
+						<dt>{{roomtype.name}}</dt>
+						<dd>
+							<div markroom="{{id}}" class="room-num-section">
+								<span>{{roomNo}}</span>
+								<em class="tag-zang" style="display: none;"></em>
+							</div>
+						</dd>
+					</dl>
+				</li>
+				{{/each}}
+			{{/if}}
+		</ul>
+	</div>
+</div>
+
+<!--  日期选择 -->
+<div id="datepicker" style="display:none;" class="index-calendar"></div>
+
+<div class="content-box">
+	<div class="content-box-panel">
+		<div class="table-room-grid" id="date_grid">
+			{{#each dates}}
+			<dl markdate="{{value}}" class="date-cell {{className}} {{weeklineClass}}">
+				<dt>
+					<b>{{text}}</b>
+					<em>{{week}}</em>
+				</dt>
+				<dd>剩{{../rooms.length}}间</dd>
+			</dl>
+			{{/each}}
+		</div>
+	</div>
+	<div class="content-box-grid">
+		<table class="table-roomcell-grid" id="roomcell_grid">
+			{{#if isFold}}
+				{{#each dates}}
+				<tr>
+					{{#each ../roomtypes}}
+						{{#each rooms}}
+						<td class="{{../../weeklineClass}}" roomtype="{{../id}}">
+							<div room="{{id}}" roomNo="{{roomNo}}" roomtype="{{roomtype.id}}" date="{{../../value}}"></div>
+						</td>
+						{{/each}}
+						<td fold-roomtype="{{id}}" class="hide">
+							<div class="fold-cell">
+								<span><em class="fold-cell-num"></em></span>
+							</div>
+						</td>
+					{{/each}}
+				</tr>
+				{{/each}}
+			{{else}}
+				{{#each dates}}
+				<tr>
+					{{#each ../rooms}}
+					<td class="{{../weeklineClass}}">
+						<div room="{{id}}" roomNo="{{roomNo}}" date="{{../value}}" roomtype="{{roomtype.id}}"></div>
+					</td>
+					{{/each}}
+				</tr>
+				{{/each}}
+			{{/if}}
+
+
+		</table>
+	</div>
+</div>

@@ -1,0 +1,263 @@
+<!--客户资料-->
+
+<div ms-controller="vm_customersDatas">
+    <div ms-visible="allDatas">
+        <div class="finance-nav-head">
+            <h1 style="top: 20px">一共有<a class="u-stand-out">{{totalCount==-1?0:totalCount}}</a>条记录</h1>
+            <div class="f-right">
+                <button class="btn btn-add-grav" ms-click="addCustomer()"><i>+</i>新增客户</button>
+                <div class="u-select-group">
+                    <select name="" class="u-select" ms-duplex="baseDatas.searchType">
+                        <option value="2">姓名</option>
+                        <option value="3">手机号</option>
+                    </select>
+                    <input class="u-input-txt" type="text" ms-attr-placeholder="baseDatas.searchType==2?'姓名':'手机号'"
+                           ms-duplex="baseDatas.input">
+                </div>
+
+                <button class="btn btn-search" ms-click="getCustomerDatas(1)">搜索</button>
+            </div>
+        </div>
+        <table class="table table-hover table-bordered">
+            <thead>
+            <tr>
+                <th style="width: 10%;min-width: 100px">
+                    <select name="" id="" style="width: 103px" ms-change="getCustomerDatas(1)"
+                            ms-duplex="baseDatas.innType">
+                        <option value="-1">全部客人</option>
+                        <option ms-repeat-cur="customerType" ms-attr-value="cur.id">{{cur.name}}</option>
+                    </select>
+                </th>
+                <th style="width: 6%">姓名</th>
+
+                <th style="width: 10%">联系电话</th>
+                <th style="width: 8%">手机归属地</th>
+                <th style="width: 8%">生日</th>
+                <th style="width: 8%">本店消费<i class="icon-sort" ms-class-sort-down="baseDatas.spendDown"
+                           ms-class-sort-up="!baseDatas.spendDown" ms-click="getCustomerDatas(1,'spend')"></i></th>
+                <th ms-if="hasUnions" style="width: 8%">会员等级</th>
+                <th ms-if="hasUnions">会员消费</th>
+                <th style="width: 10%">最后退房日期<i class="icon-sort" ms-class-sort-down="baseDatas.outDown"
+                             ms-class-sort-up="!baseDatas.outDown"
+                             ms-click="getCustomerDatas(1,'out')"></i></th>
+                <th style="width: 14%">备注</th>
+                <th style="width: 14%;min-width: 165px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-repeat="datasList" ms-if="datasList.length">
+                <td>{{transformInnType(el.status)}}</td>
+                <td>{{el.name}}</td>
+
+                <td>{{el.contact}}</td>
+                <td>{{el.address}}</td>
+                <td>{{el.birthday}}</td>
+                <td><span style="color: #4095ef;text-decoration: underline;cursor: pointer"
+                          ms-click="openThisDetail(1,el)">{{el.costMoney}}</span></td>
+                <td ms-if="hasUnions"><i class="icon-vip" ms-visible="!getGrade(el.contact)==''">{{getGradeIndex(el.contact)}}</i>{{getGrade(el.contact)==''?'（无）':getGrade(el.contact)}}
+                </td>
+                <td ms-if="hasUnions">{{getUnionMoney(el.contact)}}</td>
+                <td>{{(el.lastCheckOut == '' || el.lastCheckOut == null || el.lastCheckOut ==
+                    "1900-01-01")?'暂无退房记录':el.lastCheckOut}}
+                </td>
+                <td>{{el.note}}</td>
+                <td>
+                    <button class="btn btn-small" ms-click="openModifyDialog(el,$index)">管理</button>
+                    <button class="btn btn-small" ms-click="openSendMsgDialog(el)">发短信</button>
+                </td>
+            </tr>
+            <tr ms-if="!datasList.length">
+                <td ms-attr-colspan="hasUnions?11:9">暂无客人信息！</td>
+            </tr>
+            </tbody>
+        </table>
+        <div id="customer_datas_page" style="overflow: hidden"></div>
+
+        <!--新增客户弹框-->
+        <div class="tomasky-ui-popups" ms-visible="addDialogVisible">
+            <div class="tomasky-ui-popups-backdrop"></div>
+            <div class="ui-popups-dialog">
+                <em class="close" data-dismiss="popups" ms-click="closeAddCustomerDialog()">×</em>
+                <div class="ui-popups-head">
+                    <h3 class="ui-popups-title">新增客户</h3>
+                </div>
+                <div class="ui-popups-body u-add-customer">
+                    <div class="rows">
+                        <label>姓　名：</label><input type="text" ms-duplex="addDatas.name">
+                    </div>
+                    <div class="rows">
+                        <label>手机号：</label><input type="text" ms-duplex="addDatas.contact">
+                    </div>
+                    <div class="rows">
+                        <label>证件号：</label>
+                        <div class="u-select-group-dialog">
+                            <select class="u-select" ms-duplex="addDatas.cardType">
+                                <option value="1">身份证</option>
+                                <option value="2">军官证</option>
+                                <option value="3">通行证</option>
+                                <option value="4">护照</option>
+                                <option value="5">其他</option>
+                            </select>
+                            <input type="text" class="u-input-txt" ms-duplex="addDatas.cardNo">
+                        </div>
+
+                    </div>
+                    <div class="rows">
+                        <label>性　别：</label><select name="" style="height: 30px;line-height: 30px"
+                                                   ms-duplex="addDatas.sex">
+                        <option value="1">男</option>
+                        <option value="0">女</option>
+                    </select>
+
+                    </div>
+                    <div class="rows">
+                        <label>生　日：</label><input type="text" placeholder="格式：2015-01-01" ms-duplex="addDatas.birthday">
+                    </div>
+                    <div class="rows">
+                        <label>备　注：</label><textarea name="note" cols="30" rows="10"
+                                                     ms-duplex="addDatas.note"></textarea>
+                    </div>
+                </div>
+                <div class="ui-popups-foot">
+                    <button class="u-big-btn" ms-click="toAddCustomer()">确定</button>
+                    <p></p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!--客户管理弹框-->
+        <div class="tomasky-ui-popups" ms-visible="modifyDialogVisible">
+            <div class="tomasky-ui-popups-backdrop"></div>
+            <div class="ui-popups-dialog">
+                <em class="close" data-dismiss="popups" ms-click="closeModifyDialog()">×</em>
+                <div class="ui-popups-head">
+                    <h3 class="ui-popups-title">客户管理</h3>
+                </div>
+                <div class="ui-popups-body u-add-customer">
+                    <div class="rows">
+                        <label>姓　名：</label><input type="text" ms-duplex="modifyDatas.name">
+                    </div>
+                    <div class="rows">
+                        <label>手机号：</label><input type="text" ms-duplex="modifyDatas.contact"
+                                                  ms-attr-disabled="modifyTelDisable">
+                    </div>
+                    <div class="rows">
+                        <label>证件号：</label><a style="position: relative">
+                        <div class="u-select-group-dialog">
+                            <select class="u-select" ms-duplex="modifyDatas.cardType">
+                                <option value="1">身份证</option>
+                                <option value="2">军官证</option>
+                                <option value="3">通行证</option>
+                                <option value="4">护照</option>
+                                <option value="5">其他</option>
+                            </select>
+                            <input type="text" class="u-input-txt" ms-duplex="modifyDatas.cardNo">
+                        </div>
+                    </a>
+                    </div>
+                    <div class="rows">
+                        <label>性　别：</label><select name="" style="height: 30px;line-height: 30px"
+                                                   ms-duplex="modifyDatas.sex">
+                        <option value="1">男</option>
+                        <option value="0">女</option>
+                    </select>
+                    </div>
+                    <div class="rows">
+                        <label>生　日：</label><input type="text" placeholder="格式：2015-01-01"
+                                                  ms-duplex="modifyDatas.birthday">
+                    </div>
+                    <div class="rows">
+                        <label>备　注：</label><textarea name="note" cols="30" rows="10"
+                                                     ms-duplex="modifyDatas.note"></textarea>
+                    </div>
+                </div>
+                <div class="ui-popups-foot">
+                    <button class="u-big-btn" ms-click="modifyToSave()">保存
+                    </button>
+                    <p></p>
+                </div>
+            </div>
+        </div>
+        <!--发送短信-->
+        <div class="tomasky-ui-popups" ms-visible="sendMsgDialog">
+            <div class="tomasky-ui-popups-backdrop"></div>
+            <div class="ui-popups-dialog u-send-msg">
+                <em class="close" data-dismiss="popups" ms-click="closeSendMsgDialog()">×</em>
+                <div class="ui-popups-head">
+                    <h3 class="ui-popups-title">发送短信</h3>
+                </div>
+                <div class="ui-popups-body">
+                    <div class="row">
+                        <label>发送给：</label>{{curSendMsg.name}}({{curSendMsg.contact}})
+                    </div>
+                    <div class="row">
+                        <label>短信模板：</label><select name="" style="width: 235px" ms-duplex="curMsgId" ms-change="changeMsgTxt()">
+                        <option value="">请选择短信模板</option>
+                        <option value="" ms-repeat="msgTemp" ms-if-loop="el.status==2" ms-attr-value="el.id" >
+                            {{el.msgTitle}}
+                        </option>
+                    </select>
+                    </div>
+                    <div class="row">
+                        <textarea name="" id="sendMsgTxt" cols="30" rows="10" ms-duplex="sendMsgTxt">{{sendMsgTxt}}</textarea>
+                        <p>已输入<span class="stand-out">{{sendMsgTxt.length}}</span>个字，将分为<span class="stand-out">{{Math.ceil(sendMsgTxt.length/53)}}</span>条短信发送
+                        </p>
+                    </div>
+                </div>
+                <div class="ui-popups-foot">
+                    <button class="u-big-btn" ms-click="toSendMsg()">发送短信</button>
+                    <p class="u-send-hint" style="width: 280px">{{sendMsgHint}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--查看该条信息详情-->
+    <div ms-visible="thisDetail">
+        <div>
+            <button class="btn btn-back" ms-click="backToAll()"><< 返回</button>
+        </div>
+        <div class="c-content-title">
+            <p>{{lookData.name}}共入住 {{costList.totalCount}}次，已退房订单消费 {{lookData.costMoney}}</p>
+        </div>
+        <table class="table table-hover table-bordered">
+            <thead>
+            <tr>
+                <th>订单标注</th>
+                <th>房号（单价）</th>
+                <th>入住/退房时间</th>
+                <th>房费金额</th>
+                <th>其他消费</th>
+                <th>实付款</th>
+                <th>客人来源</th>
+                <th>所属客栈</th>
+                <th>操作人</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-if="costList.list.length" ms-repeat="costList.list">
+                <td>{{orderStatusMap(el.status)}}</td>
+                <td>
+                    <p ms-repeat-elem="el.roomNo" style="line-height: 20px">{{elem}}</p>
+                </td>
+                <td>
+                    <p ms-repeat-x="el.inOut" style="line-height: 20px">{{x}}</p>
+                </td>
+                <td>{{el.totalAmount}}</td>
+                <td>{{el.otherCost==null?'（无）':el.otherCost}}</td>
+                <td>{{el.totalPaid}}</td>
+                <td>{{el.cfName}}</td>
+                <td>{{el.innName}}</td>
+                <td>{{el.userCode}}</td>
+            </tr>
+            <tr ms-if="!costList.list.length">
+                <td colspan="9">暂无消费记录！</td>
+            </tr>
+            </tbody>
+        </table>
+        <div id="detail_page" style="overflow: hidden"></div>
+    </div>
+
+
+</div>

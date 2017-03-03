@@ -1,0 +1,626 @@
+.orderOpen {
+    padding-right: 360px;
+}
+
+.house-message {
+    width: 450px;
+    height: 320px;
+    background: #ffffff;
+    position: fixed;
+    transition: all ease-in .3s;
+    -webkit-transition: all ease-in .3s;
+    -moz-transition: all ease-in .3s;
+    -ms-transition: all ease-in .3s;
+    -o-transition: all ease-in .3s;
+    right: 1px;
+    left: auto;
+    bottom: -320px;
+    z-index: 100;
+    opacity: 1;
+    filter: Alpha(opacity=100);
+    transform-origin: bottom;
+    -webkit-transform-origin: bottom;
+    -moz-transform-origin: bottom;
+    -o-transform-origin: bottom;
+    -ms-transform-origin: bottom;
+}
+
+.house-boxshadow {
+    box-shadow: -4px 5px 5px #E8E8E8;
+    -moz-box-shadow: -4px 5px 5px #E8E8E8;
+    -webkit-box-shadow: -4px 5px 5px #E8E8E8;
+}
+
+.house-message.no {
+    transition: none;
+    -moz-transition: none;
+    -webkit-transition: none;
+    -ms-transition: none;
+    -o-transition: none
+}
+
+.house-message.on {
+    bottom: -320px;
+    transform: scaleX(0);
+    -moz-transform: scaleX(0);
+    -ms-transform: scaleX(0);
+    -o-transform: scaleX(0);
+    -webkit-transform: scaleX(0);
+    opacity: 0;
+    filter: Alpha(opacity=0)
+
+}
+
+.house-message-head {
+    height: 40px;
+    width: 100%;
+    position: relative;
+    background: #db4a38;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.house-message-head ul {
+    position: absolute;
+    bottom: 0;
+    left: 10px;
+}
+
+.house-message-head li {
+    background: url(../../images/bg-message2.png) no-repeat center center;
+    background-size: 100% 100%;
+    width: 101px;
+    height: 31px;
+    line-height: 32px;
+    text-align: center;
+    cursor: pointer;
+    color: #ffffff;
+    font-size: 14px;
+    float: left;
+    position: relative;
+}
+
+.house-message-head li i {
+    display: inline-block;
+    background: url(../../images/bg-message-circle2.png) no-repeat;
+    width: 15px;
+    height: 15px;
+    line-height: 16px;
+    margin-left: 2px;
+    text-align: center;
+    color: #ee765a;
+    font-size: 11px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+.house-message-head li.on i {
+    background: url(../../images/bg-message-circle.png) no-repeat;
+    color: #ffffff;
+}
+
+.house-message-head li.on {
+    background: url(../../images/bg-message.png) no-repeat center center;
+    background-size: 100% 100%;
+    color: #db4a38
+}
+
+.house-message-close {
+    background: url(../../images/bg-message-close.png) no-repeat center;
+    width: 26px;
+    height: 26px;
+    display: block;
+    position: absolute;
+    top: 50%;
+    margin-top: -13px;
+    right: 11px;
+    cursor: pointer;
+}
+
+.house-message-content {
+    width: 100%;
+    background: #ffffff;
+    padding: 0 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 280px;
+    box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+.house-message-list {
+    width: 100%;
+    box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+.house-message-list div.listPart {
+    min-height: 85px;
+    padding: 15px 0;
+    width: 100%;
+    color: #404040;
+    overflow:hidden;
+    border-bottom: 1px #d2d2d2 dashed;
+}
+
+.house-message-list div.border0 {
+    border-bottom: 0;
+}
+
+.house-message-list h3 {
+    width: 410px;
+    padding-bottom: 6px;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.house-message-list span {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.house-message-list h3 .fl, .house-message-list h4 .fl {
+    width: 150px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.house-message-list h3 .fr {
+    width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.house-message .qudao1 {
+    color: #0084a0
+}
+
+.house-message .qudao1 i {
+    /*去哪儿*/
+    background: url(../../images/bg_where.png) no-repeat;
+    width: 25px;
+    height: 15px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.house-message .qudao2 {
+    color: #db0e0e
+}
+
+.house-message-list h4 b {
+    color: #db4a38;
+    font-size: 12px;
+    display: block;
+    padding-top: 4px;
+    font-weight: 400;
+}
+
+.house-message .btnSure {
+    background: #db4a38;
+    border: 1px #db4a38 solid;
+    color: #ffffff;
+    text-align: center;
+    padding: 6px 13px;
+    margin-right: 7px;
+    cursor: pointer;
+    border-radius: 2px;
+    display: inline-block;
+    position: relative;
+    top: 4px;
+}
+
+.house-message .btnCancel {
+    background: #ffffff;
+    color: #404040;
+    border: 1px #404040 solid;
+    text-align: center;
+    padding: 6px 13px;
+    display: inline-block;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    top: 4px;
+}
+.house-message .btnOrigin {
+    background: #f19715;
+    color: #ffffff;
+    border: 1px #f19715 solid;
+    text-align: center;
+    padding: 6px 13px;
+    display: inline-block;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    top: 4px;
+    float: right;
+    margin-right: 8px;
+}
+
+/*拒单*/
+.tomasky-ui-popups .bottom-refuse {
+    text-align: center
+}
+
+.bottom-refuse img {
+    margin: 0 auto;
+    width: 34px;
+    height: 34px;
+    display: block;
+}
+
+.bottom-refuse h4 {
+    padding: 6px 0;
+    font-size: 14px;
+    color: #cf2d01;
+    text-align: center
+}
+
+.bottom-refuse .oo-dropdown-width-channel {
+    width: 240px;
+    margin: 6px auto 16px
+}
+
+.bottom-refuse .btnSure {
+    width: 126px;
+    line-height: 34px;
+    padding: 0;
+    background: #dcdcdc;
+    border: 1px #dcdcdc solid;
+    color: #ffffff;
+    text-align: center;
+    cursor: default;
+    margin-right: 10px;
+    border-radius: 2px
+}
+
+.bottom-refuse .btnok {
+    width: 126px;
+    line-height: 34px;
+    padding: 0;
+    background: #7db628;
+    border: 1px #7db628 solid;
+    cursor: pointer;
+    color: #ffffff;
+    text-align: center;
+    margin-right: 10px;
+    border-radius: 2px
+}
+
+.bottom-refuse .btnCancel {
+    width: 126px;
+    line-height: 34px;
+    padding: 0;
+    background: #ffffff;
+    border: 1px #c9c9c9 solid;
+    color: #c9c9c9;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 2px
+}
+
+.bottom-refuse a, .bottom-refuse span {
+    text-align: left
+}
+
+.bottom-refuse.tomasky-hidden-x {
+    overflow: inherit !important;
+    overflow-y: inherit !important
+}
+
+.bottom-refuse .ui-popups-foot {
+    padding: 8px 24px
+}
+
+.clear {
+    clear: both;
+}
+
+.listPart .oo-dropdown-width-channel {
+    width: 195px;
+    margin-top: 10px
+}
+
+.handleBtn {
+    padding: 18px 0;
+    clear: both;
+    height: 32px;
+}
+
+.house-message .handleBtn a {
+    top: 0;
+}
+
+/*成功接单*/
+.dialog-success {
+    background: url(../../images/bg-dialog.png) no-repeat center;
+    width: 317px;
+    height: 205px;
+    position: absolute;
+    left: -306px;
+    top: 52px;
+    text-align: center;
+}
+
+.dialog-success h3 {
+    font-size: 16px;
+    color: #f19715;
+    padding-bottom: 4px;
+}
+
+.dialog-success .dashed {
+    width: 197px;
+    border-top: 1px #c9c9c9 dashed;
+    height: 1px;
+    margin: 5px auto 10px;
+}
+
+.dialog-success h4 {
+    color: #808080;
+    font-size: 12px;
+    margin: 5px 0 10px 0;
+}
+
+.dialog-success .btn {
+    display: block;
+    background: #f19715;
+    color: #ffffff;
+    font-size: 12px;
+    text-align: center;
+    width: 175px;
+    height: 30px;
+    line-height: 30px;
+    margin: 10px auto;
+    border: 0;
+}
+
+.table-roomcell-grid td > div.shingGrid {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #aae4ff;
+    z-index: 10
+}
+
+.house-message-list .listPart:last-child {
+    border: 0
+}
+
+/*重要通知*/
+.house-announce {
+    min-height: 36px;
+    width: 100%;
+    padding: 20px 0;
+    overflow: hidden;
+    zoom: 1;
+    border-bottom: 1px #c9c9c9 dashed;
+}
+
+.house-announce div {
+    float: left;
+    vertical-align: top;
+}
+
+.house-announce .title2 {
+    color: #32ad44;
+    width: 59px;
+}
+
+.house-announce .info {
+    width: 278px;
+    margin-left: 5px;
+}
+
+.house-announce .info h4 {
+    padding-bottom: 7px;
+}
+
+.house-announce .info div {
+    width: 100%
+}
+
+.house-announce .info span {
+    display: inline-block;
+    max-width: 245px;
+    padding-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.house-announce .info a {
+    color: #4a90e2;
+    margin-left: 5px;
+    text-decoration: underline;
+}
+
+.house-announce .btn-red {
+    color: #db4a38;
+    float: right;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 2px;
+    border: 1px #db4a38 solid;
+}
+
+.effecticon {
+    background: url(../../images/bg-message-circle.png) no-repeat;
+    color: #ffffff;
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    line-height: 16px;
+    margin-left: 2px;
+    text-align: center;
+    font-size: 11px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+    position: absolute;
+    left: 395px;
+    top: 0;
+    z-index: 10;
+    opacity: 0;
+    transform: scale(0);
+    -webkit-transform: scale(0);
+    -moz-transform: scale(0);
+    -ms-transform: scale(0);
+    -o-transform: scale(0);
+}
+
+.effecticon2 {
+    position: absolute;
+    top: 225px;
+    left: 0
+}
+
+.on .effecticon {
+    -webkit-animation: effect ease-in-out 1.2s;
+    -ms-animation: effect ease-in-out 1.2s;
+    animation: effect ease-in-out 1.2s;
+}
+
+.effecticon2.on {
+    -webkit-animation: effect2 ease-in-out 1s;
+    -ms-animation: effect2 ease-in-out 1s;
+    animation: effect2 ease-in-out 1s;
+}
+
+.house-announce:last-child {
+    border-bottom: 0;
+}
+
+/*弧线运动*/
+@-webkit-keyframes effect {
+    0% {
+        left: 395px;
+        opacity: 0;
+        filter: Alpha(opacity=0);
+        transform: scale(0);
+        -webkit-transform: scale(0);
+        -moz-transform: scale(0);
+        -ms-transform: scale(0);
+        -o-transform: scale(0);
+    }
+    70% {
+        left: 174px;
+        opacity: 1;
+        filter: Alpha(opacity=100);
+        transform: scale(1);
+        -webkit-transform: scale(1);
+        -moz-transform: scale(1);
+        -ms-transform: scale(1);
+        -o-transform: scale(1);
+    }
+    100% {
+        left: 174px;
+        opacity: 0
+    }
+}
+
+@keyframes effect {
+    0% {
+        left: 395px;
+        opacity: 0;
+        filter: Alpha(opacity=0);
+        transform: scale(0);
+        -webkit-transform: scale(0);
+        -moz-transform: scale(0);
+        -ms-transform: scale(0);
+        -o-transform: scale(0);
+    }
+    80% {
+        left: 174px;
+        opacity: 1;
+        filter: Alpha(opacity=100);
+        transform: scale(1);
+        -webkit-transform: scale(1);
+        -moz-transform: scale(1);
+        -ms-transform: scale(1);
+        -o-transform: scale(1);
+    }
+    100% {
+        left: 174px;
+        opacity: 0;
+        filter: Alpha(opacity=0);
+        transform: scale(1);
+        -webkit-transform: scale(1);
+        -moz-transform: scale(1);
+        -ms-transform: scale(1);
+        -o-transform: scale(1);
+    }
+}
+
+@keyframes effect2 {
+    0% {
+
+        top: 225px;
+
+    }
+    80% {
+
+        top: 18px;
+
+    }
+    100% {
+
+        top: 18px;
+
+    }
+}
+
+@-webkit-keyframes effect2 {
+    0% {
+
+        top: 225px;
+
+    }
+    80% {
+
+        top: 18px;
+
+    }
+    100% {
+
+        top: 18px;
+
+    }
+}
+
+.noMessagePart{
+    margin-top:64px;
+    text-align: center;
+    width:100%;
+    color:#666666
+}
+.noMessagePart img{
+    display: block;
+    width: 151px;
+    padding-left: 111px;
+    margin-bottom: 20px;
+}
+.allRead{
+    position: absolute;
+    left: 232px;
+    bottom: 4px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px #ffffff solid;
+}
+.advice-content{
+    width: 278px;
+    margin-left: 5px;
+    float: left;
+    vertical-align: top;
+}

@@ -1,0 +1,39 @@
+<div class="order-item {{type}}" data-type="{{type}}"
+	{{#if width}}style="width: {{width}}px;"{{/if}}
+	{{#if height}}style="height: {{height}}px;"{{/if}} >
+	<b  {{#if cfColorValue}}style="background: {{cfColorValue}};"{{/if}}></b>
+	<p>
+		<label {{#if channelWidth}}style="width: {{channelWidth}}px;"{{/if}}>{{channelName}}</label>
+		{{#if needPlane}}
+		<i class="iconfont icon-plane"></i>
+		{{/if}}
+		{{#if needCar}}
+		<i class="iconfont icon-qiche"></i>
+		{{/if}}
+		{{#if needSpe}}
+		<i class="iconfont icon-zhongyaoxiaoxi"></i>
+		{{/if}}
+		{{#if needRatePlan}}
+            <i class="icon-xyz"></i>
+        {{else}}
+            {{#if needdanbao}}
+                <i class="icon-danbao"></i>
+            {{else}}
+                {{#if weifu}}
+                    <i class="iconfont icon-money"></i>
+                {{/if}}
+            {{/if}}
+        {{/if}}
+		{{#if hasRemind}}
+		<i class="iconfont icon-clock"></i>
+		{{/if}}
+	</p>
+	<h3>{{guest}} <em class="order-start start-scale"></em> </h3>
+	
+	<ul class="roomcell-list" {{#if maskWidth}}style="width: {{maskWidth}}px;"{{/if}}>
+		{{#each days}}
+		<li days="{{@index}}" role="orderitem"></li>
+		{{/each}}
+	</ul>
+</div>
+

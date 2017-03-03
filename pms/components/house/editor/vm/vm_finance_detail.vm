@@ -1,0 +1,330 @@
+var vm_finance_detail = avalon.define({
+	$id : 'vm_finance_detail',
+	$itemMapReverse : {
+		1 : 4,
+		2 : 5,
+		3 : 6,
+		9 : 10
+	},
+	$operateEnum : {
+		'1' : '新增',
+		'2' : '更新',
+		'3' : '删除'
+	},
+	$ordertypeEnum : {
+		'2' : '新增预定',
+		'23' : '预定转入住',
+		'3' : '新增入住',
+		'34' : '部分退房',
+		'4' : '全部退房',
+		'5' : '未到/取消',
+		'6' : '取消入住',
+		'7' : '撤销退房',
+		'8' : '自动退房'
+	},
+	$uniqueCode : null, // 当前订单 uniqueCode
+	$currentItem : null, // 当前修改记录
+	financeEnum : {
+		1 : {
+			name : '收取订金',
+			value : 1
+		},
+		2 : {
+			name : '收取房费',
+			value : 1
+		},
+		3 : {
+			name : '收取押金',
+			value : 1
+		},
+		4 : {
+			name : '退还订金',
+			value : -1
+		},
+		5 : {
+			name : '退还房费',
+			value : -1
+		},
+		6 : {
+			name : '退还押金',
+			value : -1
+		},
+		9 : {
+			name : '商品收入',
+			value : 1
+		},
+		10 : {
+			name : '商品支出',
+			value : -1
+		},
+		11 : {
+			name : '抵扣积分',
+			value : 1,
+			isHide : true
+		}
+	},
+	$payEnumMap : {},
+	payEnum : [], // 初始化时 vm_finances 的支付方式 初始化
+	editeAccess : false,
+	datas : [
+	// 'open': false,
+	// 'id': el.id,
+	// 'itemId': el.item,
+	// 'item': vm.financeEnum[el.item].name,
+	// 'price': el.price,
+	// 'payName': el.payChannel ? el.payChannel.name : '',
+	// 'payId': el.payChannel ? el.payChannel.id : '',
+	// 'createdUser': el.createdUser,
+	// 'recordAt': el.recordAt,
+	// 'operateType': el.operateType,
+	// 'payStatus': el.payStatus || '0',
+	// 'canModify': el.canModify == 0 ? false : true,
+	// 'updating': false,
+	// 'orderType': null,
+	// 'history': arr
+	],
+	activeItem : {
+		'id' : null,
+		'itemId' : null,
+		'item' : '',
+		'payName' : '',
+		'payId' : null,
+		'price' : '',
+		'recordAt' : ''
+	},
+
+	toggle : function(el) {
+		el.open = !el.open
+	},
+	// 关闭窗口
+	close : function() {
+		var vm = vm_finance_detail, dataArr = vm.datas.$model.filter(function(el) {
+			return el.operateType && el.operateType != 3 // 去掉删除项目
+		})
+		fEnum = vm.financeEnum.$model, paidAmount = 0, paidPayment = 0
+
+		// 同步财务
+		dataArr.forEach(function(el) {
+			if (!el.itemId)
+				return true
+			var fId = el.itemId, fv = fEnum[fId], val = el.price * fv.value
+
+			// 关于押金
+			if (fId == 3 || fId == 6) {
+				paidPayment += val;
+			} else {
+				paidAmount += val;
+			}
+		})
+
+		vm_finances.refreshFinance(paidAmount, paidPayment)
+	},
+	// 去支付
+	pay : function(financeId, payId) {
+		var PayModule = require('house/pay')
+		if (PayModule) {
+			var method = payId == 1 ? 'openQuickPay' : 'openSaomaPay'
+			PayModule[method](financeId)
+			$(this).closest('.ui-popups').popups('hide')
+		}
+	},
+	// 撤销支付
+	refund : function(financeId, itemId, price) {
+		var vm = vm_finance_detail, refundItem = vm.$itemMapReverse[itemId], uniqueCode = vm.$uniqueCode
+
+		refundData = {
+			innId : User.getUserInfo().innId, // editor.js 中有User
+			financeId : financeId,
+			refundItem : refundItem,
+			payPrice : price,
+			uniqueCode : uniqueCode,
+			t : new Date().valueOf()
+		}
+
+		tmsky.ui.dialog.loading()
+
+		$.get('/finance/refundBarCodeAlipay', refundData).done(function(rs) {
+			if (rs.status == 200) {
+				// 退款成功
+				vm.flushData()
+			} else {
+				tmsky.ui.dialog.tips(rs.message + '', 'error')
+			}
+		}).always(tmsky.ui.dialog.loading.close)
+	},
+	// 编辑
+	edite : function(el) {
+		var vm = vm_finance_detail, activeItem = vm.activeItem
+		if (vm.$currentItem) {
+			vm.$currentItem.updating = false
+		}
+		activeItem.id = el.id
+		activeItem.itemId = el.itemId
+		activeItem.item = el.item
+		activeItem.payName = el.payName
+		activeItem.payId = el.payId
+		activeItem.recordUser = el.recordUser
+		activeItem.recordAt = el.recordAt
+		activeItem.price = avalon.filters.toFixed(el.price)
+		el.updating = true
+		// el.open = false
+		vm.$currentItem = el
+	},
+	cancelEdite : function(el) {
+		el.updating = false
+	},
+	saveEdite : function() {
+		var vm = vm_finance_detail, currentItem = vm.$currentItem, activeItem = vm.activeItem, financeEnum = vm.financeEnum, payEnumMap = vm.$payEnumMap;
+		var postData = {
+			id : activeItem.id,
+			item : activeItem.itemId,
+			operateType : 2, // 修改
+			price : activeItem.price,
+			recordAt : activeItem.recordAt,
+			uniqueCode : vm.$uniqueCode,
+			payChannel : {
+				id : activeItem.payId
+			}
+		}
+
+		tmsky.ui.dialog.loading()
+		$.ajax({
+			type : "POST",
+			url : "/finance/update",
+			contentType : "application/json;charset=utf-8",
+			data : JSON.stringify(postData)
+		}).done(function(rs) {
+			// 修改财务记录：
+			// 如果没有修改，返回{}
+			// 如果有修改且成功，返回{"status":200}
+			// 如果有修改且失败，返回{"status":400, "message":"错误信息"}
+			currentItem.updating = false
+			if ($.isEmptyObject(rs)) {
+				return;
+			}
+			if (rs.status === 200) {
+				tmsky.ui.dialog.tips('修改成功', 'success')
+				// push history
+				currentItem.history.unshift({
+					'itemId' : currentItem.itemId,
+					'item' : vm.financeEnum[currentItem.itemId].name,
+					'price' : currentItem.price,
+					'payName' : currentItem.payName,
+					'createdUser' : currentItem.createdUser,
+					'recordUser' : currentItem.recordUser,
+					'recordAt' : currentItem.recordAt,
+					'operateType' : '更新'
+				})
+				currentItem.itemId = activeItem.itemId
+				currentItem.item = financeEnum[activeItem.itemId].name
+				currentItem.payId = activeItem.payId
+				currentItem.payName = payEnumMap[activeItem.payId]
+				currentItem.price = activeItem.price
+				currentItem.recordUser = rs.operator
+				currentItem.recordAt = activeItem.recordAt
+				vm_orders.$g_mainOrder.updatedAt = rs.updatedAt
+			} else if (rs.status === 400) {
+				tmsky.ui.dialog.tips(rs.message, 'error')
+			}
+		}).always(tmsky.ui.dialog.loading.close)
+	},
+	del : function(el) {
+		var vm = vm_finance_detail
+
+		tmsky.ui.dialog.confirm('确定此财务记录删除？', function() {
+			tmsky.ui.dialog.loading()
+			$.post('/finance/update', {
+				id : el.id,
+				operateType : 3, // 3：删除
+				uniqueCode : vm.$uniqueCode
+			}).done(function(rs) {
+				if (rs.status === 200) {
+					el.operateType = 3
+				} else if (rs.status === 400) {
+					tmsky.ui.dialog.tips(rs.message + '', 'error')
+				}
+			}).always(tmsky.ui.dialog.loading.close)
+		})
+	},
+	// 编辑按钮是否显示
+	editeBtnVisible : function(el) {
+		var ret = true, editeAccess = vm_finance_detail.editeAccess
+		if (!editeAccess || !el.canModify || el.operateType == 3)
+			return false
+		return ret
+	},
+	// 选择时间
+	selectTime : function(e) {
+		var target = e.target
+		$(target).datetimepicker({
+			changeMonth: true
+		}).focus()
+	},
+	// 刷新数据
+	flushData : function(uniqueCode) {
+		var tempArr = [], vm = vm_finance_detail, operateEnum = vm.$operateEnum, ordertypeEnum = vm.$ordertypeEnum, financeArr, orderType
+		uniqueCode = uniqueCode || vm.$uniqueCode
+
+		tmsky.ui.dialog.loading()
+		$.get('/order/financeRecord/' + uniqueCode, {
+			't' : new Date().getMilliseconds()
+		}).done(function(rs) {
+			if (rs.status == 200) {
+				vm.$uniqueCode = uniqueCode // 缓存
+
+				financeArr = rs.fr || []
+				financeArr.forEach(function(eachOrder) {
+					orderType = eachOrder.orderType
+					tempArr.push({
+						orderType : ordertypeEnum[orderType],
+						createdUser : eachOrder.createdUser,
+						createdAt : eachOrder.createdAt
+					})
+					eachOrder.financeRecords.forEach(function(el, index) {
+						var history = el.recordHistorys || [], arr = [], item
+
+						history.forEach(function(h) {
+							arr.push({
+								'itemId' : h.item,
+								'item' : vm.financeEnum[h.item].name,
+								'price' : h.price,
+								'payName' : h.payChannel ? h.payChannel.name : '',
+								'createdUser' : h.createdUser,
+								'recordUser' : h.recordUser,
+								'recordAt' : h.recordAt,
+								'operateType' : operateEnum[h.operateType]
+							})
+						})
+
+						item = {
+							'open' : false,
+							'id' : el.id,
+							'itemId' : el.item,
+							'item' : vm.financeEnum[el.item].name,
+							'price' : el.price,
+							'payName' : el.payChannel ? el.payChannel.name : '',
+							'payId' : el.payChannel ? el.payChannel.id : '',
+							'createdUser' : el.createdUser,
+							'createdAt' : el.createdAt,
+							'recordUser' : el.recordUser,
+							'recordAt' : el.recordAt,
+							'operateType' : el.operateType,
+							'payStatus' : el.payStatus || '0',
+							'canModify' : el.canModify == 0 ? false : true,
+							'updating' : false,
+							'orderType' : null,
+							'history' : arr
+						}
+						tempArr.push(item)
+					})
+				})
+				vm.datas = []
+				vm.datas = tempArr
+				$('#finance_popups').popups('justshow')
+			} else {
+				tmsky.ui.dialog.tips(rs.message + '', 'error')
+			}
+		}).always(tmsky.ui.dialog.loading.close)
+	}
+
+})

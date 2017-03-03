@@ -1,0 +1,47 @@
+{{each orders as order index}}
+<tr>
+    <td>
+        <span class="{{order.statusClass}}" style="margin-right: 15px"></span>
+        {{if order.customerFrom}}{{order.customerFrom.name}}{{/if}}
+    </td>
+    <td>
+        {{each order.subOrders as subOrder}}
+            {{if subOrder.room}}
+                {{subOrder.room.roomNo}}
+                {{if subOrder.room.roomType}}
+                    ({{subOrder.room.roomType.name}})
+                {{/if}}
+                <br/>
+            {{/if}}
+        {{/each}}
+    </td>
+    <td>
+        {{each order.subOrders as subOrder}}
+            {{subOrder.checkInAt | dateFormat:'MM-dd'}}~{{subOrder.checkOutAt | dateFormat:'MM-dd'}}<br/>
+        {{/each}}
+    </td>
+    <td>{{order.contactUser}}</td>
+    <td>
+        {{order.contactPhone}}
+        {{if order.gradeName}}
+        <span class="order-union">
+            <i class="ui-union-icon">{{order.unionIndex}}</i>
+            {{order.gradeName}}
+        </span></td>
+        {{/if}}
+    <td class="table-right">{{if order.totalAmount}}￥{{order.totalAmount}}{{/if}}
+        {{if order.discountType &&order.discountAmount}}
+        <span class="order-union-price">
+            <span class="c-red">-{{order.discountAmount}}</span>
+            （{{order.discountType}}）
+        </span>
+
+    </td>
+    {{/if}}
+    </td>
+    <td class="table-right">{{if (order.totalAmount - order.paidAmount != 0)}}￥{{order.overage}}{{/if}}</td>
+    <td class="table-right">{{if order.paidPayment}}￥{{order.paidPayment}}{{/if}}</td>
+    <td>{{order.updatedUser}}({{order.orderStatusText}})</td>
+    <td class="table-center"><a class="order-operate" index="{{index}}">{{operate}}</a></td>
+</tr>
+{{/each}}

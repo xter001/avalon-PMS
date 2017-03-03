@@ -1,0 +1,191 @@
+var User = require('../../header/user.js')
+
+var vm_financeIndex = avalon.define({
+    $id : 'vm_financeIndex',
+    unUsualNum : '',
+    paramDatas : {
+        from : '',
+        to : ''
+    },
+    basedatas : {
+        roomNum : '',//房间总数
+        checkInRoomNum : '',//当天出入房间数
+        handoverNum : '',//当天交接班次数
+        totalRoomFee : '',//入账房费收入
+        totalGoodsFee : '',//商品销售收入
+    },
+    financeTotal : {},
+
+    init : function () {
+        var vm = vm_financeIndex
+        vm.paramDatas.from = tmsky.date.today()
+        vm.paramDatas.to = tmsky.date.format(tmsky.date.tomorrow(), 'yyyy-MM-dd')
+
+        vm.getDailyOverview()
+        vm.getUnusualNum()
+        vm.getFinancialCountJson()
+    },
+
+
+    getDailyOverview : function () {
+        tmsky.ui.dialog.loading()
+        var vm = vm_financeIndex
+        var data = {
+            from : vm.paramDatas.from
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(data, true),
+            url : '/finance/getDailyOverview',
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    var param = rs.list[0]
+                    if (param.totalRoomFee == null) {
+                        param.totalRoomFee = 0
+                    }
+                    vm.basedatas.roomNum = param.roomNum
+                    vm.basedatas.checkInRoomNum = param.checkInRoomNum
+                    vm.basedatas.handoverNum = param.handoverNum
+                    vm.basedatas.totalRoomFee = param.totalRoomFee
+                    vm.basedatas.totalGoodsFee = param.totalGoodsFee
+                }
+            }
+        })
+    },
+    //获取今日财务汇总
+    getFinancialCountJson : function () {
+        var vm = vm_financeIndex
+        var datas = {
+            from : tmsky.date.format(vm.paramDatas.from + ' 00:00', 'yyyy-MM-dd hh:mm'),
+            to : tmsky.date.format(vm.paramDatas.from + ' 23:59', 'yyyy-MM-dd hh:mm')
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(datas, true),
+            url : '/inns/reports/getFinancialCountJson',
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    var data = rs.account
+                    data.roomFeeInCome -= data.roomFeeInComeCash
+                    data.payMentInCome -= data.payMentInComeCash
+                    data.accountBookInCome -= data.accountBookInComeCash
+                    data.roomFeePayOut -= data.roomFeePayOutCash
+                    data.payMentPayOut -= data.payMentPayOutCash
+                    data.accountBookPayOut -= data.accountBookPayOutCash
+
+                    data.goodsInCome -= data.goodsInComeCash
+                    data.goodsPayOut -= data.goodsPayOutCash
+
+                    data.totalInCome = data.roomFeeInCome + data.payMentInCome + data.accountBookInCome + data.goodsInCome
+                    data.totalInComCash = data.roomFeeInComeCash + data.payMentInComeCash + data.accountBookInComeCash + data.goodsInComeCash
+                    data.totalPayOut = data.roomFeePayOut + data.payMentPayOut + data.accountBookPayOut + data.goodsPayOut
+                    data.totalPayOutCash = data.roomFeePayOutCash + data.payMentPayOutCash + data.accountBookPayOutCash + data.goodsPayOutCash
+
+
+                    vm.financeTotal = data
+                }
+            }
+        })
+
+    },
+//    获取异常订单数
+    getUnusualNum : function () {
+        var vm = vm_financeIndex
+        var data = {
+            exceptType : '-1',
+            innId : User.getUserInfo().innId,
+            from : vm.getDefaultFromTime(),
+            to : vm.getDefaultToTime()
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(data, true),
+            url : '/inn/orders/excptOrderQuery',
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    vm.unUsualNum = rs.page.totalCount
+                }
+            }
+        })
+    },
+
+    //获取7天前日期
+    getDefaultFromTime : function () {
+        var timeDif = new Date(new Date().toLocaleDateString() + ' 18:00').getTime() - new Date().getTime()   //判断是在今天的六点前还是后
+        var myDate = new Date(); //获取今天日期
+        myDate.setDate(myDate.getDate() - 7);
+        var dateArray = [];
+        var dateTemp;
+        var flag = 1;
+        for (var i = 0; i < 7; i++) {
+            dateTemp = myDate.getFullYear() + '-' + (myDate.getMonth() + 1) + "-" + myDate.getDate();
+            dateArray.push(dateTemp);
+            myDate.setDate(myDate.getDate() + flag);
+        }
+        if (timeDif > 0) {
+            return dateArray[0]
+        } else {
+            return dateArray[1]
+        }
+    },
+    goToDetailFinance : function () {
+        var url = ''
+        //if (avalon.vmodels.vm_finance_main.isNewUser) {
+        //新用户
+        url = '/public/views/1/finance.html?#tab=inCome'
+        tmsky.getVm('vm_finance_main').changeTabs('inCome')
+        //} else {
+        //    //url = '/public/views/1/finance.html?from='+ vm_financeIndex.paramDatas.from +'&to='+ vm_financeIndex.paramDatas.to +'#tab=dayIncome'
+        //    url = '/public/views/1/finance.html#tab=dayIncome'
+        //    tmsky.getVm('vm_finance_main').changeTabs('dayIncome')
+        //}
+        //location.href = url
+    },
+    getDefaultToTime : function () {
+        var timeDif = new Date(new Date().toLocaleDateString() + ' 18:00').getTime() - new Date().getTime()   //判断是在今天的六点前还是后
+        if (timeDif > 0) {
+            return tmsky.date.format(tmsky.date.yesterday(), 'yyyy-MM-dd')
+        } else {
+            return tmsky.date.format(tmsky.date.today(), 'yyyy-MM-dd')
+        }
+    },
+//    点击跳转至异常订单
+    hrefToOrder : function () {
+        var url = window.location.origin + '/public/views/1/order.html#tab=mot_error'
+        window.open(url)
+    },
+//    跳转至在住客人表
+    toCustomerIn : function () {
+        tmsky.getVm('vm_finance_main').changeTabs('customerIn')
+    },
+//    交接班
+    toHandover : function () {
+        tmsky.getVm('vm_handover').handovering()
+    },
+//    跳转至房费日销售表
+    toRoomSale : function () {
+        tmsky.getVm('vm_finance_main').changeTabs('roomSale')
+        tmsky.getVm('vm_roomSale').getRoomSaleList()
+    },
+//    至商品日销售表
+    toGoodSale : function () {
+        tmsky.getVm('vm_finance_main').changeTabs('goodSale')
+        tmsky.getVm('vm_goodSale').getGoodSaleList()
+    },
+//    至日收支流水表
+//    toDetails : function () {
+//        tmsky.getVm('vm_finance_main').changeTabs('dayIncome')
+//
+//    }
+})

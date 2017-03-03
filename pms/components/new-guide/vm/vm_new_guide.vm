@@ -1,0 +1,343 @@
+var COMMON = require('../../common/js/const.js'),
+    GUIDE_CONST = require('../js/guide_const.js');
+var vm_new_guide = avalon.define({
+    $id : 'vm_new_guide',
+    init : function () {
+        vm_new_guide.initStep()
+    },
+    scan : function () {
+        avalon.scan();
+        return this
+    },
+    initStep : function () {
+        if (window.localStorage) {
+            //如果缓存中有'guide_new_user'
+            var stepStorage = window.localStorage.getItem('guide_new_user')
+            if (stepStorage) {
+                stepStorage = JSON.parse(stepStorage)
+                vm_new_guide.step = stepStorage
+                return false
+            }
+        }
+        var step = {};
+        var GUIDES = $.extend(true, {}, GUIDE_CONST.GUIDES);
+        step[GUIDES.HOTEL] = {
+            finished : false,
+            step : 1,
+            guideId : ''
+        };
+        step[GUIDES.ROOM] = {
+            finished : false,
+            step : 1,
+            guideId : ''
+        };
+        step[GUIDES.CHANNEL] = {
+            finished : false,
+            step : 1,
+            guideId : ''
+        };
+        step[GUIDES.HOUSE] = {
+            finished : false,
+            step : 1,
+            guideId : ''
+        };
+        vm_new_guide.step = step
+    },
+    step : {},
+    //新手引导限制
+    judgeNeedGuide : function (guideTag) {
+        var GUIDES = $.extend(true, {}, GUIDE_CONST.GUIDES);
+        //顶级判断base接口中user的innId == currentInn.id && user.mainAccount (是主账号)，才能开启新手引导
+        var userInnId = CommonCacheUtil.innBaseInfo.user.mainInnId,
+            currentInnId = CommonCacheUtil.innBaseInfo.user.innId,
+            mainAccount = CommonCacheUtil.innBaseInfo.user.mainAccount
+        if (userInnId != currentInnId || !mainAccount) {
+            return false
+        }
+        return true
+    },
+    //判断是否需要展开新手引导
+    initNewGuide : function (guideTag, finishedBack) {
+        //判断是否满足新手引导条件
+        if (!vm_new_guide.judgeNeedGuide(guideTag))return false
+
+        //新手引导总标识为未完成，才能继续分模块引导
+        vm_new_guide.hasFinishedAllGuides(function () {
+            vm_new_guide.initNewGuideAjax(guideTag, finishedBack)
+        })
+    },
+    initNewGuideAjax : function (guideTag, finishedBack) {
+        var GUIDES = $.extend(true, {}, GUIDE_CONST.GUIDES)
+        var unFinishedBack = function () {  //未完成引导的回调
+            var vm_guide_roomtype = avalon.vmodels.vm_guide_roomtype;
+            if (window.localStorage) {
+                window.localStorage.setItem('guide_new_user', JSON.stringify(vm_new_guide.step.$model))
+            }
+            switch (guideTag) {
+                case GUIDES.HOTEL:
+                    //引入店铺类型
+                    $('body').append(__inline('../tpl/guide-hotel-type.html'));
+                    __inline('vm_guide_roomtype.vm');
+                    vm_guide_roomtype.init(guideTag);
+                    break;
+                case GUIDES.ROOM:
+                    //引入房型指引
+                    $('body').append(__inline('../tpl/guide-room-type.html'));
+                    if (!avalon.vmodels.vm_guide_roomtype) {
+                        __inline('vm_guide_roomtype.vm')
+                    }
+                    vm_guide_roomtype.init(guideTag);
+                    break;
+                case GUIDES.CHANNEL:
+                    $('body').append(__inline('../tpl/guide-new-channel.html'));
+                    __inline('vm_new_channel.vm').init(guideTag);
+                    break;
+                case GUIDES.HOUSE:
+                    //引入房态指引
+                    $('body').append(__inline('../tpl/guide-house-type.html'));
+                    __inline('vm_guide_house.vm').init(guideTag);
+                    break;
+            }
+            vm_new_guide.scan()
+        };
+        if (window.localStorage) {
+            var param = window.localStorage.getItem('guide_new_user'),
+                allGuideId = window.localStorage.getItem('new_guide_done_id');
+            if (allGuideId) {
+                vm_new_guide.allGuideId = allGuideId
+            }
+            if (param) {
+                param = JSON.parse(param);
+                vm_new_guide.step = param;
+
+                if (param[guideTag].finished) {
+                    //该流程引导已完成
+                    vm_new_guide.step = param;
+                    if (finishedBack) {
+                        finishedBack()
+                    }
+                    return false
+                } else {
+                    //缓存中引导未完成，则请求ajax确认最新数据
+                    vm_new_guide.ajaxOneGuideTag(guideTag, finishedBack, unFinishedBack);
+                    return false
+                }
+            }
+        }
+        //没有缓存，则请求ajax
+        vm_new_guide.ajaxOneGuideTag(guideTag, finishedBack, unFinishedBack)
+    },
+    //ajax请求某引导标识
+    ajaxOneGuideTag : function (guideTag, finishedBack, unFinishedBack) {
+        var data = {
+            guideTag : guideTag,
+            systemTag : 'PMS',
+            innId : CommonCacheUtil.innBaseInfo.user.innId,
+            userCode : CommonCacheUtil.innBaseInfo.user.code,
+            version : '2017-01-16'
+        };
+        $.ajax({
+            type : "GET",
+            url : '/guide/getInnGuide',
+            dataType : 'json',
+            data : data,
+            async : false,
+            success : function (rs) {
+                if (rs.status == 200) {
+                    if (rs.guide.status == 0) {
+                        //需要新手引导 切小步骤为第一步
+                        vm_new_guide.step[guideTag].finished = false;
+                        vm_new_guide.step[guideTag].guideId = rs.guide.id;
+                        if (unFinishedBack) {
+                            unFinishedBack()
+                        }
+                    } else {
+                        //该流程新手引导已完成
+                        vm_new_guide.step[guideTag].finished = true;
+                        vm_new_guide.step[guideTag].guideId = rs.guide.id;
+                        if (window.localStorage) {
+                            window.localStorage.setItem('guide_new_user', JSON.stringify(vm_new_guide.step.$model))
+                        }
+                        if (finishedBack) {
+                            finishedBack()
+                        }
+                    }
+
+                }
+            }
+        })
+    },
+    guideHouseBack : function () {
+        //判断是否满足新手引导条件
+        if (!vm_new_guide.judgeNeedGuide(GUIDE_CONST.GUIDES.HOUSE))return false
+
+        var goToRoomTypePage = function () {
+                window.location.href = '/public/views/1/inn-manage/room-manage.html'
+            },
+            goToRoomFuncPlugPage = function () {
+                window.location.href = '/public/views/1/functions-plug.html'
+            };
+        var goGuidePage = function () {
+            //引导没有完成过，跳转到对应界面,判断此时应该跳转哪个个页面
+            var needAjax = true
+            if (window.localStorage) {
+                var param = window.localStorage.getItem('guide_new_user');
+                if (param) {
+                    needAjax = false
+                    param = JSON.parse(param);
+                    var judgeChannelGuide = function () {
+                        //房型引导完成 判断渠道引导
+                        if (!param[GUIDE_CONST.GUIDES.CHANNEL].finished) {
+                            vm_new_guide.ajaxOneGuideTag(GUIDE_CONST.GUIDES.CHANNEL, function () {
+                                vm_new_guide.initNewGuide(GUIDE_CONST.GUIDES.HOUSE)
+                            }, goToRoomFuncPlugPage)
+                        } else {
+                            vm_new_guide.initNewGuide(GUIDE_CONST.GUIDES.HOUSE)
+                        }
+                    }
+                    if (!param[GUIDE_CONST.GUIDES.HOTEL].finished || !param[GUIDE_CONST.GUIDES.ROOM].finished) {
+                        //缓存中店铺类型和房型引导有任何一个为false，则ajax请求最新数据，以判断是否跳转到房型管理
+                        vm_new_guide.ajaxOneGuideTag(GUIDE_CONST.GUIDES.HOTEL, function () {
+                            //店铺类型引导完成 判断房型引导
+                            vm_new_guide.ajaxOneGuideTag(GUIDE_CONST.GUIDES.ROOM, judgeChannelGuide, goToRoomTypePage)
+                        }, goToRoomTypePage)
+                    } else {
+                        judgeChannelGuide()
+                    }
+                }
+            }
+            if (needAjax) {
+                vm_new_guide.ajaxOneGuideTag(GUIDE_CONST.GUIDES.HOTEL, function () {
+                    vm_new_guide.ajaxOneGuideTag(GUIDE_CONST.GUIDES.ROOM, function () {
+                        vm_new_guide.ajaxOneGuideTag(GUIDE_CONST.GUIDES.CHANNEL, function () {
+                            vm_new_guide.initNewGuide(GUIDE_CONST.GUIDES.HOUSE)
+                        }, goToRoomFuncPlugPage)
+                    }, goToRoomTypePage)
+                }, goToRoomTypePage);
+            }
+        };
+        vm_new_guide.hasFinishedAllGuides(goGuidePage)
+    },
+    allGuideId : '',
+    //通过总标识判断是否完成过至少一次新手引导整体流程
+    hasFinishedAllGuides : function (noFinishedBack, finishedBack) {
+        var isNeedAjax = false;
+        if (window.localStorage) {
+            var param = window.localStorage.getItem(GUIDE_CONST.GUIDES.GUIDE_DONE)
+            if (param == 'undefined' || param == null) {
+                //缓存不存在值，则需ajax请求最新GUIDE_NONE
+                isNeedAjax = true
+            } else if (param == 1) {
+                //缓存存在值，全部引导完成
+                if (finishedBack) {
+                    finishedBack()
+                }
+            } else if (param == 0) {
+                //缓存存在值,引导没有完成过，跳转到对应界面
+                if (noFinishedBack) {
+                    noFinishedBack()
+                }
+            }
+        } else {
+            //不支持localStorage，则需ajax请求GUIDE_NONE
+            isNeedAjax = true
+        }
+        if (isNeedAjax) {
+            var data = {
+                guideTag : GUIDE_CONST.GUIDES.GUIDE_DONE,
+                systemTag : 'PMS',
+                innId : CommonCacheUtil.innBaseInfo.user.innId,
+                userCode : CommonCacheUtil.innBaseInfo.user.code,
+                version : '2017-01-16'
+            };
+            $.get('/guide/getInnGuide', data, {
+                t : new Date().valueOf()
+            }).done(function (rs) {
+                if (rs.status == 200) {
+                    vm_new_guide.allGuide = rs.guide.status
+                    if (window.localStorage) {
+                        window.localStorage.setItem(GUIDE_CONST.GUIDES.GUIDE_DONE, rs.guide.status);
+                        window.localStorage.setItem('new_guide_done_id', rs.guide.id);
+                    }
+                    vm_new_guide.allGuideId = rs.guide.id
+                    if (rs.guide.status == 0) {
+                        //引导没有完成过，跳转到对应界面
+                        if (noFinishedBack) {
+                            noFinishedBack()
+                        }
+                    } else {
+                        if (finishedBack) {
+                            finishedBack()
+                        }
+                    }
+                }
+            })
+        }
+    },
+    //保存大步骤
+    ajaxSaveGuide : function (guide, call) {
+        //allGuide为总标识保存
+        var allGuide = false,
+            data = {
+                id : ''
+            }
+        if (GUIDE_CONST.GUIDES.GUIDE_DONE == guide) {
+            data.id = vm_new_guide.allGuideId
+        } else {
+            data.id = vm_new_guide.step[guide].guideId
+        }
+        $.ajax({
+            type : "GET",
+            url : '/guide/finishGuide',
+            data : data,
+            dataType : 'json',
+            success : function (data) {
+                tmsky.ui.dialog.loading.close()
+                if (data.status == 200) {
+                    if (guide == GUIDE_CONST.GUIDES.HOTEL) {
+                        vm_new_guide.initNewGuide(GUIDE_CONST.GUIDES.ROOM)
+                    }
+                    if (guide == GUIDE_CONST.GUIDES.ROOM) {
+                        setTimeout(function () {
+                            location.href = '/public/views/1/functions-plug.html'
+                        }, 100)
+                    }
+                    if (guide == GUIDE_CONST.GUIDES.CHANNEL) {
+                        setTimeout(function () {
+                            location.href = '/public/views/1/index.html'
+                        }, 100)
+                    }
+                    if (guide == GUIDE_CONST.GUIDES.HOUSE) {
+                        call() || call(data)
+                        return 'true'
+                    }
+                    if (guide == GUIDE_CONST.GUIDES.GUIDE_DONE) {
+                        if (window.localStorage) {
+                            window.localStorage.setItem(GUIDE_CONST.GUIDES.GUIDE_DONE, 1);
+                        }
+                        call() || call(data)
+                    } else {
+                        var step = vm_new_guide.step.$model
+                        step[guide].step = 1
+                        step[guide].finished = true
+                        vm_new_guide.step = step
+                        vm_new_guide.saveStorage()
+                    }
+                } else {
+                    tmsky.ui.dialog.alert(data.message || '保存新手引导失败！')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.alert('保存新手引导失败！')
+            }
+        })
+    },
+    //将所有step属性存入缓存
+    saveStorage : function () {
+        if (window.localStorage) {
+            var data = JSON.stringify(vm_new_guide.step.$model)
+            window.localStorage.setItem('guide_new_user', data)
+        }
+    }
+});
+

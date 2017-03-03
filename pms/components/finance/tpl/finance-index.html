@@ -1,0 +1,107 @@
+<div class="finance-index" ms-controller="vm_financeIndex">
+    <div class="finance-index-title" ms-if="unUsualNum!=0">
+        <a ms-click="hrefToOrder">您有<span class="u-stand-out">{{unUsualNum}}</span>笔异常订单未处理！将影响财务统计，去看看>></a>
+    </div>
+    <div class="finance-index-content">
+        <div class="info-left fl content-box">
+            <h1 class="f-border-left"> 夜审流程</h1>
+            <div class="info-left-list">
+                <p>当前在住<span class="u-stand-out">{{basedatas.checkInRoomNum}}</span>间房，空房<span class="u-stand-out">{{basedatas.roomNum-basedatas.checkInRoomNum}}</span>间
+                </p>
+                <a class="list-flag" ms-click="toCustomerIn">查看在住客人余款及押金处理情况>></a>
+            </div>
+            <div class="info-left-list">
+                <p>交接记录<span class="u-stand-out">{{basedatas.handoverNum}}</span>次</p>
+                <a class="list-flag" ms-click="toHandover">现在去交接>></a>
+            </div>
+            <div class="info-left-list">
+                <p>今日入账房费收入<a class="list-flag f-16" ms-click="toRoomSale">{{basedatas.totalRoomFee}}</a>元，
+                    商品销售收入<a class="list-flag f-16" ms-click="toGoodSale">{{basedatas.totalGoodsFee}}</a>元
+                </p>
+            </div>
+
+        </div>
+        <div class="info-right fl content-box">
+            <h1 class="f-border-left">今日财务流水
+                <a ms-click="goToDetailFinance()" class="list-flag f-right" style="font-size: 12px">查看明细</a>
+            </h1>
+            <div style="padding: 0 20px">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th>计费项目</th>
+                        <th>现金收入</th>
+                        <th>非现金收入</th>
+                        <th>现金支出</th>
+                        <th>非现金支出</th>
+                        <th>合计</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>房费</td>
+                        <td>￥{{financeTotal.roomFeeInComeCash | toFixed}}</td>
+                        <td>￥{{financeTotal.roomFeeInCome | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.roomFeePayOutCash | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.roomFeePayOut | toFixed}}</td>
+                        <td class="bg-grav">
+                            ￥{{((financeTotal.roomFeeInComeCash+financeTotal.roomFeeInCome)-(financeTotal.roomFeePayOutCash+financeTotal.roomFeePayOut)) | toFixed}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>押金</td>
+                        <td>￥{{financeTotal.payMentInComeCash | toFixed}}</td>
+                        <td>￥{{financeTotal.payMentInCome | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.payMentPayOutCash | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.payMentPayOut | toFixed}}</td>
+                        <td class="bg-grav">
+                            ￥{{((financeTotal.payMentInComeCash+financeTotal.payMentInCome)-(financeTotal.payMentPayOutCash+financeTotal.payMentPayOut)) | toFixed}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>商品</td>
+                        <td>￥{{financeTotal.goodsInComeCash | toFixed}}</td>
+                        <td>￥{{financeTotal.goodsInCome | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.goodsPayOutCash | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.goodsPayOut | toFixed}}</td>
+                        <td class="bg-grav">
+                            ￥{{((financeTotal.goodsInComeCash+financeTotal.goodsInCome)-(financeTotal.goodsPayOutCash+financeTotal.goodsPayOut)) | toFixed}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>账本</td>
+                        <td>￥{{financeTotal.accountBookInComeCash | toFixed}}</td>
+                        <td>￥{{financeTotal.accountBookInCome | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.accountBookPayOutCash | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.accountBookPayOut | toFixed}}</td>
+                        <td class="bg-grav">
+                            ￥{{((financeTotal.accountBookInComeCash+financeTotal.accountBookInCome)-(financeTotal.accountBookPayOutCash+financeTotal.accountBookPayOut)) | toFixed}}
+                        </td>
+                    </tr>
+                    <tr class="bg-grav">
+                        <td>合计</td>
+                        <td>￥{{financeTotal.totalInComCash | toFixed}}</td>
+                        <td>￥{{financeTotal.totalInCome | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.totalPayOutCash | toFixed}}</td>
+                        <td class="colred">￥{{financeTotal.totalPayOut | toFixed}}</td>
+                        <td>
+                            ￥{{((financeTotal.totalInComCash+financeTotal.totalInCome)-(financeTotal.totalPayOutCash+financeTotal.totalPayOut)) | toFixed}}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="finance-index-state">
+        <h1>说明：</h1>
+        <p>今日入账房费收入=拆分订单，只计算今日房间产生的收入</p>
+        <p>今日财务流水=今日客户付款情况，包括房费、押金等。该项记录同时记录了具体每笔收支的支付方式</p>
+        <p>举例：用户入住3天，每日房费100元。用户入住支付房费300刷卡+押金100元现金。今日入账房费100元，财务流水400（300刷卡+100现金）</p>
+    </div>
+    <div class="finance-index-state">
+        <h1>意见与建议：</h1>
+        <p>如果您对我们更新的“财务”有什么意见或建议？<a href="http://form.mikecrm.com/61gnJR" class="list-flag">戳这里>></a></p>
+    </div>
+</div>

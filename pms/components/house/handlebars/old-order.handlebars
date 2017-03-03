@@ -1,0 +1,35 @@
+<div class="order-item {{type}}" 
+	{{#if width}}style="width: {{width}}px;"{{/if}} >
+	<ul class="roomcell-list" {{#if maskWidth}}style="width: {{maskWidth}}px;"{{/if}}>
+		{{#each days}}
+		<li days="{{@index}}" role="orderitem">
+			<p class="order-channel" style="background: {{../cfColorValue}};">{{../channelName}}</p>
+			<h3 class="order-guest">{{../guest}}</h3>
+			{{#if ../needPlane}}
+			<i class="iconfont icon-plane"></i>
+			{{/if}}
+			{{#if ../needCar}}
+			<i class="iconfont icon-qiche"></i>
+			{{/if}}
+			{{#if ../needSpe}}
+			<i class="iconfont icon-zhongyaoxiaoxi"></i>
+			{{/if}}
+			{{#if ../needRatePlan}}
+                <i class="iconfont icon-xyz"></i>
+            {{else}}
+                {{#if ../../needdanbao}}
+                    <i class="iconfont icon-danbao"></i>
+                {{else}}
+                    {{#if ../../../weifu}}
+                        <i class="iconfont icon-money"></i>
+                    {{/if}}
+                {{/if}}
+            {{/if}}
+			{{#if ../hasRemind}}
+			<i class="iconfont icon-clock"></i>
+			{{/if}}
+		</li>
+		{{/each}}
+	</ul>
+</div>
+

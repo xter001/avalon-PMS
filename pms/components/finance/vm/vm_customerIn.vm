@@ -1,0 +1,114 @@
+var Total = require('../handler/totalStyle.js');
+
+
+var vm_customerIn = avalon.define({
+    $id : 'vm_customerIn',
+    timeData : {
+        from : ''
+    },
+    pepList : [],
+    cfList : [],//渠道来源
+    totalDatas : {
+        totalAmount : 0,//订单总金额
+        paidAmount : 0,//已收金额
+        paidPayment : 0//已收押金
+    },
+
+
+    init : function () {
+        var vm = vm_customerIn
+        vm.timeData.from = tmsky.date.today()
+        if (vm.pepList.length == 0) {
+            vm.getInList()
+        }
+    },
+
+    getInList : function () {
+        tmsky.ui.dialog.loading()
+        var vm = vm_customerIn,
+            popList = [];
+        var data = {
+            from : vm.timeData.from
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(data, true),
+            url : '/finance/getCheckInOrder',
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    if (rs.list) {
+                        rs.list.forEach(function (tr) {
+                            var roomnosArr = tr.roomnos.split(','),
+                                orderNo = ''
+                            if (tr.otaOrderNo != null) {
+                                orderNo = tr.otaOrderNo
+                            } else {
+                                orderNo = tr.orderNo
+                            }
+
+                            var item = {
+                                customerFromId : vm.cfMap(tr.customerFromId),//渠道来源
+                                orderNo : orderNo,
+                                roomnos : [],
+                                mainCheckIn : tmsky.date.format(tr.mainCheckIn, 'yyyy-MM-dd'),
+                                mainCheckOut : tmsky.date.format(tr.mainCheckOut, 'yyyy-MM-dd'),
+                                contactUser : tr.contactUser,
+                                totalAmount : tr.totalAmount,
+                                paidAmount : tr.paidAmount,
+                                paidPayment : tr.paidPayment
+                            }
+                            roomnosArr.forEach(function (xx) {
+                                var room = {
+                                    roomNo : xx
+                                }
+                                item.roomnos.push(room)
+                            })
+
+                            popList.push(item)
+
+                        })
+                        vm.pepList = popList
+                        Total.cssInit($('#customerIn_div'), 9)
+                        vm.countFee()
+                    }
+
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            }
+        })
+
+    },
+    //    获取渠道来源
+    cfMap : function (id) {
+        var vm = vm_customerIn,
+            cf = '';
+        if (vm.cfList.length) {
+            vm.cfList.forEach(function (x) {
+                if (x.id == id) {
+                    cf = x.$model.name
+                }
+            })
+        }
+        return cf
+    },
+    countFee : function () {
+        var vm = vm_customerIn
+        vm.totalDatas.totalAmount = 0
+        vm.totalDatas.paidAmount = 0
+        vm.totalDatas.paidPayment = 0
+        if (vm.pepList) {
+            vm.pepList.forEach(function (x) {
+                vm.totalDatas.totalAmount = vm.totalDatas.totalAmount + x.totalAmount
+                vm.totalDatas.paidAmount = vm.totalDatas.paidAmount + x.paidAmount
+                vm.totalDatas.paidPayment = vm.totalDatas.paidPayment + x.paidPayment
+            })
+        }
+    },
+
+})

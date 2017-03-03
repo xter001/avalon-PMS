@@ -1,0 +1,51 @@
+{{#if mainId}}
+<div class="channel-name">
+	<span>{{channelName}}</span>
+	{{#if needPlane}}
+	<i class="iconfont icon-plane"></i>
+	{{/if}}
+	{{#if needCar}}
+	<i class="iconfont icon-qiche"></i>
+	{{/if}}
+	{{#if needSpe}}
+	<i class="iconfont icon-zhongyaoxiaoxi"></i>
+	{{/if}}
+	{{#if needRatePlan}}
+        <i class="icon-xyz"></i>
+    {{else}}
+        {{#if needdanbao}}
+            <i class="icon-danbao"></i>
+        {{else}}
+            {{#if weifu}}
+                <i class="iconfont icon-money"></i>
+            {{/if}}
+        {{/if}}
+    {{/if}}
+	{{#if hasRemind}}
+	<i class="iconfont icon-clock"></i>
+	{{/if}}
+
+	
+</div>
+<h4>{{guest}} {{#if contact}} ({{contact}}){{/if}} {{#if gradeName}} <i class="ui-customers-icon">{{gradeNum}}</i> {{/if}}</h4>
+<div class="data-info">
+	<span><em>{{start}}</em></span>入住~<em>{{stop}}</em>退房 <strong>{{days}}</strong>天</span>
+	<span class="stutas-label stutas-label-{{orderType}}"></span>
+</div> 
+<div class="tip-line"></div> 
+<div>
+	<span>订单金额：￥{{totalAmount}}</span>
+	<span class="need-fee">需{{needPayText}}房费：<span class="c-red">￥{{needPay}}</span></span>
+</div>  
+{{#if hasRmk}}
+<div class="order-tip-remind">
+	<span>备注：{{remind}}</span>   
+</div> 
+{{/if}}
+{{else}}
+<div>
+	<p>{{date}}</p>
+	<p>{{roomNo}}（{{roomtypeName}}）</p>
+	<p>￥{{price}}</p>
+</div>
+{{/if}}

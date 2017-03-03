@@ -1,0 +1,18 @@
+<!--选择录入方式-->
+<div class="tomasky-ui-popups input-type-dialog" ms-visible="inputTypeDialog" ms-controller="vm_idcard_input">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog" style="width: 412px">
+        <em class="close" data-dismiss="popups" ms-click="closeDialog('inputTypeDialog')">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">选择录入方式</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x ">
+            <ul class="input-type-list">
+                <li class="input-hand" ms-click="toInputMsg(1)"></li>
+                <li class="input-card" ms-click="toInputMsg(2)"></li>
+                <li class="no-card"></li>
+            </ul>
+        </div>
+    </div>
+</div>
+

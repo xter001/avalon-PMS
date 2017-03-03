@@ -1,0 +1,44 @@
+<!--入住人列表弹框-->
+<!--<link rel="stylesheet" href="../css/idcard-input.css">-->
+
+<div class="tomasky-ui-popups checkin-list-dialog" ms-visible="checkinListDialog" ms-controller="vm_idcard_input">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog" style="width: 600px">
+        <em class="close" data-dismiss="popups" ms-click="closeDialog('checkinListDialog')">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">入住人列表</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x ">
+            <div class="ui-checkin-toolbar clearfix">
+                <div class="left clr-31 ft-12">当前已添加 {{persons.length}} 位入住人</div>
+                <div class="right">
+                    <button class="btn btn-tool ft-12 clr-31" ms-attr-disabled="persons.length >= maxPerson" ms-click="toInputMsg(2)">扫描身份证信息</button>
+                    <button class="btn btn-tool ft-12 clr-31" ms-attr-disabled="persons.length >= maxPerson" ms-click="toInputMsg(1)">手工录入证件信息</button>
+                </div>
+            </div>
+            <div class="ui-no-checkin" ms-visible="!persons.length">
+                <h1 class="ft-18 col-86">还未添加入住人哦~</h1>
+                <h3 class="ft-14 col-86">点击右上角的按钮添加吧！</h3>
+                <img src="../images/bg_fq.png" alt="">
+            </div>
+            <div class="ui-has-checkin" ms-visible="persons.length">
+                <ul>
+                    <li ms-repeat-el="persons">
+                        <span>{{el.name}}&nbsp;&nbsp;证件号：&nbsp;&nbsp;{{el.cardNo}}</span>
+                        <div class="btns fr">
+                            <button class="btn-modify" ms-click="modify(el,$index)">修改</button>
+                            <button class="btn-del" ms-click="removeFromList($index)">删除</button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <!--<button class="btn-add fl btn" ms-click="openInputTypeDialog()">添加入住人</button>-->
+            <div class="fr">
+                <button class="btn-save btn" ms-click="closeDialog('checkinListDialog','save')">保存</button>
+                <button class="btn-cancel btn" ms-click="closeDialog('checkinListDialog','cancel')">取消</button>
+            </div>
+        </div>
+    </div>
+</div>

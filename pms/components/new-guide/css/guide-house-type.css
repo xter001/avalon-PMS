@@ -1,0 +1,403 @@
+/*房态引导*/
+/*common*/
+.border-orange {
+    border: 3px solid #FFA74F;
+    border-radius:4px;
+    -webkit-animation-name: shineRed;
+    -webkit-animation-duration: 1.5s;
+    -webkit-animation-iteration-count: infinite;
+}
+@-webkit-keyframes  shineRed {
+    from { -webkit-box-shadow: 0 0 8px #FFA74F; }
+    50% { -webkit-box-shadow: 0 0 15px #FFA143; }
+    to { -webkit-box-shadow: 0 0 8px #FFA74F; }
+}
+.box-tips-guide {
+    position: absolute;
+    border:3px solid #ffa74f;
+    border-radius:4px;
+    background: #ffffff;
+    box-shadow: 0px 2px 8px 0px rgba(143,108,74,0.38);
+    padding: 10px 36px;
+}
+.triangle-up-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 18px solid #FFA74F;
+}
+.triangle-up-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-bottom: 16px solid #fff;
+}
+.triangle-left-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 18px solid transparent;
+    border-right: 18px solid #FFA74F;
+    border-bottom: 18px solid transparent;
+}
+.triangle-left-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-right: 16px solid #fff;
+    border-bottom: 16px solid transparent;
+}
+.triangle-right-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 18px solid transparent;
+    border-left: 18px solid #FFA74F;
+    border-bottom: 18px solid transparent;
+}
+.triangle-right-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-left: 16px solid #fff;
+    border-bottom: 16px solid transparent;
+}
+.triangle-down-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 18px solid #fff;
+}
+.triangle-down-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 16px solid #FFA74F;
+}
+.guide-btn-orange {
+    background:#ffa74f;
+    border-radius:2px;
+    width:250px;
+    height:36px;
+    color: #fff;
+    cursor: pointer;
+    margin: 15px 0;
+}
+.guide-house-right{
+    position: absolute;
+    right: 356px;
+}
+/*非公共*/
+.room-type-guide {
+    position: relative;
+    height:52px;
+    margin-top: 50px;
+}
+.data-grid-tips {
+    /*border-radius:10px;*/
+    width:260px;
+    top: 78px;
+    left: 218px;
+}
+.triangle-up-room-step1 {
+    left: 210px;
+    top: -18px;
+}
+.triangle-up-white-room-step1 {
+    left: 212px;
+    top: -13px;
+}
+.triangle-left-room-step2 {
+    left: -18px;
+    top: 50px;
+}
+.triangle-left-white-room-step2 {
+    top: 52px;
+    left: -13px;
+}
+.triangle-down-bg-room-step3 {
+    bottom: -16px;
+    left: 59px;
+}
+.triangle-down-border-room-step3 {
+    bottom: -12px;
+    left: 57px;
+}
+
+
+
+.room-type-cell-guide {
+    position: absolute;
+    width: 120px;
+    bottom: 48px;
+    top: 105px;
+}
+.room-type-cell-tips {
+    width: 252px;
+    height: 234px;
+    left: 145px;
+    top: 80px;
+}
+.bottom-bar-tips {
+    width:242px;
+    height:285px;
+    bottom: 78px;
+    left: 100px;
+}
+.bottom-bar-guide {
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    height: 52px;
+}
+.room-cell-guide {
+    position: absolute;
+    width: 96px;
+    height: 50px;
+    left: 408px;
+    top: 105px;
+}
+.room-cell-tips {
+    width:314px;
+    padding: 20px 0;
+    top: 74px;
+}
+.triangle-up-room-step4 {
+    top: -18px;
+    left: 30px;
+}
+.triangle-up-white-room-step4 {
+    top: -14px;
+    left: 32px;
+}
+/*房态引导*/
+.guide-house-order{
+    top: 200px;
+    background:#ffffff;
+    box-shadow:0px 2px 8px 0px rgba(143,108,74,0.38);
+    width:265px;
+    height:188px;
+    padding: 30px;
+}
+.guide-house-order h2{
+    font-weight: bold;
+    text-align: center;
+    font-size: 18px;
+    line-height: 25px;
+}
+.guide-house-order p{
+    position: relative;
+    padding-left: 20px;
+    font-size: 12px;
+    line-height: 19px;
+    margin-top: 8px;
+}
+.guide-house-order p:before{
+    position: absolute;
+    top:2px;
+    left: 0;
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: url("../images/star.png")no-repeat;
+    background-size: 100%;
+}
+.guide-house-btn-explain{
+    background:#ffffff;
+    box-shadow:0px 2px 8px 0px rgba(143,108,74,0.38);
+    width:324px;
+    height:66px;
+    line-height: 66px;
+    text-align: center;
+    bottom: 10px;
+    font-weight: bold;
+    font-size: 18px;
+}
+.guide-house-btn{
+    border:3px solid #ffa74f;
+    border-radius:10px;
+    width:102px;
+    height:42px;
+    position: absolute;
+    right: 226px;
+    bottom: 8px;
+}
+.guide-house-btn-check{
+    bottom: 10px;
+    background:#ffffff;
+    box-shadow:0px 2px 8px 0px rgba(143,108,74,0.38);
+    width:265px;
+    /*height:188px;*/
+    padding: 30px;
+}
+.guide-house-btn-check h2{
+    font-weight: bold;
+    text-align: center;
+    font-size: 18px;
+    line-height: 25px;
+}
+.guide-house-btn-check p{
+    position: relative;
+    padding-left: 20px;
+    font-size: 12px;
+    line-height: 19px;
+    margin-top: 8px;
+}
+.guide-house-btn-check p:before{
+    position: absolute;
+    top:2px;
+    left: 0;
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: url("../images/star.png")no-repeat;
+    background-size: 100%;
+}
+.guide-house-check-out{
+    width:260px;
+    top: 176px;
+    left: 286px;
+}
+.guide-house-check-out-up1 {
+    left: 151px;
+    top: -18px;
+}
+.guide-house-check-out-up2 {
+    left: 153px;
+    top: -13px;
+}
+.guide-house-check-out-color{
+    position: relative;
+    padding: 6px 0 10px 79px;
+}
+.guide-house-check-out-green:before{
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 55px;
+    background:#cff397;
+    border:1px solid #92d388;
+    border-radius:4px;
+    width:14px;
+    height:14px;
+}
+.guide-house-check-out-yellow:before{
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 55px;
+    background:#facb6b;
+    border:1px solid #ffaa30;
+    border-radius:4px;
+    width:14px;
+    height:14px;
+}
+.guide-house-check-out-gray:before{
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 55px;
+    background:#d2d2d2;
+    border:1px solid #c4c2c2;
+    border-radius:4px;
+    width:14px;
+    height:14px;
+}
+.guide-house-unlock{
+    /*left: 256px;*/
+    top: 50px;
+    width:234px;
+}
+.guide-house-unlock-top{
+    position: absolute;
+    /*left: 256px;*/
+    width: 72px;
+    height: 43px;
+    top: 0;
+}
+.guide-house-unlock-all{
+    left: 256px;
+}
+.guide-house-unlock-suo{
+    text-align: center;
+    background:#f3f3f3;
+    box-shadow:inset 0px 1px 1px 0px #f3f3f3;
+    border-radius:6px;
+    /*width:256px;*/
+    height:124px;
+}
+.guide-house-unlock-suo img{
+    margin-top: 23px;
+    width: 47px;
+    height: 57px;
+}
+.guide-house-unlock-suo p{
+    font-size:14px;
+    color:#646464;
+}
+.guide-house-unlock-suo-p{
+    position: relative;
+    padding-left: 20px;
+    font-size: 12px;
+    line-height: 19px;
+    margin-top: 8px;
+}
+.guide-house-unlock-suo-p:before{
+    position: absolute;
+    top:2px;
+    left: 0;
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: url("../images/star.png")no-repeat;
+    background-size: 100%;
+}
+.guide-house-unlock-btn{
+    cursor: pointer;
+    margin: 15px 0 20px 0;
+    text-align: center;
+    line-height: 36px;
+    background:#ffa74f;
+    border-radius:2px;
+    height:36px;
+    font-size:14px;
+    color:#ffffff;
+}
+.guide-house-finish{
+    left: 466px;
+    top: 190px;
+    width:234px;
+}
+.guide-house-unlock-wx{
+    margin: 0 auto;
+    width: 118px;
+}
+.guide-house-unlock-wx img{
+    width: 100%;
+}
+.guide-house-right-bg {
+    top: 50px;
+    right: -18px;
+}
+.guide-house-right-border {
+    top: 52px;
+    right: -14px;
+}
+.guide-house-btn-explain-bg {
+    bottom: 1px;
+    right: -18px;
+}
+.guide-house-btn-explain-border {
+    bottom: 3px;
+    right: -13px;
+}

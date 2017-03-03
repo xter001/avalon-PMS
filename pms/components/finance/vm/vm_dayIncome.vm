@@ -1,0 +1,230 @@
+var REPORT_CONST = require('../common/const.js')
+
+var vm_dayIncome = avalon.define({
+    $id : 'vm_dayIncome',
+    page : {pageNo : 1, pageSize : 15, totalPages : -1, totalCount : -1},
+    data : {
+        listType : 0,
+        fcItem : '',
+        acItem : '',
+        pcname : '',
+        operateUser : '',
+        from : '',
+        to : '',
+        sortType : '',
+        detailDate : '',
+        accountDate : ''
+    },
+    //data:{type : '1', sortType : '', mobile : '', payChannelName : '', item : '', itemType : '', itemZd : '', from : '', to : '', accountDate : '', detailDate: ''},
+
+    listType : {0 : '类型', 1 : '房费', 2 : '押金', 3 : '商品', 4 : '账本'},
+    total : {fee : '', income : 0, payout : 0},
+    urls : {
+        getFinanceIncome : '/innBook/getNewAccounts',
+        exportExcel : '/innBook/exportNewExcel',
+    },
+    accountBooks : [],
+    books : [],
+    orderInfo : {
+        customerFromName : '',
+        orderNo : '',
+        roomNos : '',
+        checkins : '',
+        checkouts : '',
+        orderFee : '',
+        paidAmount : '',
+        paidPayment : '',
+        name : '',
+        contact : '',
+        updatedAt : '',
+        updatedUser : ''
+    },
+    tempTime : {
+        from : '',
+        to : ''
+    },
+    init : function () {
+        vm_dayIncome.data.accountDate = tmsky.date.format(new Date(), 'yyyy-MM-dd hh:mm:ss');
+        vm_dayIncome.data.sortType = 'accountTime desc,id desc'
+        var parem = tmsky.location.params
+        if (parem.tab == 'dayIncome' && parem.from != null && parem.to != null) {
+            vm_dayIncome.data.from = parem.from
+            vm_dayIncome.data.to = parem.to
+            vm_dayIncome.tempTime.from = parem.from
+            vm_dayIncome.tempTime.to = parem.to
+        } else {
+            vm_dayIncome.data.from = tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00'
+            vm_dayIncome.tempTime.from = tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00'
+            vm_dayIncome.data.to = tmsky.date.addDays(new Date(), 1, 'yyyy-MM-dd') + ' 00:00'
+            vm_dayIncome.tempTime.to = tmsky.date.addDays(new Date(), 1, 'yyyy-MM-dd') + ' 00:00'
+        }
+
+        return this
+    },
+    initJson : function () {
+        if (vm_dayIncome.books.$model.length == 0) {
+            vm_dayIncome.getFinanceIncome(1)
+        }
+    },
+
+    scan : function () {
+        avalon.scan(document.getElementById('account_book_div'))
+        return this
+    },
+    changeListType : function () {
+        vm_dayIncome.getFinanceIncome(1)
+    },
+    incomeChangeItem : function (event) {
+        var $select = $(this)
+        if ($select.val() == '') {
+            vm_dayIncome.data.fcItem = ''
+            vm_dayIncome.data.acItem = ''
+            vm_dayIncome.getFinanceIncome(1)
+            return
+        }
+        var $option = $select.find('option[value=' + $select.val() + ']')
+        var type = $option.attr('tag')
+        if (type == 'ac_item') {
+            vm_dayIncome.data.acItem = $option.val()
+            vm_dayIncome.data.fcItem = -9999
+        } else if (type == 'fi_item') {
+            vm_dayIncome.data.acItem = -9999
+            vm_dayIncome.data.fcItem = $option.val()
+        }
+        vm_dayIncome.getFinanceIncome(1)
+    },
+    getFinanceIncome : function (pageNo, type) {
+        if (vm_dayIncome.page.totalPages > 0 && vm_dayIncome.page.totalPages < pageNo) {
+            return;
+        }
+        var defTime = parseInt(tmsky.date.diffDays(vm_dayIncome.data.from, vm_dayIncome.data.to))
+        if (defTime > 31 || defTime < 0) {
+            vm_dayIncome.books = []
+            $('#income_book_page').hide()
+            tmsky.ui.dialog.errorTips('最多查看连续31天的报表信息！')
+            return;
+        }
+        var data = {
+            listType : vm_dayIncome.data.listType,
+            operateUser : vm_dayIncome.data.operateUser,
+            pcname : vm_dayIncome.data.pcname,
+            acItem : vm_dayIncome.data.acItem,
+            fcItem : vm_dayIncome.data.fcItem,
+            from : vm_dayIncome.data.from,
+            to : vm_dayIncome.data.to,
+            pageNo : pageNo || vm_dayIncome.page.pageNo
+        };
+        if (type == 'export') {
+            vm_dayIncome.exportExcel(data)
+        } else {
+            vm_dayIncome.ajaxGetRecords(data)
+        }
+    },
+    exportExcel : function (data) {
+        tmsky.ui.dialog.loading();
+        var loadUrl = vm_dayIncome.urls.exportExcel
+        var $form = $('<form></form>').attr({
+            'action' : loadUrl,
+            'method' : 'POST'
+        });
+        for (prop in data) {
+            if (data.hasOwnProperty(prop)) {
+                var $input = $('<input />')
+                $input.attr('name', prop).attr('value', data[prop]).appendTo($form);
+            }
+        }
+        $form.hide().appendTo($("body")).submit();
+        tmsky.ui.dialog.loading.close();
+    },
+    ajaxGetRecords : function (data) {
+        tmsky.ui.dialog.loading();
+        var url = vm_dayIncome.urls.getFinanceIncome + tmsky.util.generateUrlEndStr()
+        $.post(url, data).done(function (rs) {
+            if (rs.status == 200) {
+                vm_dayIncome.books = vm_dayIncome.filterBook(rs.page.result)
+                vm_dayIncome.total.income = rs.totalIncome
+                vm_dayIncome.total.payout = rs.totalPayout
+                var page = {};
+                page.totalPages = rs.page.totalPages;
+                page.pageNo = rs.page.pageNo;
+                page.pageSize = 20;
+                tmsky.getVm('vm_finance_main').initPage('income_book_page', page, function () {
+                    var pageInfo = tmsky.ui.page.getParams("income_book_page")
+                    vm_dayIncome.page.pageNo = pageInfo.pageNo
+                    vm_dayIncome.getFinanceIncome(pageInfo.pageNo)
+                });
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    filterBook : function (books) {
+        var list = []
+        if (books == undefined || books.length == 0) {
+            return list
+        }
+        for (var i = 0; i < books.length; i++) {
+            var o = books[i]
+            o.itemName = (o.recordType == 1) ? REPORT_CONST.FINANCE_ITEM[o.item] : o.item
+            o.cashIn = (o.cashIn) ? tmsky.number.fixFloat(o.cashIn, 2, '') : ''
+            o.cashOut = (o.cashOut) ? tmsky.number.fixFloat(o.cashOut, 2, '') : ''
+            o.roomNos = o.roomNos.split(',')
+
+            if (o.consumer != null) {
+                o.consumer = o.consumer.split(',')
+            } else {
+                o.consumer = []
+            }
+        }
+        return books
+    },
+
+//    选择时间
+    openIncomeTimeBox : function () {
+        var vm = vm_dayIncome
+        $(this).next().show();
+        $("#income_account_from").datetimepicker({
+            changeMonth: true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(selectedDate, vm.tempTime.to))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#income_account_to").datetimepicker("setDate", tmsky.date.addDays(selectedDate, 31));
+                }
+                vm.tempTime.to = tmsky.date.format(vm.tempTime.to, 'yyyy-MM-dd hh:mm')
+            }
+        })
+        $("#income_account_to").datetimepicker({
+            changeMonth: true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(vm.tempTime.from, selectedDate))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#income_account_from").datetimepicker("setDate", tmsky.date.addDays(selectedDate, -31));
+                }
+                vm.tempTime.from = tmsky.date.format(vm.tempTime.from, 'yyyy-MM-dd hh:mm')
+            }
+        })
+    },
+    searchIncome : function () {
+        var vm = vm_dayIncome
+        var defTime = parseInt(tmsky.date.diffDays(vm.tempTime.from, vm.tempTime.to))
+        if (vm.data.from == vm.tempTime.from && vm.data.to == vm.tempTime.to) {
+            $(this).parent().hide()
+            return
+        }
+        if (defTime < 0) {
+            tmsky.ui.dialog.errorTips('开始日期不能大于结束日期，请重新选择！')
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.data.from = vm.tempTime.from
+            vm.data.to = vm.tempTime.to
+            vm.data.detailDate = ''
+            vm.getFinanceIncome(1)
+            $(this).parent().hide()
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的财务信息！')
+        }
+    },
+})

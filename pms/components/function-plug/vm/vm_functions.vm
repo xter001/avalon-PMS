@@ -1,0 +1,415 @@
+var COMMON = require('../../common/js/const.js')
+var UserInfo = require('../../header/user.js');
+var GUIDE_CONST = require('../../new-guide/js/guide_const.js')
+var vm_functions = avalon.define({
+    $id : 'vm_functions',
+    init : function () {
+        var newGuide = require('new-guide')
+        newGuide.init()
+        tmsky.getVm('vm_new_guide').initNewGuide(GUIDE_CONST.GUIDES.CHANNEL)
+        vm_functions.getBaseInfo()
+        vm_functions.bind()
+        vm_functions.getFuncs()
+        vm_functions.getAccountState()
+        setTimeout(function () {
+            avalon.vmodels.vm_shopcost.hasDonedAllGuides('', vm_functions.initGuideParam)
+        }, 2000)
+    },
+    scan : function () {
+        avalon.scan()
+        return this
+    },
+    alertBool : {
+        closeOnOff : false
+    },
+    funcInfo : {},  //插件信息
+    funcBool : {
+        origin_plug : true,
+        card_plug : false,
+        peopleRegister_plug : false,
+        print_plug : false,
+        payChannel_plug : false,
+        barCode_plug : false,
+        notPayAllSign_plug : false,
+        checkstand_plug : false,
+        accountBook_plug : false,
+        foldRoomStatus_plug : false,
+        //spend_plug : false,
+        msg_plug : false,
+        handover_plug : false,
+        dirtyRoom_plug : false,
+        autoCheckOut_plug : false,
+        union_plug : false
+    },
+    accountState : '申请开通',
+    getAccountState : function () {
+        var inn = UserInfo.getCurrentInn()
+        var level = inn.level, applyAt = inn.applyAt
+        if (level == 1 && applyAt) {
+            vm_functions.accountState = '审核中'
+        }
+    },
+    inOutGuide : false,
+    guideId : '',
+    initGuideParam : function () {
+        if (window.localStorage) {
+            var param = window.localStorage.getItem('func-guide')
+            if (param) {
+                //存在缓存，则记一笔引导已完成
+                return false
+            }
+        }
+        //缓存没有则请求
+        var data = {
+            guideTag : 'FUNC_PLUG_GUIDE',
+            systemTag : 'PMS',
+            innId : CommonCacheUtil.innBaseInfo.user.innId,
+            userCode : CommonCacheUtil.innBaseInfo.user.code,
+            version : '2017-01-05'
+        }
+        $.get('/guide/getInnGuide', data, {
+            t : new Date().valueOf()
+        }).done(function (rs) {
+            if (rs.status == 200) {
+                if (rs.guide.status == 0) {
+                    vm_functions.inOutGuide = true
+                    vm_functions.guideId = rs.guide.id
+                }
+                if (rs.guide.status == 1) {
+                    if (window.localStorage) {
+                        window.localStorage.setItem('func-guide', 1)
+                    }
+                }
+            }
+        })
+    },
+    closeGuideParam : function () {
+        vm_functions.inOutGuide = false
+        var data = {
+            id : vm_functions.guideId
+        }
+        $.get('/guide/finishGuide', data, {
+            t : new Date().valueOf()
+        }).done(function (rs) {
+            if (window.localStorage) {
+                window.localStorage.setItem('func-guide', 1)
+            }
+        })
+    },
+//开启关闭插件
+    toSaveInnFuncs : function (_this) {
+        var funcId = _this.attr('funcid')
+        var status = !_this.hasClass('onoff') ? 'open' : 'close'
+
+        //是否能开启快捷支付
+        //if (funcId == 24 && status == 'open') {
+        //    vm_functions.canOpenPayQuick()
+        //    return
+        //}
+
+        if (status == 'close') {
+            vm_functions.alertBool.closeOnOff = true
+            $('#remove_func').attr('funcId', funcId)
+            return
+        }
+        var callBack = function () {
+            vm_functions.changeMenuPart($('.func_menu li[funcid=' + funcId + ']'))
+        }
+        vm_functions.toSaveInnFuncsAjax(funcId, status, _this, callBack)
+
+    }
+    ,
+
+    changeMenuPart : function (_this) {
+        //开关也要切换到那个tab页
+        _this.toggleClass('onoff')
+        var name = _this.attr('name')
+        var hasOn = _this.hasClass('onoff')
+        var funcid = _this.attr('funcid')
+        vm_functions.changeTabs(name)
+        $('.func_menu ul li').removeClass('on')
+        _this.addClass('on')
+        if (hasOn) {
+            vm_functions.hasSubOn = true
+        } else {
+            vm_functions.hasSubOn = false
+        }
+        vm_functions.initVm(funcid)
+    },
+
+//关闭确认onoff框
+    closeAlertOnoff : function () {
+        vm_functions.alertBool.closeOnOff = false
+    }
+    ,
+    sureAlertOnoff : function () {
+        var funcId = $('#remove_func').attr('funcId')
+        var callBack = function () {
+            vm_functions.changeMenuPart($('.func_menu li[funcid=' + funcId + ']'))
+        }
+        if (funcId == 1) {
+            vm_functions.toSaveInnFuncsAjax(20, 'close', $('.func_menu li[funcid=' + funcId + ']'), callBack)
+            vm_functions.toSaveInnFuncsAjax(21, 'close', $('.func_menu li[funcid=' + funcId + ']'), callBack)
+        }
+        vm_functions.toSaveInnFuncsAjax(funcId, 'close', $('.func_menu li[funcid=' + funcId + ']'), callBack)
+    }
+    ,
+    toSaveInnFuncsAjax : function (funcId, status, _this, callBack) {
+        var getUrl = "/inns/" + vm_functions.getInnId() + "/plug/" + funcId + "/" + status + "?temp=" + new Date().getTime();
+        $.get(getUrl, function (json) {
+            vm_functions.alertBool.closeOnOff = false
+            if (json.status == 200) {
+                if (!tmsky.isEmpty(callBack))
+                    callBack()
+            } else {
+                tmsky.ui.dialog.tips(json, 'error')
+            }
+        }, "json");
+    }
+    ,
+    menuPlug : [],
+    getFuncs : function () {
+        $.ajax({
+            type : 'GET',
+            url : '/plug/getPlugs',
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    var funcInfo = {}
+                    var innLevel = UserInfo.getCurrentInn().level
+                    rs.plugs.forEach(function (el, i) {
+                        el.innPlugFuncs.forEach(function (el2, i2) {
+                            var json = {
+                                id : el2.id,
+                                innLevel : innLevel - el.innLevel >= 0 ? true : false,
+                                funcCode : el2.funcCode,
+                                onoff : false
+                            }
+                            funcInfo[el2.id] = json
+                        })
+                    })
+                    rs.openCodes.forEach(function (el, i) {
+                        for (var item in funcInfo) {
+                            if (el == funcInfo[item].funcCode) {
+                                funcInfo[item].onoff = true
+                            }
+                        }
+                    })
+                    vm_functions.funcInfo = funcInfo
+                    vm_functions.menuPlug = rs.plugs  //原始数据
+                    vm_functions.initAjax(funcInfo)
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            }
+
+        })
+    }
+    ,
+    initAjax : function (funcInfo) {
+        var type, funcid, name
+        var params = location.hash
+        params = params.split('#')
+        var paramsJson = {}
+        params.forEach(function (el, i) {
+            if (el == '')return
+            var type = el.split('=')[0],
+                value = el.split('=')[1]
+            paramsJson[type] = value
+        })
+        type = paramsJson
+
+        if (tmsky.isEmptyObject(type)) {
+            location.hash = '#tab=origin_plug'
+            type = {tab : 'origin_plug'}
+        }
+        if (!tmsky.isEmptyObject(type) && !type.tab) {
+            location.hash = '#tab=origin_plug'
+            type = {tab : 'origin_plug'}
+        }
+        name = type.tab
+        funcid = $('.func_menu ul li[name=' + name + ']').attr('funcid')
+        var hasOn = funcInfo[funcid].onoff
+        vm_functions.changeTabs(name)
+        $('.func_menu ul li').removeClass('on')
+        $('.func_menu ul li[funcid=' + funcid + ']').addClass('on')
+        if (hasOn) {
+            vm_functions.hasSubOn = true
+        } else {
+            vm_functions.hasSubOn = false
+        }
+        //判断加载的vm
+        vm_functions.initVm(funcid)
+    },
+    initVm : function (funcid) {
+        if (funcid == 6 || funcid == 1 || funcid == 9) {
+            tmsky.getVm('vm_order_info').init()
+        }
+        if (funcid == 17) {
+            tmsky.getVm('vm_print').init()
+        }
+        if (funcid == 11 || funcid == 10 || funcid == 24) {
+            tmsky.getVm('vm_pay_set').init()
+        }
+
+
+        if (funcid == 12) {
+            tmsky.getVm('vm_accountBook').init()
+            tmsky.getVm('vm_funcSet').init()
+        } else if (funcid == 11) {
+            tmsky.getVm('vm_autoCheckOut').init()
+        } else if (funcid == 2) {
+            tmsky.getVm('vm_eseMeg').init()
+        }
+    },
+    hasSubOn : false,
+    bind : function () {
+        $(document).on('click', '.func_menu ul li', function () {
+            var e = e || window.event;
+            if (e.target.tagName != 'SPAN' && e.target.tagName != 'LABEL') {
+                var name = $(e.target).attr('name')
+                var hasOn = $(e.target).hasClass('onoff')
+                var funcid = $(e.target).attr('funcid')
+                vm_functions.changeTabs(name)
+                $('.func_menu ul li').removeClass('on')
+                $(this).addClass('on')
+                if (hasOn) {
+                    vm_functions.hasSubOn = true
+                } else {
+                    vm_functions.hasSubOn = false
+                }
+                //判断加载的vm
+                vm_functions.initVm(funcid)
+            } else if (e.target.tagName == 'SPAN') {
+                vm_functions.toSaveInnFuncs($(e.target).parent('li'))
+            } else if (e.target.tagName == 'LABEL') {
+                var text = $(e.target).attr('text')
+                $('.func-reg h4 span').html(text)
+                //vm_functions.accountRegOpen(true)
+                var areaList = tmsky.getVm('vm_apply').areaList
+                if (areaList.length <= 0) {
+                    tmsky.getVm('vm_apply').applyPopup()
+                }
+
+            }
+        })
+        $('.ui_select_funcid').on('click', function () {
+            var bool = $(this).hasClass('on')
+            var funcId = $(this).attr('funcid')
+            var callBack = function () {
+                $('.ui_select[funcid=' + funcId + ']').toggleClass('on')
+            }
+            var status;
+            if (bool) {
+                //关闭
+                status = 'close'
+            } else {
+                status = 'open'
+            }
+            vm_functions.toSaveInnFuncsAjax(funcId, status, $(this).parent(), callBack)
+        })
+
+        $(document).on('click', '.ui_select_toggle', function () {
+            $(this).toggleClass('on')
+        })
+    },
+    getBaseInfo : function () {
+        var url = '/inn/info/base/PC,ALLPC,AC,GS,CF,MT,AT,ALLCF'
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                tmsky.getVm('vm_pay_set').getPC(rs.result)
+                tmsky.getVm('vm_accountBook').getAC(rs.result.AC)
+                tmsky.getVm('vm_funcSet').getGS(rs.result.GS)
+                tmsky.getVm('vm_order_info').getALLCF(rs.result.ALLCF)
+                tmsky.getVm('vm_eseMeg').getMT(rs.result.MT)
+                tmsky.getVm('vm_eseMeg').getAT(rs.result.AT)
+                tmsky.getVm('vm_eseMeg').getALLCF(rs.result.ALLCF)
+            }
+        })
+    },
+    changeTabs : function (type) {
+        location.hash = '#tab=' + type
+        var map = {
+            origin_plug : false,
+            card_plug : false,
+            peopleRegister_plug : false,
+            print_plug : false,
+            payChannel_plug : false,
+            barCode_plug : false,
+            notPayAllSign_plug : false,
+            checkstand_plug : false,
+            accountBook_plug : false,
+            foldRoomStatus_plug : false,
+            spend_plug : false,
+            msg_plug : false,
+            handover_plug : false,
+            dirtyRoom_plug : false,
+            autoCheckOut_plug : false,
+            union_plug : false
+        }
+        for (var key in map) {
+            if (key == type) {
+                map[key] = true;
+                break;
+            }
+        }
+        vm_functions.funcBool = map
+        vm_functions.resetWindow()
+    },
+    getInnId : function () {
+        return UserInfo.getCurrentInn().id
+    },
+    getOnOff : function (id) {
+        if (!tmsky.isEmptyObject(vm_functions.funcInfo)) {
+            var bool = vm_functions.funcInfo[id].onoff
+            return bool
+        } else {
+            return true
+        }
+
+    },
+    getLevel : function (id) {
+        if (!tmsky.isEmptyObject(vm_functions.funcInfo)) {
+            var bool = vm_functions.funcInfo[id].innLevel
+            return bool
+        } else {
+            return true
+        }
+    },
+    ////是否能开通快捷支付
+    //canOpenPayQuick : function () {
+    //    var url = '/inns/plug/hasCheckstand'
+    //    var callBack = function () {
+    //        var funcId = 24
+    //        vm_functions.changeMenuPart($('.func_menu li[funcid=' + funcId + ']'))
+    //    }
+    //    $.get(url).done(function (rs) {
+    //        if (rs.status == 200) {
+    //            if (rs.hasCheckstand == true) {
+    //                vm_functions.toSaveInnFuncsAjax(24, 'open', '', callBack)
+    //            } else {
+    //                tmsky.ui.dialog.alert("请用主账号在“财务”→“客栈收款信息”中填写并保存支付宝相关信息，才可开启快捷支付。<a class='ui_a' href='/public/views/1/finance.html'>现在去填写收款信息</a>")
+    //            }
+    //        }
+    //    })
+    //},
+    resetWindow : function () {
+        tmsky.getVm('vm_order_info').resetWindow()
+        tmsky.getVm('vm_pay_set').resetWindow()
+    },
+    apply_popups : false,
+    accountRegOpen : function (bool, kt) {
+        var inn = UserInfo.getCurrentInn()
+        var level = inn.level, applyAt = inn.applyAt
+        if (level != 1 || applyAt)return;
+        vm_functions.apply_popups = bool
+        if (kt) {
+            avalon.vmodels.vm_handover.sendApply()
+            vm_functions.accountState = '审核中'
+        }
+    }
+
+})
+

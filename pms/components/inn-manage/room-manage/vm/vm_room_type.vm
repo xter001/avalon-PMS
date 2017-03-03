@@ -1,0 +1,77 @@
+var RoomTypeInitHandler = require('../handler/room-init-handler.js'),
+    RoomTypeButtonHandler = require('../handler/roomtype-button-handler.js'),
+    RoomTypePriceHandler = require('../handler/roomtype-price-handler.js'),
+    RoomTypeSaveHandler = require('../handler/roomtype-save-handler.js'),
+    CommonUtil = require('../../../common/js/utils/common-util.js'),
+    UserInfo = require('../../../header/user.js'),
+    Plug = require('../../../header/plug.js'),
+    RoomHandler = require('../handler/room-handler.js')
+var WEEK_DATA = [{
+    name : '周一',
+    value : 0
+}, {
+    name : '周二',
+    value : 0
+}, {
+    name : '周三',
+    value : 0
+}, {
+    name : '周四',
+    value : 0
+}, {
+    name : '周五',
+    value : 0
+}, {
+    name : '周六',
+    value : 0
+}, {
+    name : '周日',
+    value : 0
+
+}]
+
+var vm_room_type = avalon.define({
+    $id : 'vm_room_type',
+    MAX_ROOM_NUM : 100,//一个房型最多创建多少房间
+    hasFoldFun : false,
+    roomTypeList : [], //房型列表
+    roomNumberList : [],  //房间字符串列表
+    roomMap : {},//房间转换信息
+    rooms : [],//房间排序用，因为要根据序号排序展示
+    roomTypeId : 0,
+    hasNewGuide : false,//房型管理新手引导
+    popupShow : {
+        roomSet : false,
+        roomEdit : false,
+        //新增房型开关 为true就是新增房型 为false是修改房型
+        roomAdd : false
+    },
+    //特殊价
+    spePrice : [],
+    editInfo : {
+        editBtn : '新增房型',
+        editRoomNo : [
+            {id : null, roomNo : '', status : 1}
+        ],
+        roomTypeId : '',
+        roomTypeName : '',
+        shortName : '',
+        roomTypePrice : ''
+    },
+    weekPrice : WEEK_DATA,
+    //handler
+    roomInit : RoomTypeInitHandler,
+    button : RoomTypeButtonHandler,
+    room : RoomHandler,
+    price : RoomTypePriceHandler,
+    save : RoomTypeSaveHandler,
+    init : function () {
+        this.hasFoldFun = Plug.hasFunc(Plug.F_FOLD)
+        RoomTypeInitHandler.init(function () {
+            vm_room_type.room.sortRooms.init()
+        });
+    },
+    navigateToTrash : function () {
+        avalon.router.navigate("/room/trash/")
+    }
+})

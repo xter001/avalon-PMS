@@ -1,0 +1,43 @@
+<div class="tomasky-ui-popups"  ms-controller="vm_room_type" id="addRoomType"  ms-visible="popupShow.roomEdit||popupShow.roomAdd">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-visible="!hasNewGuide" ms-click="button.closeRoomEdit()" data-dismiss="popups">×</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">编辑房型</h3>
+        </div>
+        <div class="ui-popups-body">
+            <div id="newRoomTypeDiv" class="boxinput2"><!--注册登陆类输入框-->
+                <p>
+                    <label>房型名称：</label>
+                    <input class="text-indent15" id="newRoomTypeName" ms-duplex="editInfo.roomTypeName" type="text" maxlength="12">
+                </p>
+                <p>
+                    <label>房型简称：</label>
+                    <input class="text-indent15" id="shortName" ms-duplex="editInfo.shortName" type="text" maxlength="2">
+                </p>
+                <p>
+                    <label>默认价格：</label>
+                    <input class="text-indent15" id="newRoomTypePrice" ms-duplex="editInfo.roomTypePrice" type="text" maxlength="5">
+                </p>
+                <p style="display: none">
+                    <label>房间类型id：</label>
+                    <input class="text-indent5" id="roomTypeId" maxlength="12" type="text">
+                </p>
+                <p class="add7"  id="addRoomNo">
+                    <i id="add_room_content">
+                        <span ms-repeat="editInfo.editRoomNo" ms-visible="el.status">
+                            <input placeholder="房间号" class="input_tag_zwj" ms-duplex="el.roomNo"  maxlength="12" type="text">
+                            <a title="删除" ms-click="button.removeRoomNo($index)"></a>
+                        </span>
+                    </i>
+                    <span id="add_room_content_buttom"><a class="add8" href="javascript:void(0)" ms-click="button.addRoomNo()">+添加房间号</a></span>
+                </p>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <a class="biggreen_button" href="javascript:void(0)" ms-click="button.saveRoomType()"><i class="dealName">{{editInfo.editBtn}}</i></a>
+            <div id="newRoomTypeInfos" class="alert" style="display:none"></div>
+        </div>
+
+    </div>
+</div>

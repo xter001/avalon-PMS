@@ -1,0 +1,734 @@
+var COMMON_CONST = require('../../common/js/const.js')
+var ORDER_CONST = require('../common/const.js'),
+    CommonUtil = require('../../common/js/utils/common-util.js'),
+    OrderCommonUtil = require('../utils/order-common-util.js'),
+    MainOrderUtil = require('../utils/order-main-util.js'),
+    PageUtil = require('../../common/js/utils/page-util.js'),
+    OrderSortHandler = require('../handler/order-sort-handler.js'),
+    OrderbuttonHandler = require('../handler/order-button-handler.js'),
+    User = require('../../header/user.js')
+
+
+var today = tmsky.date.today(),
+    tomorrow = tmsky.date.tomorrow(true),
+    yesterday = tmsky.date.yesterday(true),
+    $orderItems = $('#order-items'),
+    _def_query_params_ = {
+        dataResponseType : ORDER_CONST.ORDER_CONFIG.FIELDS.DATA_RESPONSE_TYPE
+    }
+
+var vm_order_main = avalon.define({
+    $id : 'vm_order_main',
+    statusClass : "",
+    isToday : true,
+    todayText : tmsky.date.format(new Date(), 'yyyy年MM月dd日'),
+    currOrderIndex : 0,
+    orderType : ORDER_CONST.MAIN_ORDER_TYPE.BOOK,
+    searchValue : '',
+    oldSearchValue : '',
+    orders : [],
+    $order : [],
+    isErrorOrder : false,
+    checkErrorOrder : false,
+    isOrderList : true,
+    innId : User.getUserInfo().innId,
+    errorList : [],
+    all_timeBox : false,
+    err_timeBox : false,
+    allTempTime : {
+        from : yesterday,
+        to : today
+    },
+    errTempTime : {
+        from : '',
+        to : ''
+    },
+
+
+    text : {
+        operate : '办理入住'
+    },
+
+    oparams : {
+        subOrderStatus : null
+    },
+
+    params : {
+        dataResponseType : ORDER_CONST.ORDER_CONFIG.FIELDS.DATA_RESPONSE_TYPE,
+        checkInFrom : today,
+        checkInTo : today,
+        searchType : ORDER_CONST.ORDER_CONFIG.FIELDS.SEARCH_TYPE.CHECK_IN_AT,
+        orderFlag : ORDER_CONST.MAIN_ORDER_TYPE.BOOK,
+        orderStatus : '',
+        pageNo : 1,
+        pageSize : ORDER_CONST.MAIN_ORDER_PAGE_SIZE
+    },
+    errorParams : {
+        type : '-1',
+        checkInFrom : '',
+        checkInTo : '',
+        pageNo : '1',
+        innId : User.getUserInfo().innId
+    },
+
+    stats : {
+        checkInCount : 0,
+        checkOutCount : 0
+    },
+
+    css : {
+        today : 'active',
+        tomorrow : ''
+    },
+
+    display : {
+        todayTomorrow : true,
+        moreSearch : false
+    },
+
+    init : function () {
+        avalon.vmodels.vm_order_shop.init()
+        vm_order_main.getUnionInfo()
+
+        var params = location.hash
+        params = params.split('#')
+        var paramsJson = {}
+        params.forEach(function (el, i) {
+            if (el == '')return
+            var type = el.split('=')[0],
+                value = el.split('=')[1]
+            paramsJson[type] = value
+        })
+        switch (paramsJson.tab) {
+            case 'BOOK':  //即将到店
+                this.query(_def_query_params_)
+                vm_order_main.changeMainOrder('BOOK')
+                $('.nav-tabs a').removeClass('active')
+                $('#MOT_BOOK').addClass('active')
+                break;
+            case 'ERROR':  //异常订单
+                vm_order_main.changeMainOrder('ERROR')
+                $('.nav-tabs a').removeClass('active')
+                $('#MOT_ERROR').addClass('active')
+                break;
+            case 'CHECKIN':  //即将离店
+                vm_order_main.changeMainOrder('CHECKIN')
+                $('.nav-tabs a').removeClass('active')
+                $('#MOT_CHECKIN').addClass('active')
+                break;
+            case 'NEW_TODAY':  //今日新办
+                vm_order_main.changeMainOrder('NEW_TODAY')
+                $('.nav-tabs a').removeClass('active')
+                $('#MOT_NEW_TODAY').addClass('active')
+                break;
+            case 'ALL':  //全部订单
+                vm_order_main.changeMainOrder('ALL')
+                $('.nav-tabs a').removeClass('active')
+                $('#MOT_ALL').addClass('active')
+                break;
+            case 'SHOP':  //商品订单
+                vm_order_main.changeMainOrder('SHOP')
+                $('.nav-tabs a').removeClass('active')
+                $('#MOT_SHOP').addClass('active')
+                break;
+            default:
+                this.query(_def_query_params_)
+                location.hash = '#tab=BOOK'
+                break;
+        }
+
+        this.initOrderStat()
+        this.initDatepicker()
+
+        return this
+    },
+
+    initDatepicker : function () {
+        var $checkInFrom = $("#checkInFrom"), $checkInTo = $("#checkInTo")
+        CommonUtil.bindingDatepickerByElement($checkInFrom, true, "#checkInFrom", "#checkInTo", true);
+        CommonUtil.bindingDatepickerByElement($checkInTo, false, "#checkInFrom", "#checkInTo", true);
+    },
+
+    // order dispose statistic
+    initOrderStat : function () {
+        $.get(ORDER_CONST.URLS.STAT, function (json) {
+            if (json.status == 200) {
+                vm_order_main.stats.checkInCount = json.result.bookOrders
+                vm_order_main.stats.checkOutCount = json.result.checkInOrders
+            } else {
+                tmsky.log('统计今日预到、预离订单总数出错：' + json.message)
+            }
+        });
+    },
+
+    dataReload : function () {
+        if (vm_order_main.orderType == 'SHOP') {
+            vm_order_main.isErrorOrder = false
+            vm_order_main.isOrderList = true
+            var pageInfo = tmsky.ui.page.getParams("page-div");
+            avalon.vmodels.vm_order_shop.ajaxShopList(pageInfo.pageNo)
+            return false
+        }
+        vm_order_main.query(vm_order_main.params.$model, false)
+    },
+
+    query : function (params, showLoading) {
+        if (vm_order_main.params.orderFlag == 'ERROR') {
+            vm_order_main.getErrorOrder()
+            return
+        }
+        showLoading = tmsky.isNull(showLoading) ? true : showLoading
+        if (showLoading)
+            tmsky.ui.dialog.loading();
+        $.post(ORDER_CONST.URLS.QUERY, params, function (rs) {
+            if (CommonUtil.isSuccess(rs)) {
+                if (rs.result && rs.result.orders && rs.result.orders.length) {
+                    rs.result.orders = rs.result.orders.filter(function (item) {
+                        return item.subOrders != ''
+                    })
+                    var orders = vm_order_main.convertOrderStatusText(rs.result.orders)
+                    OrderSortHandler.configByOrderFlag(vm_order_main.params.orderFlag, vm_order_main.params.searchType).sort(orders)
+
+                    vm_order_main.orders = []
+                    vm_order_main.orders = orders
+                    vm_order_main.$order = tmsky.extend(true, [], orders)
+                    vm_order_main.changeOrderOperateText()
+                    rs.result.orders.forEach(function (e, i) {
+                        if (!e.discountAmount) {
+                            e.discountAmount = 0
+                        }
+                        e.totalAmount = avalon.vmodels.vm_order_operate.finance.changeTwoDecimal(e.totalAmount)
+                        e.overage = avalon.vmodels.vm_order_operate.finance.changeTwoDecimal(e.totalAmount - e.paidAmount - e.discountAmount)
+                        e.unionIndex = vm_order_main.getUnionIndexByName(e.gradeName)
+                    })
+                    $orderItems.html(template('order-list', {
+                        orders : rs.result.orders,
+                        isCustomerMember : vm_order_main.isCustomerMember,
+                        operate : vm_order_main.text.operate
+                    }))
+                    avalon.nextTick(function () {
+                        vm_order_main.renderPage('page-div', rs)
+                        vm_order_main.bind.orderOperate()
+                    })
+                } else {
+                    vm_order_main.dataNothing()
+                }
+            } else {
+                vm_order_main.dataNothing()
+                tmsky.ui.dialog.errorTips(rs.message || '查询订单出错')
+            }
+        }).always(tmsky.ui.dialog.loading.close())
+    },
+
+    dataNothing : function () {
+        $orderItems.html('<tr><td colspan="10" class="table-center data-nothing">暂无订单信息</td></tr>')
+    },
+
+    changeOrderOperateText : function () {
+        switch (vm_order_main.orderType) {
+            case ORDER_CONST.MAIN_ORDER_TYPE.BOOK:
+                vm_order_main.text.operate = ORDER_CONST.MAIN_ORDER_TYPE.TEXT[vm_order_main.isToday ? 'CHECKIN' : 'VIEW']
+                break
+            case ORDER_CONST.MAIN_ORDER_TYPE.CHECKIN:
+                vm_order_main.text.operate = ORDER_CONST.MAIN_ORDER_TYPE.TEXT[vm_order_main.isToday ? 'CHECKOUT' : 'VIEW']
+                break
+            case ORDER_CONST.MAIN_ORDER_TYPE.NEW_TODAY:
+                vm_order_main.text.operate = ORDER_CONST.MAIN_ORDER_TYPE.TEXT.OPERATE
+                break
+            case ORDER_CONST.MAIN_ORDER_TYPE.ALL:
+                vm_order_main.text.operate = ORDER_CONST.MAIN_ORDER_TYPE.TEXT.OPERATE
+                break
+        }
+    },
+
+    convertOrderStatusText : function (orders) {
+        orders.forEach(function (order) {
+            switch (order.orderStatus) {
+                case COMMON_CONST.M_BOOK:
+                case COMMON_CONST.M_PART_IN:
+                    order.orderStatusText = '预定'
+                    order.statusClass = "stutas-label stutas-label-book"
+                    break;
+
+                case COMMON_CONST.M_IN:
+                case COMMON_CONST.M_PART_OUT:
+                    order.orderStatusText = '入住'
+                    order.statusClass = "stutas-label stutas-label-in"
+                    break;
+                case COMMON_CONST.M_OUT:
+                    order.orderStatusText = '退房'
+                    order.statusClass = "stutas-label stutas-label-out"
+                    break;
+                case COMMON_CONST.M_CANCLE:
+                    order.orderStatusText = '取消'
+                    order.statusClass = "stutas-label stutas-label-cancle"
+                    break;
+                case COMMON_CONST.M_DELETE:
+                    order.orderStatusText = '删除'
+                    order.statusClass = 'stutas-label stutas-label-delete'
+                    break;
+            }
+        })
+        return orders
+    },
+
+    proxyChangeMainOrder : function (id) {
+        $('#' + id).click()
+        vm_order_main.changeMainOrder(id.substring(4))
+    },
+
+    changeMainOrder : function (orderType) {
+        if (vm_order_main.orderType == orderType) {
+            return
+        }
+        location.hash = 'tab=' + orderType
+        var isAllOrder = OrderCommonUtil.isAllOrder(orderType)
+        vm_order_main.orderType = orderType
+        vm_order_main.params.orderFlag = orderType
+        vm_order_main.params.searchType = ORDER_CONST.ORDER_CONFIG.FIELDS.SEARCH_TYPE.CHECK_IN_AT
+
+        if (OrderCommonUtil.isNewTodayOrder(orderType)) {
+            vm_order_main.params.orderFlag = ORDER_CONST.MAIN_ORDER_TYPE.ALL
+            vm_order_main.params.searchType = ORDER_CONST.ORDER_CONFIG.FIELDS.SEARCH_TYPE.CREATED_AT
+        }
+        if (vm_order_main.orderType == 'NEW_TODAY') {
+            vm_order_main.params.checkInFrom = today
+            vm_order_main.params.checkInTo = tmsky.date.addDays(today, 1, true)
+        } else if (vm_order_main.orderType == 'BOOK') {
+            vm_order_main.params.checkInFrom = today
+            vm_order_main.params.checkInTo = today
+        } else {
+            vm_order_main.params.checkInFrom = tmsky.date.addDays(today, -1, true)
+            vm_order_main.params.checkInTo = today
+        }
+        vm_order_main.isToday = true
+        vm_order_main.display.todayTomorrow = orderType == ORDER_CONST.MAIN_ORDER_TYPE.BOOK || orderType == ORDER_CONST.MAIN_ORDER_TYPE.CHECKIN ? 'visible' : 'hidden'
+
+        vm_order_main.display.moreSearch = isAllOrder
+        vm_order_main.oparams.subOrderStatus = isAllOrder ? COMMON_CONST.MAIN_ORDER_STATUS.ALL : null
+
+        vm_order_main.changeCss()
+        vm_order_main.filterHandler()
+    },
+
+    changeCss : function () {
+        if (vm_order_main.isToday) {
+            vm_order_main.css.today = 'active'
+            vm_order_main.css.tomorrow = ''
+        } else {
+            vm_order_main.css.today = ''
+            vm_order_main.css.tomorrow = 'active'
+        }
+    },
+
+    todayTomorrow : function (isToday) {
+        if (vm_order_main.isToday != isToday) {
+            vm_order_main.isToday = isToday
+            if (isToday) {
+                vm_order_main.params.checkInFrom = today
+                vm_order_main.params.checkInTo = today
+            } else {
+                vm_order_main.params.checkInFrom = tomorrow
+                vm_order_main.params.checkInTo = tomorrow
+            }
+            vm_order_main.changeCss()
+            vm_order_main.filterHandler()
+        }
+    },
+
+    renderPage : function (id, rs) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : this.filterHandler,
+            pageNo : rs.result.pageNo,
+            pageSize : rs.result.pageSize,
+            pages : rs.result.pages,
+            totalCount : rs.result.totalCount,
+            maxPages : 10,//default
+            minPageSize : ORDER_CONST.MAIN_ORDER_PAGE_SIZE,//default
+            maxPageSize : 100,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+    errorRenderPage : function (id, rs) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("page-div");
+                vm_order_main.selectErrorOrderList(pageInfo.pageNo)
+            },
+            pageNo : rs.page.pageNo,
+            pageSize : rs.page.pageSize,
+            pages : rs.page.totalPages,
+            totalCount : rs.page.totalCount,
+            maxPages : 10,//default
+            minPageSize : ORDER_CONST.MAIN_ORDER_PAGE_SIZE,//default
+            maxPageSize : 100,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+
+    enterSearch : function (e) {
+        if (e && e.keyCode == 13) {
+            vm_order_main.searchOrders()
+        }
+    },
+
+    searchOrders : function () {
+        if (vm_order_main.oldSearchValue != vm_order_main.searchValue) {
+            vm_order_main.filterHandler()
+        }
+    },
+
+    filterHandler : function () {
+        if (vm_order_main.params.orderFlag == ORDER_CONST.MAIN_ORDER_TYPE.ALL) {
+            vm_order_main.validateDate(vm_order_main.params);
+        }
+        $('#order-list').show()
+        vm_order_main.isErrorOrder = false
+        if (vm_order_main.params.orderFlag == "SHOP") {
+            vm_order_main.orders = []
+            $orderItems.html(template('order-list', {
+                orders : [],
+                operate : ''
+            }))
+            $('#order-list').hide()
+            avalon.vmodels.vm_order_shop.ajaxShopList()
+            avalon.vmodels.vm_order_shop.validateDate(avalon.vmodels.vm_order_shop.date);
+            return false
+        }
+
+        //判断是否异常订单
+        if (vm_order_main.params.orderFlag == 'ERROR') {
+            vm_order_main.orders = []
+            $orderItems.html(template('order-list', {
+                orders : [],
+                operate : ''
+            }))
+            $('#order-list').hide()
+            vm_order_main.getErrorOrder()
+            vm_order_main.isErrorOrder = true
+            return false
+        }
+
+        vm_order_main.params.orderStatus = vm_order_main.oparams.subOrderStatus || OrderCommonUtil.getMainOrderStatus(vm_order_main.params.orderFlag)
+        var params = vm_order_main.params.$model
+
+        var pageInfo = tmsky.ui.page.getParams("page-div");
+        vm_order_main.params.pageNo = pageInfo.pageNo;
+        vm_order_main.params.pageSize = pageInfo.pageSize ? pageInfo.pageSize : ORDER_CONST.MAIN_ORDER_PAGE_SIZE;
+
+        // search params
+        var searchParams = PageUtil.getSearchParams({
+            value : vm_order_main.searchValue,
+            fields : [
+                {key : 'subOrders.room.roomNo'},
+                {key : 'contactPhone'},
+                {key : 'contactUser'}
+            ]
+        })
+        vm_order_main.oldSearchValue = vm_order_main.searchValue
+        vm_order_main.query($.extend(true, {}, vm_order_main.params.$model, searchParams))
+    },
+
+    // 时间段校验，最多只能查询连续31天的订单信息，已选择的时间为基准，前后31天范围
+    validateDate : function (params) {
+        var startSelector = "#checkInFrom",
+            activeSelectors = CommonUtil.getCurrActiveDateSelectors("#checkInFrom");
+        if (!activeSelectors.active) {
+            return;
+        }
+        var isActiveByStartDate = startSelector == activeSelectors.active;
+        var base, dynamic;
+        if (isActiveByStartDate) {
+            base = tmsky.date.parse(params.checkInFrom);
+            dynamic = tmsky.date.parse(params.checkInTo);
+        } else {
+            base = tmsky.date.parse(params.checkInTo);
+            dynamic = tmsky.date.parse(params.checkInFrom);
+        }
+        if (Math.abs(tmsky.date.diffDays(base, dynamic)) > ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS) {
+            dynamic = tmsky.date.addDays(base, isActiveByStartDate ? ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS : -ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS);
+        } else {
+            if (isActiveByStartDate && (tmsky.date.after(base, dynamic) || tmsky.date.equals(base, dynamic))) {
+                dynamic = tmsky.date.addDays(base, ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS);
+            }
+            if (!isActiveByStartDate && tmsky.date.before(base, dynamic)) {
+                dynamic = tmsky.date.addDays(base, -ORDER_CONST.ORDER_CONFIG.FLAG.ORDER_QUERY_AVAILABLE_DAYS);
+            }
+        }
+        dynamic = tmsky.date.format(dynamic);
+        if (isActiveByStartDate) {
+            params.checkInTo = dynamic;
+        } else {
+            params.checkInFrom = dynamic;
+        }
+    },
+
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+
+    bind : {
+        orderOperate : function () {
+            $('.order-operate').on('click', function () {
+                var $this = $(this), index = $this.attr('index')
+                vm_order_main.currOrderIndex = Number(index)
+                tmsky.getVm('vm_order_operate').orderHandle.showOrderOperatePopup(vm_order_main)
+            })
+        }
+    },
+    $errorOrders : [],
+    //异常订单--操作订单
+    errorOrderBind : function (id) {
+        $.ajax({
+            type : 'GET',
+            url : '/order/view/' + ORDER_CONST.ORDER_OPERATE.FROM + "/" + id + "?tmp=" + (new Date()).valueOf(),
+            error : function (rs) {
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                if (rs.status == 200) {
+                    var errorOrders = rs.mainOrder
+                    //avalon.log(errorOrders)
+                    //MainOrderUtil.convert(errorOrders)
+                    vm_order_main.$errorOrders = errorOrders
+                    tmsky.getVm('vm_order_operate').orderHandle.showErrorOrderOperatePopup(vm_order_main, errorOrders)
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            }
+
+        })
+    },
+
+//    异常订单
+    getErrorOrder : function () {
+        vm_order_main.isOrderList = false
+        vm_order_main.orderType = ''
+        vm_order_main.isErrorOrder = true
+        vm_order_main.checkErrorOrder = true
+        vm_order_main.display.moreSearch = false
+        $('#notVisible').hide()
+        CommonUtil.bindingDatepickerByElement($('#err_checkInFrom'), true, "#err_checkInFrom", "#err_checkInTo", true);
+        CommonUtil.bindingDatepickerByElement($('#err_checkInTo'), false, "#err_checkInFrom", "#err_checkInTo", true);
+        vm_order_main.errorParams.checkInFrom = vm_order_main.getDefaultFromTime()
+        vm_order_main.errorParams.checkInTo = vm_order_main.getDefaultToTime()
+
+        vm_order_main.errTempTime.from = vm_order_main.getDefaultFromTime()
+        vm_order_main.errTempTime.to = vm_order_main.getDefaultToTime()
+
+        vm_order_main.selectErrorOrderList()
+
+    },
+    selectErrorOrderList : function (pageNo) {
+        tmsky.ui.dialog.loading();
+        var datas = {
+            exceptType : vm_order_main.errorParams.type,
+            from : vm_order_main.errorParams.checkInFrom,
+            innId : User.getUserInfo().innId,
+            pageNo : pageNo || 1,
+            to : vm_order_main.errorParams.checkInTo
+        }
+        var popu = []
+        $.ajax({
+            type : 'GET',
+            url : '/inn/orders/excptOrderQuery',
+            data : $.param(datas, true),
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    //vm_order_main.errorList = rs.page.result
+                    vm_order_main.orders = rs.page.result
+                    rs.page.result.forEach(function (_this, x) {
+                        //处理入住时间格式
+                        var _checkinsArr = _this.checkins.split(','),
+                            _checkoutsArr = _this.checkouts.split(','),
+                            _roomnosArr = _this.roomnos.split(','),
+                            _roomnos = '',
+                            defPay = _this.paidAmount - _this.totalAmount,
+                            goOnPay = '';
+                        if (defPay < 0) {
+                            goOnPay = Math.abs(defPay)
+                        } else {
+                            goOnPay = ''
+                        }
+
+                        var item = {
+                            id : _this.id,
+                            cfname : _this.cfname,
+                            roomnos : _roomnos,
+                            checkins : _checkinsArr,
+                            checkouts : _checkoutsArr,
+                            roomPopu : [],
+                            contactUser : _this.contactUser,
+                            contactPhone : _this.contactPhone,
+                            totalAmount : _this.totalAmount,
+                            paidAmount : _this.paidAmount,
+                            paidPayment : _this.paidPayment,
+                            goOnPay : goOnPay,
+                            operateUser : _this.operateUser,
+                            orderStatus : _this.orderStatus,
+                        }
+                        _roomnosArr.forEach(function (num, i) {
+                            var room = {
+                                roomno : num,
+                                checkin : tmsky.date.format(_checkinsArr[i], 'MM-dd'),
+                                checkout : tmsky.date.format(_checkoutsArr[i], 'MM-dd')
+                            }
+                            item.roomPopu.push(room)
+                        })
+                        popu.push(item)
+                    })
+                    vm_order_main.errorList = popu
+                    avalon.nextTick(function () {
+                        vm_order_main.errorRenderPage('page-div', rs)
+                    })
+                }
+
+            }
+        })
+    },
+    //获取7天前日期
+    getDefaultFromTime : function () {
+        var timeDif = new Date(new Date().toLocaleDateString() + ' 18:00').getTime() - new Date().getTime()   //判断是在今天的六点前还是后
+        var myDate = new Date(); //获取今天日期
+        myDate.setDate(myDate.getDate() - 7);
+        var dateArray = [];
+        var dateTemp;
+        var flag = 1;
+        for (var i = 0; i < 7; i++) {
+            dateTemp = myDate.getFullYear() + '-' + (myDate.getMonth() + 1) + "-" + myDate.getDate();
+            dateArray.push(dateTemp);
+            myDate.setDate(myDate.getDate() + flag);
+        }
+        if (timeDif > 0) {
+            return dateArray[0]
+        } else {
+            return dateArray[1]
+        }
+    },
+    getDefaultToTime : function () {
+        var timeDif = new Date(new Date().toLocaleDateString() + ' 18:00').getTime() - new Date().getTime()   //判断是在今天的六点前还是后
+        if (timeDif > 0) {
+            return tmsky.date.format(tmsky.date.yesterday(), 'yyyy-MM-dd')
+        } else {
+            return tmsky.date.format(tmsky.date.today(), 'yyyy-MM-dd')
+        }
+    },
+
+    orderToState : function (x) {
+        if (x == 0 || x == 5) {
+            return '未平账'
+        } else if (x == 1 || x == 2) {
+            return '未入住'
+        } else if (x == 3 || x == 4) {
+            return '未退房'
+        }
+
+
+    },
+    valueChang : function () {
+        vm_order_main.selectErrorOrderList(vm_order_main.errorParams.type)
+    },
+
+    //    格式化时间：如（16-09-08）
+    formatTime : function (time, hhmmss) {
+        var t = ''
+        if (hhmmss) {
+            t = tmsky.date.format(time, 'yy-MM-dd hh:mm')
+        } else {
+            t = tmsky.date.format(time, 'yy-MM-dd')
+        }
+        return t
+    },
+    //    选择时间
+    openTimeBox : function (type) {
+        var vm = vm_order_main
+        if (type == 'all') {
+            vm.all_timeBox = true
+        } else if (type == 'err') {
+            vm.err_timeBox = true
+        } else if (type == 'shop') {
+            tmsky.getVm('vm_order_shop').shop_timeBox = true
+        }
+    },
+    //搜索全部订单
+    searchAllOrder : function () {
+        var vm = vm_order_main
+        var defTime = parseInt(tmsky.date.diffDays(vm.allTempTime.from, vm.allTempTime.to))
+        if (vm.params.checkInFrom == vm.allTempTime.from && vm.params.checkInTo == vm.allTempTime.to) {
+            vm.all_timeBox = false
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.params.checkInFrom = vm.allTempTime.from
+            vm.params.checkInTo = vm.allTempTime.to
+            vm.filterHandler()
+            vm.all_timeBox = false
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的订单信息！')
+        }
+    },
+    //搜索异常订单
+    searchErrOrder : function () {
+        var vm = vm_order_main
+        var defTime = parseInt(tmsky.date.diffDays(vm.errTempTime.from, vm.errTempTime.to))
+        if (vm.errorParams.checkInFrom == vm.errTempTime.from && vm.errorParams.checkInTo == vm.errTempTime.to) {
+            vm.err_timeBox = false
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.errorParams.checkInFrom = vm.errTempTime.from
+            vm.errorParams.checkInTo = vm.errTempTime.to
+            vm.selectErrorOrderList()
+            vm.err_timeBox = false
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的订单信息！')
+        }
+    },
+    isCustomerMember : false,//该客栈是否是联盟会员
+    //获取联盟信息
+    getUnionInfo : function () {
+        $.ajax({
+            url : COMMON_CONST.DOMAIN.DIS + '/union/getUnionInfo',
+            data : {
+                pmsInnId : User.getUserInfo().superInnId,
+                type : 2
+            },
+            success : function (rs) {
+                if (rs.status == 200 && rs.unions.length != 0) {
+                    vm_order_main.unionInfo = rs.unions[0].grades
+                    if (rs.unions[0] && rs.unions[0].openMember == 1) {
+                        vm_order_main.isCustomerMember = true
+                    }
+                }
+            }
+        })
+    },
+    unionInfo : [],
+    //通过会员名称来判断Index
+    getUnionIndexByName : function (name) {
+        var unions = vm_order_main.unionInfo
+        var index = ''
+        if (unions.length != 0) {
+            unions.forEach(function (el, i) {
+                if (name == el.name) {
+                    index = i + 1
+                }
+            })
+        }
+        return index
+    }
+
+
+})

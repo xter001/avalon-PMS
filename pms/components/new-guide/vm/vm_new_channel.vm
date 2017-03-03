@@ -1,0 +1,77 @@
+var COMMON = require('../../common/js/const.js'),
+    GUIDE_CONST = require('../js/guide_const.js');
+
+var vm_new_channel = avalon.define({
+    $id: "vm_new_channel",
+    step: {
+        one: true,
+        two: false
+    },//在哪一步显示
+    guideTag: "",
+    init: function (guideTag) {
+        avalon.vmodels['vm_new_channel'].guideTag = guideTag
+        var channelStep = window.localStorage.getItem('channelStep')
+        var html = $("#GuideaddChannel").html()
+        if (channelStep) {
+            switch (channelStep) {
+                case 'one' :
+                    $("#addChannel").append(html)
+                    avalon.vmodels['vm_new_channel'].oneStepOper()
+                    break;
+                case 'two' :
+                    $("#addChannel").html("+ 新增渠道")
+                    avalon.vmodels['vm_new_channel'].resetStep()
+                    avalon.vmodels['vm_new_channel'].step[channelStep] = true;
+                    break;
+                case 'finish' :
+                    avalon.vmodels['vm_new_channel'].resetStep()
+                    $("#finishinnCreate").popups()
+                    break;
+                default :
+                    break;
+
+            }
+        } else {
+            var html = $("#GuideaddChannel").html()
+            $("#addChannel").append(html)
+            window.localStorage.setItem("channelStep", "one")
+            avalon.vmodels['vm_new_channel'].oneStepOper()
+        }
+        $("#subFunSet").remove()
+        $("#defaultChannels").remove()
+
+    },
+    oneStepOper: function () {
+        $("#confirmChannel").on("click", function () {
+            $("#addChannel").html("+ 新增渠道")
+            avalon.vmodels['vm_new_channel'].resetStep()
+            avalon.vmodels['vm_new_channel'].step.two = true;
+            window.localStorage.setItem("channelStep", "two")
+        })
+        $("#addChannel").on("click", function () {
+            avalon.vmodels['vm_new_channel'].step.one = false
+        })
+    },
+    nextStep: function (step) {
+        window.localStorage.setItem("channelStep", "finish")
+        avalon.vmodels['vm_new_channel'].resetStep()
+        $("#finishinnCreate").popups()
+    },
+    resetStep: function () {
+        $.each(avalon.vmodels['vm_new_channel'].step, function (key, val) {
+            avalon.vmodels['vm_new_channel'].step[key] = false
+        })
+    },
+    intoHouse: function () {
+        avalon.vmodels['vm_new_guide'].ajaxSaveGuide(avalon.vmodels['vm_new_channel'].guideTag)
+    },
+    finishGuide: function () {
+        avalon.vmodels['vm_new_guide'].ajaxOneGuideTag(GUIDE_CONST.GUIDES.HOUSE)
+        avalon.vmodels['vm_new_guide'].ajaxSaveGuide(GUIDE_CONST.GUIDES.HOUSE)
+        avalon.vmodels['vm_new_guide'].ajaxSaveGuide(GUIDE_CONST.GUIDES.CHANNEL)
+        avalon.vmodels['vm_new_guide'].ajaxSaveGuide(GUIDE_CONST.GUIDES.GUIDE_DONE, function () {
+            $("#finishinnCreate").popups("hide");
+            $(".guide-left-cover,.guide-top-cover").remove()
+        })
+    }
+})

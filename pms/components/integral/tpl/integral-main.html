@@ -1,0 +1,133 @@
+<!--integral-main-->
+
+<div class="integral-content" ms-controller="vm_integral">
+    <div class="jf-title">
+        <h1 class="jf-border-left">可用番币：<span class="u-stand-out">{{currentInn.availableIntegral?currentInn.availableIntegral:0}}</span><i
+                class="u-line"></i>昨日新增：<span
+                class="u-stand-out">{{yesIntegral}}</span>
+            <a class="ft-col-blue" ms-click="openJfRule()" style="font-weight: normal;text-decoration: underline;margin-left: 20px">查看积分规则>></a>
+        </h1>
+    </div>
+    <div class="jf-nav">
+        <ul>
+            <li ms-class="selected:defNav.exchange" ms-click="changeTabs('exchange')">兑换区</li>
+            <li ms-class="selected:defNav.jfDetails" ms-click="changeTabs('jfDetails')">番币明细</li>
+        </ul>
+    </div>
+    <!--兑换区-->
+    <div ms-visible="defNav.exchange" style="padding-top: 20px">
+        <div class="jf-ex-item" ms-repeat-el="goods">
+            <div class="item-img">
+                <img ms-attr-src="el.img" alt="">
+            </div>
+
+            <p class="item-ts">{{el.name}} <span class="f-right">番币：<i>{{el.score}}</i></span></p>
+            <p class="fj-ex-btn" ms-click="toExchange(el)">
+                立即兑换<i class="jf-hover-icon"></i>
+            </p>
+            <div class="jf-hover-info">
+                <span class="triangle-upL"></span>
+                <span class="triangle-upR"></span>
+                <p ms-repeat-elem="el.hoverMsg">{{elem}}</p>
+            </div>
+        </div>
+
+        <!--积分兑换-->
+        <div class="tomasky-ui-popups" ms-visible="jfExchange">
+            <div class="tomasky-ui-popups-backdrop"></div>
+            <div class="ui-popups-dialog" style="width: 370px">
+                <em class="close" data-dismiss="popups" ms-click="closeJFExchange()">X</em>
+                <div class="ui-popups-head">
+                    <h3 class="ui-popups-title">积分兑换</h3>
+                </div>
+                <div class="ui-popups-body tomasky-hidden-x">
+                    <h1 class="ex-dialog-title ft-bold">商品信息</h1>
+                    <div class="ex-dialog-body">
+                        <p>商品名称：{{curGood.name}}</p>
+                        <div class="mdg-list">兑换数量：
+                            <i class="num-jian" ms-click="numJian"></i>
+                            <input type="text" maxlength="6"
+                                   ms-on-keyup="checkNumber(jfCash.num)"  ms-duplex="jfCash.num">
+                            <i class="num-jia" ms-click="numAdd"></i>
+                        </div>
+                        <p>所需积分：{{parseInt(jfCash.num * curGood.score)}}</p>
+
+                    </div>
+                    <p class="ft-bold">是否确认兑换？</p>
+                </div>
+                <div class="ui-popups-foot jf-dialog-foot">
+                    <button class="sure" ms-click="exchangeGoods">确认</button>
+                    <button class="quxiao" ms-click="closeJFExchange()">取消</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!--积分明细-->
+    <div ms-visible="defNav.jfDetails" style="overflow: hidden">
+        <div class="f-right">
+            <!--<input type="text" id="jf_from" ms-duplex="datas.from" class="select-time"-->
+                   <!--placeholder="开始时间">到-->
+            <!--<input type="text" id="jf_to" ms-duplex="datas.to" class="select-time"-->
+                   <!--placeholder="结束时间">-->
+
+            <div class="time-list-box fr" style="position: relative;margin-right: 10px">
+                <div class="time-cover small-box fr" ms-click="openTimeBox()">
+                    <i></i>{{formatTime(datas.from)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(datas.to)}}
+                </div>
+                <div class="time-select small-time-select" ms-visible="timeBox" style="top: 32px;right: 0px;">
+                    <input type="text" id="jf_from" ms-duplex="tempData.from" class="select-time"
+                           placeholder="开始时间">到
+                    <input type="text" id="jf_to" ms-duplex="tempData.to" class="select-time"
+                           placeholder="结束时间">
+                    <button class="btn-sure" ms-click="searchJfDel" style="width: 250px">确定</button>
+                </div>
+            </div>
+
+        </div>
+        <table class="table table-bordered table-hover" style="margin-top: 40px">
+            <thead>
+            <tr>
+                <th>时间</th>
+                <th>类型</th>
+                <th>内容</th>
+                <th>积分分值</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ms-repeat="detList" ms-if="detList.length">
+                <td>{{el.createdAt}}</td>
+                <td>{{(el.taskType == 1 ||el.taskType == 2) ? '收入' : '支出'}}</td>
+                <td>{{el.note==null?el.task:el.note}}</td>
+                <td><i ms-visible="el.taskType==3">-</i><i ms-visible="el.taskType == 1 ||el.taskType == 2">+</i>{{el.score}}</td>
+            </tr>
+            <tr ms-if="!detList.length">
+                <td colspan="4" style="text-align: center">暂无积分明细！</td>
+            </tr>
+            </tbody>
+        </table>
+        <div id="jf-page-div"></div>
+    </div>
+    <!--积分规则-->
+    <div class="tomasky-ui-popups" ms-visible="jfRule">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog" style="width: 700px">
+            <em class="close" data-dismiss="popups" ms-click="closeJfRule">X</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">积分规则</h3>
+            </div>
+            <div class="ui-popups-body tomasky-hidden-x ft-14 jf-rule-info">
+                <h2>客栈积分可以用来在积分商城里兑换商品</h2>
+                <ul>
+                    <li>(1) 获取方式一：每天登录番茄来了客栈管理系统可获得5积分</li>
+                    <li>(2) 获取方式二：代销、直连、信用住每来一个订单5积分</li>
+                    <li>(3) 获取方式三：当日离店订单办理退房可获得积分<span>（1间夜=1积分；每个订单最多5积分；每个客栈每天最多50积分）</span></li>
+                </ul>
+            </div>
+            <div class="ui-popups-foot jf-dialog-foot">
+                <p>客栈积分规则的解释权归番茄来了所有，如有疑问请联系 4000-230-190</p>
+            </div>
+        </div>
+    </div>
+
+</div>

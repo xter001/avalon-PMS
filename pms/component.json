@@ -1,0 +1,8 @@
+{
+  "name": "views",
+  "version": "1",
+  "dependencies": {
+    "lodash/lodash": "3.7.0",
+    "tomato-fe/validator": "0.1.0"
+  }
+}

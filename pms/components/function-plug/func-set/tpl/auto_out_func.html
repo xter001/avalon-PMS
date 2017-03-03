@@ -1,0 +1,30 @@
+<!--自动退房-->
+<div ms-visible="funcBool.autoCheckOut_plug">
+    <!--开启前-->
+    <div class="ui_fun_contenter autoOutOff" ms-controller="vm_autoCheckOut">
+        <h1 class="u_border_left">功能说明</h1>
+        <div class="ui_fun_wrap">
+            <h5>开启后，当已入住的订单到了所选定的退房时间之后，系统将会把房费已付足的订单自动办理退房。</h5>
+        </div>
+    </div>
+    <!--开启后-->
+    <div class="ui_fun_contenter bg_white" style="overflow: inherit" ms-visible="hasSubOn" ms-controller="vm_autoCheckOut">
+        <h1 class="u_border_left">设置自动退房</h1>
+        <div class="ui_fun_wrap">
+            <h5 style="width: 135px;float: left">请选择自动退房的时间</h5>
+
+            <div class="tomasky-ui-dropdown oo-dropdown-width-channel u-width-90" ms-class-disabled="disabled" data-ui="dropdown">
+                <input type="hidden" value="0" ms-duplex="time">
+                <a href="javascript:void(0);">
+                    <span data-role="value" ms-duplex="time">{{time}}:00</span>
+                    <i class="iconfont icon-arrowdown"></i>
+                </a>
+                <div class="ui-dropdown-list ui-dropdown-list-max-height-4">
+                    <a href="javascript:;" data-role="item" ms-data-value="item" style="display: block;" ms-repeat-item="timeList">{{item}}:00</a>
+                </div>
+            </div>
+            <button class="fun_btn_opera" ms-click="btnModify">{{operaTxt}}</button>
+        </div>
+    </div>
+
+</div>

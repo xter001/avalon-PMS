@@ -1,0 +1,225 @@
+var vm_bill_check = avalon.define({
+    $id : 'vm_bill_check',
+    page:{pageNo:1,pageSize:10,totalPages:-1,totalCount:-1},
+    data:{from : '', to : '', appKey: '', priceStrategy:'', settlementTime:'', billType:1},
+    bankType: {1:'【个人】',2:'【企业】'},
+    innInfo:{bankAccount:'',bankCity:'',bankCode:'',bankName:'',bankProvince:'',bankRegion:'',bankType:'',confirm:''},
+    settlementInfo: {arrearsSettlementAmount:0, incomeSettlementAmount:0, totalSettlementAmount:0},
+    settlementStatus : {0 : "未结算", 1 : "已结算", 2 : "纠纷延期"},
+    confirmStatus : {0 : '未确定', 1 : '客栈确认', 2 : '系统确认'},
+    billCheckView: {bills:true, details: false},
+    urls:{
+        getCheckBills : COMMON_CONST.DOMAIN.FQMS+'/api/finance/billList',
+        getBillDetails : COMMON_CONST.DOMAIN.FQMS+'/api/finance/billDetail',
+        getSettlementInfo : COMMON_CONST.DOMAIN.FQMS+'/api/finance/settlementInfo',
+        confirmBill : COMMON_CONST.DOMAIN.FQMS+'/finance/api/pms/confirm',
+        exportExcel : COMMON_CONST.DOMAIN.FQMS+'/api/finance/exportBill',
+        confirmBankInfo : '/inns/saveInnConfirm',
+    },
+    bills: [],
+    recordDetailList: [],
+    exportList: [],
+    init : function () {
+        $("#bill_check_from").datetimepicker({
+            maxDate : $("#bill_check_to").val(),
+            onSelect : function(selectedDate) {
+                $("#bill_check_to").datetimepicker("option", "minDate", selectedDate);
+                vm_bill_check.data.from = selectedDate
+                vm_bill_check.getCheckBills(1)
+            }
+        })
+        $("#bill_check_to").datetimepicker({
+            minDate : $("#bill_check_from").val(),
+            onSelect : function(selectedDate) {
+                $("#bill_check_from").datetimepicker("option", "maxDate", selectedDate);
+                vm_bill_check.data.to = selectedDate
+                vm_bill_check.getCheckBills(1)
+            }
+        })
+        vm_bill_check.innInfo = CommonCacheUtil.innBaseInfo
+        return this
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('bill_check_div'))
+        return this
+    },
+    setViews : function (bills, details) {
+        vm_bill_check.billCheckView.bills = bills
+        vm_bill_check.billCheckView.details = details
+    },
+    checkDetails: function (pageNo, type, el, billType) {
+
+        if(billType){
+            $(this).siblings().removeClass('nav-tab-active')
+            $(this).addClass('nav-tab-active')
+        }
+
+        if(el){
+            vm_bill_check.data.settlementTime = el.settlementTime
+        }
+        vm_bill_check.data.billType = (billType)?billType:vm_bill_check.data.billType
+        var data = {
+            innId: CommonCacheUtil.innBaseInfo.user.innId,
+            billType: billType || vm_bill_check.data.billType,
+            settlementTime: vm_bill_check.data.settlementTime,
+            priceStrategy: vm_bill_check.data.priceStrategy,
+            pageSize: vm_bill_check.page.pageSize,
+            appKey: CommonCacheUtil.innBaseInfo.secure.appKey,
+            pageNo : pageNo || vm_bill_check.page.pageNo
+        };
+        vm_bill_check.setViews(false, true)
+        if(type == 'export'){
+            vm_bill_check.ajaxGetBillDetails(data, false)
+        }else{
+            vm_bill_check.ajaxGetBillDetails(data, true)
+        }
+    },
+    getCheckBills : function (pageNo, type) {
+        if(vm_bill_check.page.totalPages > 0 && vm_bill_check.page.totalPages < pageNo){
+            return;
+        }
+        vm_bill_check.setViews(true, false)
+        var data = {
+            innId: CommonCacheUtil.innBaseInfo.user.innId,
+            pageSize: vm_bill_check.page.pageSize,
+            appKey: CommonCacheUtil.innBaseInfo.secure.appKey,
+            pageNo : pageNo || vm_bill_check.page.pageNo
+        };
+        if(type == 'export'){
+            vm_bill_check.exportExcel(data)
+        }else{
+            vm_bill_check.ajaxGetRecords(data)
+        }
+    },
+    exportExcel : function (result, type) {
+        switch (type) {
+            case 1:
+                vm_bill_check.exportList = result.normalBillList || []
+                break;
+            case 2:
+                vm_bill_check.exportList = result.debitBillList || []
+                break;
+            case 3:
+                vm_bill_check.exportList = result.refundBillList || []
+                break;
+        }
+        CommonUtil.exportToExcel('bill_check_details_table_hide')
+    },
+    ajaxGetRecords : function (data) {
+        tmsky.ui.dialog.loading();
+        var url = vm_bill_check.urls.getCheckBills  + tmsky.util.generateUrlEndStr()
+        $.post(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                vm_bill_check.bills = []
+                vm_bill_check.bills = rs.result.billList||[]
+                var page = {}
+                page.pageSize = data.pageSize
+                page.pageNo = data.pageNo
+                page.totalCount = rs.result.totalCount
+                page.totalPages =  Math.ceil(rs.result.totalCount / data.pageSize)
+                tmsky.getVm('vm_finance_main').initPage('bill_check_page', page, function(){
+                    var pageInfo = tmsky.ui.page.getParams("bill_check_page")
+                    avalon.vmodels.vm_bill_check.getCheckBills(pageInfo.pageNo)
+                })
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    ajaxGetBillDetails : function (data, isPage) {
+        tmsky.ui.dialog.loading();
+        data.isPage = isPage
+        var url = (isPage)?vm_bill_check.urls.getBillDetails:vm_bill_check.urls.exportExcel  + tmsky.util.generateUrlEndStr()
+        $.post(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                if(isPage){
+                    vm_bill_check.recordDetailList = []
+                    vm_bill_check.recordDetailList = rs.result.list
+                    var page = {}
+                    page.pageSize = data.pageSize
+                    page.pageNo = data.pageNo
+                    page.totalCount = rs.result.totalCount
+                    page.totalPages =  Math.ceil(rs.result.totalCount / data.pageSize)
+                    tmsky.getVm('vm_finance_main').initPage('bill_check_details_page', page, function(){
+                        var pageInfo = tmsky.ui.page.getParams("bill_check_details_page")
+                        avalon.vmodels.vm_bill_check.checkDetails(pageInfo.pageNo, '', data)
+                    })
+                }else{
+                    vm_bill_check.exportExcel(rs.result, data.billType)
+                }
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    getSettlementInfo : function () {
+        tmsky.ui.dialog.loading();
+        var url = vm_bill_check.urls.getSettlementInfo  + tmsky.util.generateUrlEndStr()
+        var data = {
+            innId: CommonCacheUtil.innBaseInfo.user.innId,
+            appKey: CommonCacheUtil.innBaseInfo.secure.appKey
+        };
+        $.post(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                vm_bill_check.settlementInfo.arrearsSettlementAmount = rs.result.arrearsSettlementAmount
+                vm_bill_check.settlementInfo.incomeSettlementAmount = rs.result.incomeSettlementAmount
+                vm_bill_check.settlementInfo.totalSettlementAmount = rs.result.totalSettlementAmount
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function() {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    comfirmOrder : function (el) {
+        if(!vm_bill_check.innInfo.bankAccount || !vm_bill_check.innInfo.bankCity || !vm_bill_check.innInfo.bankCode
+        || !vm_bill_check.innInfo.bankName || !vm_bill_check.innInfo.bankProvince || !vm_bill_check.innInfo.bankRegion
+        || !vm_bill_check.innInfo.bankType) {
+            $('#bank_info_jump_popups').popups()
+            return
+        }
+        if(vm_bill_check.innInfo.confirm != '1'){
+            $('#bank_info_show_popups').popups()
+            return
+        }
+        vm_bill_check.confirmBill(el)
+    },
+    comfirmBankInfo: function () {
+        var url = vm_bill_check.urls.confirmBankInfo
+        var data = {innId:CommonCacheUtil.innBaseInfo.user.innId}
+        $.get(url, data).done(function(rs) {
+            if (rs.status == 200) {
+                tmsky.ui.dialog.tips('确认成功', 'success');
+                vm_bill_check.innInfo.confirm = '1'
+                $('#bank_info_show_popups').popups('hide')
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        })
+    },
+    confirmBill : function (el) {
+        tmsky.ui.dialog.confirm('确认?', function() {
+            var url = vm_bill_check.urls.confirmBill
+            var data = {
+                innId: CommonCacheUtil.innBaseInfo.user.innId,
+                appKey: CommonCacheUtil.innBaseInfo.secure.appKey,
+                settlementTime: el.settlementTime
+            }
+            tmsky.ui.dialog.loading('加载中...')
+            $.post(url, data).done(function(rs) {
+                if (rs.status == 200) {
+                    tmsky.ui.dialog.tips('操作成功!', 'success')
+                    el.confirmStatus = 1
+                }else{
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            }).always(function() {
+                tmsky.ui.dialog.loading.close();
+            })
+        })
+    }
+})

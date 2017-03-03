@@ -1,0 +1,151 @@
+/**
+ * Created by dai on 2017/01/06.
+ * pms默认皮肤---start
+ */
+.pms-logo a{
+    background: url('../images/skin-default/logo_ty.png') no-repeat;
+
+}
+.header-txt-overflow, #main-nav a {
+    color: #000;
+}
+
+#main-nav .active a {
+    color: #fff;
+    background-color: #a9221c;
+}
+
+#main-nav .active a.activity {
+    /*background:#a9221c;*/
+    background: #ffffff url("../images/skin-christmas/christmas_icon_new.png") no-repeat 50px 6px;
+    padding-bottom: 0;
+}
+
+#main-nav a {
+    color: #a9221c;
+}
+
+.fq-annouce, .fq-annouce:link, .fq-annouce:hover {
+    color: #DB4A38;
+    background: url('../h-popups/fq-annouce-icon.gif') no-repeat center left;
+}
+
+#main-nav a:hover {
+    text-decoration: none;
+    color: #fff;
+    background-color: #cf2d01;
+}
+
+#sub-nav s {
+    width: 0;
+    height: 12px;
+    border-left: 1px solid #cccccc;
+    overflow: hidden;
+    margin: 0 3px;
+    top: 7px;
+}
+
+.shopSellIcon {
+    background: #bb1c21;
+    width: 60px;
+    height: 41px;
+    top: -17px;
+    background: url('../../common/images/shopSell.png') no-repeat;
+}
+
+.shopSellIcon span {
+    position: relative;
+    top: 7px;
+}
+
+.shopSellIcon:hover {
+    top: -13px;
+    color: #EFEFEF
+}
+
+.bottomBar {
+    height: 37px;
+    background: #eeeeee;
+    border-top: 1px #d9d9d9 solid;
+
+}
+
+/*footnav.css*/
+.bottomBar li:hover a {
+    color: #cf2d01
+}
+
+.bottomBar li a {
+    padding-left: 24px;
+}
+
+.bottomBar li .icon1 {
+    background: url('../../house/footnav/images/bg_finance.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon1:hover {
+    background: url('../../house/footnav/images/bg_finance_on.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon2 {
+    background: url('../../house/footnav/images/bg_share.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon2:hover {
+    background: url('../../house/footnav/images/bg_share_on.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon3 {
+    background: url('../../house/footnav/images/bg_style.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon3:hover {
+    background: url('../../house/footnav/images/bg_style_on.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon4 {
+    background: url('../../house/footnav/images/bg_kf.png') no-repeat 0px 10px;
+}
+
+.bottomBar li a.icon4 {
+    padding-left: 20px;
+}
+
+.bottomBar li .icon4:hover {
+    background: url('../../house/footnav/images/bg_kf_on.png') no-repeat 0px 10px;
+}
+
+.bottomBar li .icon5 {
+    background: url('../../house/footnav/images/bg_message.png') no-repeat 0px 11px;
+    padding-left: 23px;
+}
+
+.bottomBar li .icon5:hover {
+    background: url('../../house/footnav/images/bg_message_on.png') no-repeat 0px 11px;
+}
+
+.bottomBar li .icon6 {
+    background: url('../../house/footnav/images/bg-message.gif') no-repeat 0px 10px;
+}
+
+.bottomBar li a.icon6 {
+    color: #cf2d01
+}
+
+.bottomBar li a.icon7 {
+    background: url('../../house/footnav/images/bdmanager.png') no-repeat 0px 10px;
+}
+
+.bottomBar li a.icon7:hover {
+    background: url('../../house/footnav/images/bdmanager_on.png') no-repeat 0px 10px;
+}
+
+/*house-grid.css*/
+.date-panel-wrap, .date-panel {
+    background-color: #db4a38;
+    color: #ffffff;
+}
+
+/**
+ * pms默认皮肤---end
+ */

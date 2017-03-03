@@ -1,0 +1,156 @@
+<div class="activity">
+    <div class="banner"></div>
+    <div class="sep-area">
+        <div>
+            <span ms-click="goState(0)" ms-click-2="getAllActivity(1,0)" ms-class-on="stateClass(0)">进行中</span>
+            <span ms-click="goState(1)" ms-click-2="getAllActivity(1,1)" ms-class-on="stateClass(1)">已结束</span>
+        </div>
+    </div>
+    <div class="ac-list" ms-visible="state[0]||state[1]">
+        <div ms-if="activityList==''"  style="margin: 20px;font-size: 16px;">暂无活动</div>
+        <div class="ac-div" ms-repeat="activityList">
+            <div class="ac-img fl">
+                <img class="wh100" ms-attr-src="{{el.imgUrl}}">
+            </div>
+            <div class="ac-info fl">
+                <h3 ms-click="goState(2,el)">{{el.activityName}}<i ms-if="el.recommend == true" class="ac-hot"></i></h3>
+                <div>活动时间：<span  class="ac-blue">{{el.activityTime}}</span></div>
+                <p ms-mouseover="showme($event)" ms-mouseout="hideme()">活动内容：{{el.content|truncate(70)}}<a ms-click="goState(2,el)" class="ac-detail">查看详情>></a></p>
+                <!--<div ms-if="el.requireStr" class="detail">{{el.requireStr}}</div>-->
+            </div>
+            <div class="ac-control fl" ms-if="(el.activityStatus == 1&&el.status==1)||(el.activityStatus == 1&&el.status==0&&(el.enterStatus==3||el.enterStatus==2||el.enterStatus==1))">
+                <div class="failReason"><i class="ac-arrow"></i>{{el.examineResult}}</div>
+                <div ms-if="el.status==1&&el.enterStatus!=3&&el.enterStatus!=2&&el.enterStatus!=1">离截止报名还有<span>{{getZnum(el.days)}}</span>天</div>
+                <span ms-mouseover="failHover(el)" ms-mouseout="failOut(el)" ms-click="openActicity(el.activityId,el.enterStatus)"
+                      ms-class="{{enterStatusClass(0,el.enterStatus)}}">{{enterStatusClass(1,el.enterStatus)}}</span>
+            </div>
+            <div class="ac-control fl"  ms-if="el.activityStatus == 0">
+                <div class="ac-over">活动已结束</div>
+            </div>
+            <div class="ac-control fl"  ms-if="el.activityStatus == 1&&el.status==0&&el.enterStatus!=3&&el.enterStatus!=2&&el.enterStatus!=1">
+                <div class="ac-over">报名已结束</div>
+            </div>
+
+        </div>
+        <div id="page-div"></div>
+    </div>
+
+    <!--详情-->
+    <div class="ac-detail-page" ms-visible="state[2]">
+        <div class="ac-detail-banner">
+            <div class="ac-detail-bannerimg fl">
+                <div class="l-banner">
+                    <div ms-if="order.loopPictureArr.length!=0" ms-repeat="order.loopPictureArr" class="banner banner1_c" ms-css-background="el"></div>
+                    <div class="defaultImg" ms-if="order.loopPictureArr.length==0"></div>
+                </div>
+            </div>
+            <div class="ac-detail-bannerinfo fr">
+                <div class="text"><label ms-if="order.status==1&&order.enterStatus!=3&&order.enterStatus!=2&&order.enterStatus!=1">离截止报名还有 {{getZnum(order.days)}} 天</label></div>
+
+                <div ms-class-cursor="order.enterStatus!=1&&order.enterStatus!=2&&order.enterStatus!=3"
+                     ms-if="(order.activityStatus == 1&&order.status==1)||(order.activityStatus == 1&&order.status==0&&(order.enterStatus==3||order.enterStatus==2||order.enterStatus==1))"
+                     ms-click="openActicity(order.activityId,order.enterStatus)" class="btn">{{enterStatusClass(1,order.enterStatus)}}</div>
+                <div ms-if="order.activityStatus == 0" class="ac-over" style="color:#ffffff">活动已结束</div>
+                <div ms-if="order.activityStatus == 1&&order.status==0&&order.enterStatus!=3&&order.enterStatus!=2&&order.enterStatus!=1" class="ac-over" style="color:#ffffff">报名已结束</div>
+            </div>
+        </div>
+        <div ms-click="goState(oldPage)" class="ac-back">返回上一步</div>
+        <div class="ac-detail-info">
+            <h3>{{order.activityName}}</h3>
+            <div>
+                <label>报名截止：</label>
+                <p>{{order.entryTime}}</p>
+            </div>
+            <div>
+                <label>活动时间：</label>
+                <p>{{order.activityTime}}</p>
+            </div>
+            <div>
+                <label>活动简介：</label>
+                <p>{{order.content}}</p>
+            </div>
+            <div>
+                <label>活动内容：</label>
+                <p id="requireStr">暂无活动内容。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--近期有拒单无法参加该活动！-->
+<div class="tomasky-ui-popups" ms-visible="bool.refuse">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="closeAlert()"  data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">提示信息</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x bottom-refuse">
+            <div class="container">
+                <div class="ac-alert">
+                    <h2>抱歉！您近期有拒单无法参加该活动！</h2>
+                    <div>您可以马上更新房量房价，<a class="ac-a">去修改房量/房价>></a></div>
+                    <div class="ac-dashed"></div>
+                    <p>下次活动等你来报名，还有其他类型活动可以参与哦。</p>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="btn btndefault btnSure"  ms-click="closeAlert()" data-ui="popups">知道了</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--未开通代销-->
+<div class="tomasky-ui-popups" ms-visible="bool.noOpenDx">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="closeAlert()"  data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">提示信息</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x bottom-refuse">
+            <div class="container">
+                <div class="ac-alert">
+                    <h2>抱歉！您还未开通代销！</h2>
+                    <div>您需要去卖房管理-渠道管理 中开通代销平台, <a href="/public/views/1/room-sell.html" class="ac-a">马上开通>></a></div>
+                    <div class="ac-dashed"></div>
+                    <p>下次活动等你来报名，还有其他类型活动可以参与哦。</p>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="btn btndefault btnSure"  ms-click="closeAlert()" data-ui="popups">知道了</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--间夜量未达标-->
+<div class="tomasky-ui-popups" ms-visible="bool.night||bool.orders">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="closeAlert()" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">提示信息</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x bottom-refuse">
+            <div class="container">
+                <div class="ac-alert">
+                    <h2 ms-visible="bool.night">抱歉！您的间夜量未达标！</h2>
+                    <!--订单量未达标-->
+                    <h2 ms-visible="bool.orders">抱歉！您的订单量未达标！</h2>
+                    <div class="ac-alert3">
+                        1.完善分销资料，上传客栈美照。<br>
+                        2.及时维护房态房价，避免拒单。<br>
+                        3.积极参与各类活动，增加曝光机会。<br>
+                        4.线下订单引导至线上下单，累计销量。<br>
+                    </div>
+                    <div class="ac-solid"></div>
+                    <p>下次活动等你来报名，还有其他类型活动可以参与哦。</p>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <button class="btn btndefault btnSure" ms-click="closeAlert()" data-ui="popups">知道了</button>
+            </div>
+        </div>
+    </div>
+</div>
+

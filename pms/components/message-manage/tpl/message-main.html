@@ -1,0 +1,28 @@
+<!--订单消息-->
+<!--<div class="orderMessage" ms-visible="tabShow.orderMessage">-->
+
+<!--</div>-->
+
+<!--闹钟提醒-->
+<div class="clockTips">
+    <div class="fr">
+        <input id="account_from" ms-duplex="data.from" type="text" placeholder="开始时间" class="select-time">
+        至
+        <input id="account_to" ms-duplex="data.to" type="text" placeholder="结束时间" class="select-time">
+    </div>
+    <div id="messageTips" ms-visible="messageTipsShow"></div>
+    <div class="message-info">
+        <div class="message-info-one" ms-repeat="messageCont" ms-click="messageClick($index)">
+            <h3 class="message-title"><i ms-class="{{el.hasRead?'has-read':''}}"></i>{{ el.title }}<span
+                    ms-visible="tabShow.clockTips" class="message-date">{{ el.date }}</span></h3>
+            <div class="message-con-sl">{{ el.content | truncate(45,'...查看全部消息') }}</div>
+            <p class="message-con-all" ms-visible="messageShow==$index">{{ el.content }}</p>
+        </div>
+    </div>
+    <div id="account_book_page"></div>
+</div>
+
+<!--账单通知-->
+<!--<div class="accountNotice" ms-visible="tabShow.accountNotice">-->
+
+<!--</div>-->

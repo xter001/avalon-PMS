@@ -1,0 +1,760 @@
+var User = require('../../../header/user.js'),
+    CONST = require('../../../common/js/const.js')
+var vm_guests = avalon.define({
+    $id: 'vm_guests',
+    $g_mainOrder: null,
+    $guestFromMap: {},
+    inputView: false,
+    infoView: false,
+    open: true,
+    integralFunc: false,
+    orderNoFunc: false,
+    multiFunc: false,
+    cardFunc: false,
+    addressFunc: false,
+    unionFunc: false,
+    needCardAndNation: true,
+    userTel: '',
+
+    cardTypeEnum: { "1": '身份证', "2": '军官证', "3": '通行证', "4": '护照', "5": '其它' },
+    nationsEnum: ['汉族', '壮族', '满族', '回族', '苗族', '维吾尔族', '土家族', '彝族', '蒙古族', '藏族', '布依族',
+        '侗族', '瑶族', '朝鲜族', '白族', '哈尼族', '哈萨克族', '黎族', '傣族', '畲族', '傈僳族', '仡佬族', '东乡族',
+        '高山族', '拉祜族', '水族', '佤族', '纳西族', '羌族', '土族', '仫佬族', '锡伯族', '柯尔克孜族', '达斡尔族', '景颇族',
+        '毛南族', '撒拉族', '塔吉克族', '阿昌族', '普米族', '鄂温克族', '怒族', '京族', '基诺族', '德昂族', '保安族',
+        '俄罗斯族', '裕固族', '乌兹别克族', '门巴族', '鄂伦春族', '独龙族', '塔塔尔族', '赫哲族', '珞巴族', '布朗族'],
+    guestFromEnum: [],
+    guestFrom: { "id": 4, "name": "其它渠道", "disabled": false },
+    orderNo: '',
+    commission: '',
+    datas: [],
+    contact: {},
+
+    // 通过姓名或者手机号搜索客户资料
+    showCustomerSearchArr: [false],
+    customers: {},
+    showName: [],
+    idCard: [],
+    // 该客栈加入的会员联盟
+    member: {
+        "phone": "",
+        //"unionId" : "0",
+        "gradeName": "无",
+        "discountPercent": 10,
+        "privilegePrice": 0,
+        "integral": 0
+    },
+    unionEnum: {},
+    unionInfo: [],
+    hideCustomerSearchArr: function (currentIndex) {
+        setTimeout(function () {
+            vm_guests.showCustomerSearchArr.splice(currentIndex, 1, false)
+        }, 200)
+    },
+    initGuestFromEnum: function (list) {
+        var vm = vm_guests,
+            map = vm.$guestFromMap
+
+        list = list || [{ "id": 4, "name": "其它渠道" }]
+        list.forEach(function (el) {
+            vm.guestFromEnum.push({
+                'id': el.id,
+                'name': el.name
+            })
+
+            map[el.id] = el.name
+        })
+        vm._changeGuestFrom()
+        vm_guests.getUnionInfo()
+    },
+    _changeGuestFrom: function (obj) {
+        var vm = vm_guests
+        obj = obj || vm.guestFromEnum.$model[0]
+        vm.guestFrom.name = obj.name
+        vm.guestFrom.id = obj.id
+        vm.guestFrom.disabled = obj.disabled || false
+    },
+
+    initCommission: function (list) {
+        __CommissionUtil__.init(list)
+    },
+
+    initMemberUnionEnum: function (list) {
+        var vm = vm_guests
+        unionEnum = { "0": "请选择所属会员联盟" }
+        list = list || []
+        list.forEach(function (el) {
+            unionEnum[el.id] = el.name
+        })
+        vm.unionEnum = unionEnum
+        vm_orders._updateTotalInfo()
+    },
+
+    getMainPerson: function () {
+        var vm = vm_guests,
+            arr = vm.datas.$model,
+            ret = {
+                name: '',
+                phone: ''
+            }
+        if (arr.length) {
+            ret.name = arr[0].name
+            ret.phone = arr[0].phone
+        }
+        return ret;
+    },
+    infoVisible: function () {
+        var vm = vm_guests,
+            mainPerson = vm.getMainPerson()
+
+        return (!mainPerson.phone && !mainPerson.name) ? false : true
+    },
+    add: function (data, getPhoneInfo) {
+        var vm = vm_guests,
+            def = {
+                id: '',
+                phone: '',
+                cardType: '1',
+                name: '',
+                cardNo: '',
+                address: '',
+                picStream: '',
+                nation: vm.addressFunc ? '汉族' : ''
+            }
+        // 一个订单最多20个入住人
+        if (vm.datas.length >= 20) {
+            tmsky.ui.dialog.tips('一个订单最多添加20个入住人！', 'error')
+            return
+        }
+        vm.open = true
+
+        data = data || def
+        data.phone = data.phone || ''
+        data.oldPhone = data.phone
+        data.phoneBlackCount = data.phoneBlackCount || 0
+        data.cardNoBlackCount = data.cardNoBlackCount || 0
+        data.spendCount = data.spendCount || 0
+        data.customerId = data.customerId || null
+
+        data.province = ''
+        data.city = ''
+
+        // 查询归属地
+        if (getPhoneInfo)
+            vm.getPhoneInfos(data.phone)
+
+        vm.datas.push(data)
+    },
+    getPhoneInfos: function (phones) {
+        var vm = vm_guests
+        InnUtil.phoneInfo(phones || vm.datas.map(function (person) {
+            if (!tmsky.isEmpty(person.phone)) {
+                return person.phone
+            }
+        }), function (rs) {
+            if (rs && rs.status == 200) {
+                for (name in rs) {
+                    vm.datas.forEach(function (el) {
+                        if (el.phone == name) {
+                            var info = rs[name]
+                            el.province = info.province
+                            el.city = info.city
+                            return false
+                        }
+                    })
+                }
+            }
+        })
+    },
+    // 添加入住人到第一个，如果不成功则添加到队尾
+    addFirst: function (item) {
+        if (!item || item.name === '') return;
+        // 刷身份证 如果当前有同名则替换为最新信息
+        var vm = vm_guests,
+            array = vm.datas || [],
+            name = String(item.name).trim(),
+            i, el, len, hasFound
+
+        for (i = 0, len = array.length; i < len; i++) {
+            el = array[i]
+            if (el.name.trim() === name) {
+                // 更新信息
+                hasFound = true
+                el.name = name;
+                el.cardNo = item.cardNo;
+                el.address = item.address;
+                el.picStream = item.picStream;
+                el.nation = item.nation;
+                return;
+            }
+        }
+        if (!hasFound) {
+            item.id = item.id || ''
+            item.phone = item.phone || ''
+            item.cardType = item.cardType || '1'
+
+            var first = array[0]
+            if (first && first.name.trim() === '') {
+                vm.datas.shift()
+                vm.datas.unshift(item)
+            } else {
+                vm.add(item, true)
+            }
+        }
+    },
+    toggle: function () {
+        var vm = vm_guests
+
+        vm.open = !vm.open
+    },
+    // 佣金处理
+    commissionHandle: function () {
+        var vm = vm_guests,
+            channelId = vm.guestFrom.id,
+            orders = vm_orders.orders.$model
+
+        vm.commission = __CommissionUtil__.getCommission(channelId, orders)
+    },
+    // 电话号码填写完成之后
+    onBlur: function (type, index) {
+        var vm = vm_guests
+        vm.hideCustomerSearchArr(index)
+        // 查询黑名单和消费
+        var timer = setTimeout(function () {
+            //验证手机号
+            if (type == 'phone') {
+                var tel = vm.datas[index].phone
+                vm.datas[index].phone = tel.replace(/[^0-9]/g, '')
+                if (vm.datas[index].phone == vm.datas[index].oldPhone) {
+                    return false
+                }
+            }
+            vm.$searchBlackAndSpend(type, index);
+        }, 200)
+        vm.$timer = timer
+    },
+    $timer: '',
+    // 查询黑名单和消费
+    $searchBlackAndSpend: function (type, index) {
+        var vm = vm_guests
+        if (vm.datas.length < index) return
+        var ele = vm.datas[index], phone = ele.$model.phone.trim(), cardNo = ele.$model.cardNo ? ele.$model.cardNo.trim() : ""
+        if (phone !== '' || cardNo !== '') {
+            var datas = {
+                temp: new Date().valueOf()
+            };
+            if (type === 'phone') {
+                datas.contact = phone
+            } else if (type === 'cardNo') {
+                datas.cardNo = cardNo
+            }
+            $.get('/inns/blackList/getListJson', datas)
+                .done(function (rs) {
+                    if (rs.status === 200) {
+                        var blackList = rs.list
+                        if (blackList) {
+                            if (type === 'phone') {
+                                ele.phoneBlackCount = blackList.length
+                                var tableHtml = _black_list_tpl_(blackList)
+                                $('#phone_black_list_popups').find('.ui-popups-body').html(tableHtml)
+                                ele.customerId = rs.customerId
+                                //查询消费详情
+                                var customerId = ele.customerId
+                                if (customerId && phone) {
+                                    $.post('/inns/customers/getCostDetail', {
+                                        'customerId': customerId,
+                                        "contact": phone
+                                    })
+                                        .done(function (rs) {
+                                            if (rs.status === 200) {
+                                                var list = rs.page.result
+                                                if (list) {
+                                                    ele.spendCount = list.length
+                                                    // 替换字符串
+                                                    list.forEach(function (el, i) {
+                                                        el.status = CONST.STATUS_MAP[el.status]
+                                                        el.roomNo = el.roomNo.replace(/,/g, '<br/>')
+                                                        el.inOut = el.inOut.replace(/,/g, '<br/>')
+                                                    })
+                                                    var tableHtml = _spend_list_tpl_(list);
+                                                    $('#spend_list_popups').find('.ui-popups-body').html(tableHtml)
+                                                }
+                                            }
+                                        })
+                                } else {
+                                    ele.spendCount = 0
+                                }
+                            } else if (type === 'cardNo') {
+                                ele.cardNoBlackCount = blackList.length
+                                var tableHtml = _black_list_tpl_(blackList)
+                                $('#cardNo_black_list_popups').find('.ui-popups-body').html(tableHtml)
+                            }
+                        }
+                    }
+                });
+        } else {
+            ele.phoneBlackCount = 0
+            ele.cardNoBlackCount = 0
+            ele.spendCount = 0
+        }
+    },
+    // 手机号黑名单详情
+    phoneBlackDetail: function () {
+        $('#phone_black_list_popups').popups()
+    },
+    // 证件号黑名单详情
+    cardNoBlackDetail: function () {
+        $('#cardNo_black_list_popups').popups()
+    },
+    // 消费详情
+    spendDetail: function () {
+        $('#spend_list_popups').popups()
+    },
+    // 查询积分
+    $searchIntegral: function () {
+        var vm = vm_guests
+
+        if (vm.datas.length < 1) return;
+
+        var phone = vm.datas[0].$model.phone.trim()
+
+        if (phone !== '') {
+            $.get("/getInnIntegral/" + phone, { temp: new Date().valueOf() })
+                .done(function (json) {
+                    var integral = 0
+                    if (json.status == 200) {
+                        integral = json.integral;
+                    }
+                    vm.integral = integral// 设置积分
+                })
+        } else {
+            vm.integral = 0;
+        }
+    },
+
+    reset: function (notReset) {
+        var vm = vm_guests
+        vm.datas.removeAll()
+        vm.$g_mainOrder = null
+        vm.gradeName = ''
+        if (!notReset) {
+            vm.inputView = false
+            vm._changeGuestFrom()
+            vm.orderNo = ''
+            vm.commission = ''
+            vm.add()
+            // vm.initUnion()
+            vm.showCustomerSearchArr.removeAll()
+        }
+    },
+    gradeName: '',  //主订单的会员等级
+    // 刷新到于 g_mainOrder 信息同步
+    flushMainOrder: function (g_mainOrder) {
+        var vm = vm_guests;
+        var idcardType = avalon.vmodels.vm_idcard_main.idcardType;
+        //roomToPerson_func
+        vm.reset(true)  // avalon 二次赋值bug
+        // 所选中订单的入住日期是否大于今天。是：不需要显示身份证录入以及名族
+        vm.setNeedCardAndNation()
+        vm.$g_mainOrder = g_mainOrder
+        vm_guests.gradeName = g_mainOrder.gradeName
+
+
+        //联系人
+        if (idcardType.roomToPerson_func || idcardType.psb_func ) {
+            var item = {
+                    name: g_mainOrder.contactUser,
+                    phone: g_mainOrder.contactPhone,
+                }
+                vm.add(item)
+
+        } else {
+            if (g_mainOrder.persons.length === 0) {
+                vm.add()
+            }
+
+            g_mainOrder.persons.forEach(function (el) {
+                var item = {
+                    id: el.id,
+                    name: el.name,
+                    phone: el.phone,
+                    cardType: el.cardType || '1',
+                    cardNo: el.cardNo,
+                    address: el.address,
+                    picStream: el.picStream,
+                    nation: el.nation
+                }
+                vm.add(item)
+            })
+        }
+        vm.getPhoneInfos()
+        if (g_mainOrder.customerFrom) {
+            var orderFrom = g_mainOrder.orderFrom
+            vm._changeGuestFrom({
+                "id": g_mainOrder.customerFrom.id,
+                "name": g_mainOrder.customerFrom.name,
+                "disabled": (orderFrom != -1 && orderFrom != -2 && orderFrom != -3 && orderFrom != -4 && orderFrom != -5)
+            })
+        } else {
+            vm._changeGuestFrom()
+        }
+        vm.commission = g_mainOrder.commission || ''
+        vm.orderNo = vm.showOrderNoByCustomerFromId()
+    },
+    // 获取显示的订单号（代销订单、信用住等显示渠道订单号，其他显示我们订单号。）
+    showOrderNoByCustomerFromId: function () {
+        var vm = vm_orders
+        return vm.$g_mainOrder.orderFrom > 0 ? vm.$g_mainOrder.otaOrderNo : vm.$g_mainOrder.orderNo
+    },
+    // ===== 提取值 ====
+    convertData: function () {
+        var vm = vm_guests,
+            datas = vm.datas.$model,
+            ret = {
+                persons: [],
+                commission: Number(vm.commission).toFixed(2) * 1,
+                orderNo: vm.guestFrom.disabled ? vm.$g_mainOrder.orderNo || '' : vm.orderNo,
+                customerFrom: {
+                    id: vm.guestFrom.id
+                }
+            }
+        if (vm_guests.gradeName != '' && vm_guests.gradeName != undefined && vm_guests.gradeName != '无') {
+            ret.gradeName = vm_guests.gradeName
+        }
+        datas.forEach(function (el, index) {
+            var isPayMan = index === 0 ? 1 : 0
+            if (avalon.vmodels.vm_idcard_main.idcardType.roomToPerson_func) {
+                isPayMan = 0
+            }
+            // if (!el.name || !el.phone) {
+            //     return false
+            // }
+            if (index == 0) {
+                //保存联系人
+                ret.contactUser = el.name && el.name.trim()
+                ret.contactPhone = el.phone && el.phone.trim()
+            }
+            ret.persons.push({
+                id: el.id,
+                name: el.name && el.name.trim(),
+                phone: el.phone && el.phone.trim(),
+                cardType: el.cardType,
+                cardNo: el.cardNo,
+                address: el.address,
+                picStream: el.picStream,
+                nation: el.nation,
+                isPayMan: isPayMan,
+                //unionId : el.phone ? vm.member.unionId : 0,
+                discountPercent: vm.member.discountPercent * 10
+            })
+        })
+
+        if (avalon.vmodels.vm_idcard_main.idcardType.roomToPerson_func) {
+            delete ret.persons
+        }
+
+        return ret;
+    },
+    searchCustomerMember: false,//该客栈是否是联盟会员
+    searchCustomerParam: {},
+    unionCode: '',
+    //获取联盟信息
+    getUnionInfo: function () {
+        $.ajax({
+            url: CONST.DOMAIN.DIS + '/union/getUnionInfo',
+            data: {
+                pmsInnId: User.getUserInfo().superInnId,
+                type: 2
+            },
+            success: function (rs) {
+                if (rs.status == 200 && rs.unions.length != 0) {
+                    if (rs.unions[0] && rs.unions[0].openMember == 1) {
+                        vm_guests.searchCustomerMember = true
+                        vm_guests.unionCode = rs.unions[0].uniqueCode
+                        vm_guests.unionInfo = rs.unions[0].grades
+                    }
+                }
+            }
+        })
+    },
+    $searchTimer: '',
+    onFocusPhone: function (el) {
+        el.oldPhone = el.phone
+    },
+    customerSearch: function (type, currentIndex) {
+        if (type == 2) {
+            //输入手机
+            vm_guests.gradeName = ''
+            if (avalon.vmodels.vm_orders.$g_mainOrder != null && currentIndex == 0) {
+                if (vm_guests.datas[0].phone == avalon.vmodels.vm_orders.$g_mainOrder.contactPhone) {
+                    vm_guests.gradeName = avalon.vmodels.vm_orders.$g_mainOrder.gradeName
+                }
+            }
+        }
+        if (type == 2 && $(this).val().length < 5) {
+            //输入手机
+            vm_guests.hideCustomerSearchArr(currentIndex)
+            return false
+        }
+        var _this = $(this)
+        clearTimeout(vm_guests.$searchTimer)
+        vm_guests.$searchTimer = setTimeout(function () {
+            vm_guests.timerCustomerSearch(type, currentIndex, _this)
+        }, 800)
+    },
+    timerCustomerSearch: function (type, currentIndex, _this) {
+        var vm = vm_guests;
+        var name = vm.datas.$model[currentIndex].name && vm.datas.$model[currentIndex].name.trim()
+        var phone = vm.datas.$model[currentIndex].phone && vm.datas.$model[currentIndex].phone.trim()
+        $.each(vm.showCustomerSearchArr, function (i) {
+            vm.showCustomerSearchArr.splice(i, 1, false)
+        })
+        if (!vm.searchCustomerMember) {
+            if (type == 1 && name !== '' || type == 2 && phone !== '') {
+                _this.addClass('search-loading')
+                $.post('/inns/customers/search', {
+                    'searchType': type == 1 ? 2 : 3,
+                    'input': type == 1 ? name : phone,
+                    "innType": -1,
+                    "sortTypeOut": "customer_out_down",
+                    "pageNo": 1
+                })
+                    .done(function (rs) {
+                        $('.search-loading').removeClass('search-loading')
+                        if (rs.status === 200) {
+                            vm.customers = rs.customers
+                            vm.showCustomerSearchArr.splice(currentIndex, 1, true)
+                            if (vm.customers.length == 0) {
+                                vm.closeCustomerDiv(currentIndex)
+                            }
+                        }
+                    })
+            }
+        } else {
+            //查询会员信息接口
+            var param = $.extend({}, CommonCacheUtil.innBaseInfo.secure)
+            param.pageNo = 1
+            param.searchKey = type == 1 ? name : phone
+            param.searchType = type == 1 ? 'name' : 'mobile'
+            param.unionCode = vm.unionCode
+            if (type == 1 && name !== '' || type == 2 && phone !== '') {
+                _this.addClass('search-loading')
+                $.post(CONST.DOMAIN.DIS + '/union/queryMembers', param)
+                    .done(function (rs) {
+                        $('.search-loading').removeClass('search-loading')
+                        if (rs.status === 200) {
+                            var list = []
+                            rs.page.result.forEach(function (el, i) {
+                                var json = {
+                                    cardNo: el.idCardNo,
+                                    name: el.name,
+                                    contact: el.contact,
+                                    costMoney: el.totalConsume,
+                                    integral: el.totalIntegral,
+                                    cardType: 1
+                                }
+                                var unionInfo = vm_guests.getUnionGradeByPrice(el.totalConsume)
+                                if (!tmsky.isEmptyObject(unionInfo)) {
+                                    json.unionInfo = unionInfo
+                                }
+                                list.push(json)
+                            })
+                            vm.customers = list
+                            vm.showCustomerSearchArr.splice(currentIndex, 1, true)
+                            if (vm.customers.length == 0) {
+                                vm.closeCustomerDiv(currentIndex)
+                            }
+                        }
+                    })
+            }
+        }
+    },
+    closeCustomerDiv: function (currentIndex) {
+        var vm = vm_guests
+        setTimeout(
+            function () {
+                vm.showCustomerSearchArr.splice(currentIndex, 1, false)
+            }, 2000)
+    },
+
+    customerFix: function (item, currentIndex) {
+        var vm = vm_guests
+        var phone = vm.datas[0].$model.phone.trim()
+        if (currentIndex == 0 && item.unionInfo) {
+            vm_guests.gradeName = item.unionInfo.name
+        }
+        // 填充所选客户资料
+        vm.datas[currentIndex].name = item.name
+        vm.datas[currentIndex].phone = item.contact
+        vm.datas[currentIndex].cardType = item.cardType
+        vm.datas[currentIndex].cardNo = item.cardNo
+        vm.showCustomerSearchArr.splice(currentIndex, 1, false)
+
+        clearTimeout(vm_guests.$timer)
+        vm_guests.onBlur('phone', currentIndex)
+    },
+
+    setNeedCardAndNation: function () {
+        if (vm_orders.isTodayBeforeFirstCheckInDate()) {
+            vm_guests.needCardAndNation = false
+        } else {
+            vm_guests.needCardAndNation = true
+        }
+    },
+
+    //通过会员联盟消费价格来判断联盟等级
+    getUnionGradeByPrice: function (num) {
+        var unions = vm_guests.unionInfo
+        var grade = {}
+        if (unions.length != 0) {
+            unions.forEach(function (el, i) {
+                if (num >= el.promoteFee) {
+                    grade = $.extend({}, el)
+                }
+            })
+        }
+        return grade
+    },
+    //通过会员名称来判断Index
+    getUnionIndexByName: function (name) {
+        var unions = vm_guests.unionInfo
+        var index = ''
+        if (unions.length != 0) {
+            unions.forEach(function (el, i) {
+                if (name == el.name) {
+                    index = i + 1
+                }
+            })
+        }
+        return index
+    },
+    getFloat2Num: function (num) {
+        return parseFloat(num.toFixed(2))
+    }
+})
+
+vm_guests.add()
+// 监听来源渠道
+vm_guests.guestFrom.$watch("id", function (val) {
+    var vm = vm_guests,
+        map = vm.$guestFromMap
+
+    if (map[val]) {
+        vm.guestFrom.name = map[val]
+    }
+
+    if (vm.inputView) {
+        vm.commissionHandle()
+    }
+})
+
+// 抵扣积分是否显示
+vm_guests.member.$watch("integral", function (val) {
+    var isHide = val <= 0
+    vm_finances.toggleFinance(isHide)
+})
+
+// 佣金帮助类 commissionUtil
+var __CommissionUtil__ = (function () {
+    var commissionUtil = {};
+
+    var COMMISSION_TYPE_NONE = "0"; // 无
+    var COMMISSION_TYPE_SCALE = "1"; // 比例
+    var COMMISSION_TYPE_FIXED = "2"; // 固定金额
+    var datas = [];
+    var cache = {};// 缓存结果
+
+    function _searchCommission(channelId) {
+        if (cache[channelId] !== void 0)
+            return cache[channelId];
+        var resultJson = {
+            type: COMMISSION_TYPE_NONE
+        };
+        if (datas.length) {
+            var i, e, len;
+            for (i = 0, len = datas.length; i < len; i++) {
+                e = datas[i];
+                if (e.channelId == channelId) {
+                    if (e.commissionType == COMMISSION_TYPE_SCALE) {
+                        // 固定比例
+                        resultJson.type = COMMISSION_TYPE_SCALE;
+                        resultJson.scale = (e.commissionValue / 100);
+                    } else {
+                        // 固定金额
+                        resultJson.type = COMMISSION_TYPE_FIXED;
+                        resultJson.table = _getCommssionTable(channelId);
+                    }
+                    break;
+                }
+            }
+        }
+        return cache[channelId] = resultJson;
+    }
+
+    function _getCommssionTable(channelId) {
+        var jsonValue = {};
+        var array = datas || [];
+        array.forEach(function (e) {
+            if (channelId == e.channelId) {
+                var roomTypeId = e.roomTypeId;
+                jsonValue[roomTypeId] = e.commissionValue;
+            }
+        });
+        return jsonValue;
+    }
+
+    /**
+     * 获取佣金
+     *
+     * @param channelId
+     *            来源渠道
+     * @return 佣金值或者''
+     */
+    commissionUtil.getCommission = function (channelId, orders) {
+        var result = '';
+        var commission = _searchCommission(channelId);
+        // 判断佣金类型
+        switch (commission.type) {
+            case COMMISSION_TYPE_NONE:
+                break;
+            case COMMISSION_TYPE_SCALE:
+                var roomFee = 0;
+                orders.forEach(function (el) {
+                    var sum = el.sum
+
+                    if (isNaN(sum))
+                        return;// 跳过
+                    roomFee += Number(sum)
+                });
+                result = roomFee * commission.scale;
+                break;
+            case COMMISSION_TYPE_FIXED:
+                var table = commission.table
+
+                orders.forEach(function (el) {
+                    var days = el.days,
+                        price = table[el.roomtypeId]
+
+                    if (isNaN(price))
+                        return;// 跳过
+                    result = Number(result) + price * days;
+                });
+                break;
+        }
+        if (typeof result === 'number')
+            result = Number(result).toFixed(2) * 1;
+        return result;
+    }
+
+    /**
+     * 初始化
+     *
+     * @param {[type]}
+     *            list [description]
+     * @return {[type]} [description]
+     */
+    commissionUtil.init = function (list) {
+        datas = list
+    }
+
+    return commissionUtil;
+})();

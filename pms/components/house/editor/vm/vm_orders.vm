@@ -1,0 +1,1134 @@
+var _CacheOrders = null,
+    // 退房时缓存之前订单状态
+    _OutingDaysPrefix = '实住',
+    MAX_PRICE_ITEM_LENGTH = 12
+
+var vm_orders = avalon.define({
+    $id: 'vm_orders',
+    $g_status: null,
+    $g_mainOrder: null,
+    inputView: false,
+    infoView: false,
+    today: tmsky.date.today(),
+    isRatePlan: false, // 是否信用住
+    isFromDx: false, // 是否来自代销平台
+    isFromOTA: false, // 是否来自ota
+    important: true, // 是否可修改的订单
+    totalDays: 1,
+    firstDate: null, // 订单最开始的一天
+    endDate: null, // 订单最后一天
+    roomFee: 0, // 房费金额
+    spendsFee: 0, // 其他消费
+    totalAmount: 0, // 订单总金额 房费金额+其他消费
+    spendFunc: false,
+    showAddSpend: true,// 是否显示添加其他消费按钮
+    additionView: false,
+    date: {
+        checkin: '',
+        checkout: ''
+    },
+    spendEnum: {
+        0: '请选择'
+    },
+    spends: [],
+    orders: [],
+    $priceRep: [], // 当前点击的格子数据 仓库
+    priceList: [],
+    priceShow: false,
+    priceTop: -300,
+    isAccessDeleteOrder: false,
+    priceMaxWidth: '227px',
+    priceShowByInfo: false,
+    priceTopByInfo: -300,
+    initSpendEnum: function (list) {
+        var vm = vm_orders,
+            spendEnum = { 0: '请选择' }
+        list = list || []
+        list.forEach(function (el) {
+            spendEnum[el.id] = el.name
+        })
+        if (list.length) {
+            vm.spendFunc = true
+        }
+        vm.spendEnum = spendEnum
+    },
+
+    // 选中框是否出现
+    _checkBtn: function () {
+        var vm = vm_orders,
+            arr = vm.orders,
+            g_status = vm.$g_status,
+            today = tmsky.date.today()
+
+        var i, len, el, nocheck;
+        for (i = 0, len = arr.length; i < len; i++) {
+            el = arr[i];
+            nocheck = true
+
+            if (g_status === CONST.G_BOOKING || g_status === CONST.G_INING || g_status === CONST.G_BOOK_CANCLEING) {
+                break;
+            }
+            // 查询子订单
+            if (g_status === CONST.G_PART_INING) {
+                nocheck = (el.status === CONST.SUB_IN) ? true : false
+                el.checked = !nocheck
+            }
+
+            //退房
+            if (g_status === CONST.G_OUTING) {
+                nocheck = (el.status === CONST.SUB_OUT) ? true : false
+                el.checked = !nocheck
+                if (vm_b_checkout_model.isNoCheckInTruely(el.start) || el.status != 3) {
+                    el.checked = false
+                    nocheck = true
+                }
+            }
+            // 信用住退房，必须为全退
+            if (g_status === CONST.G_RATEPLAN_OUTING && !el.nocheck) {
+                el.checked = true
+            }
+            el.nocheck = nocheck
+        }
+    },
+
+    // 获取实际房费
+    getRealRoomFee: function () {
+        var vm = vm_orders, arr = vm.orders.$model, penalty = vm_finances.penalty > 0 ? vm_finances.penalty : 0, fee = 0, price
+
+        arr.forEach(function (el) {
+            price = parseFloat(el.sum) || 0
+            fee += parseFloat(price)
+        })
+
+        if (vm.$g_status !== CONST.G_BOOK_CANCLEING) {
+            fee += parseFloat(parseFloat(penalty) || 0)
+        }
+
+        return fee.toFixed(2) * 1;
+    },
+
+    // 更新房费 / 总天数
+    _updateTotalInfo: function () {
+        var vm = vm_orders,
+            arr = vm.orders.$model,
+            penalty = vm_finances.penalty > 0 ? vm_finances.penalty : 0,
+            days = 0, fee = 0, price, privilegePrice
+
+        var discountPercent = Number(vm_guests.member.discountPercent)
+
+        arr.forEach(function (el) {
+            price = parseFloat(el.sum) || 0
+            days += (+el.days)
+            fee += parseFloat(price)
+        })
+
+        // 老马在 16-04-26 确认取消时也要将违约房费算到房费和订单总金额中
+        //if (vm.$g_status !== CONST.G_BOOK_CANCLEING) {
+        fee += parseFloat(parseFloat(penalty) || 0)
+        //}
+
+        privilegePrice = Number(fee * (10 - discountPercent) / 10).toFixed(2) * 1
+        vm_guests.member.privilegePrice = privilegePrice
+
+        vm.totalDays = days
+        vm.roomFee = fee - privilegePrice
+        vm.totalAmount = vm.roomFee + (+vm.spendsFee)
+    },
+
+    // 更具状态更新选中按钮
+    gStatusOnChange: function (g_status, noCheckBtn) {
+        //noCheckBtn为true，则不更新是否勾选按钮
+        var vm = vm_orders;
+        vm.$g_status = g_status
+
+        if (noCheckBtn != true) {
+            vm._checkBtn()
+        }
+
+        if (g_status === CONST.G_OUTING || g_status === CONST.G_RATEPLAN_OUTING) {
+            var repo = vm.$priceRep,
+                originTotalAmount = vm.totalAmount
+            hasEarlier = false
+            if (tmsky.isEmpty(_CacheOrders)) {
+                _CacheOrders = $.extend(true, [], vm.orders.$model)
+            }
+
+            // 更新实住
+            vm.orders.forEach(function (el, i) {
+                if (el.status === CONST.SUB_OUT)
+                    return true
+                var retObj = vm._countCheckoutDays(el)
+                _CacheOrders[i].earlier = retObj.earlier
+                if (retObj.earlier && !vm.isRatePlan) {
+                    el.days = retObj.days
+                    el.sum = retObj.sum
+                    /* el.daysPrefix = _OutingDaysPrefix */
+                    hasEarlier = true
+                }
+                el.daysPrefix = _OutingDaysPrefix
+            })
+            if (hasEarlier) {
+                vm._updateTotalInfo()
+                // vm_finances.penalty = originTotalAmount - vm.totalAmount
+                vm_finances.penaltyVisible = true
+                vm_finances.penaltyInput = true
+            }
+            if (!!vm_finances.penalty) {
+                vm_finances.penaltyVisible = true
+                vm_finances.penaltyInput = true
+            }
+        }
+        if (g_status === CONST.G_OUT || g_status === CONST.G_PART_OUT) {
+            vm_finances.penaltyVisible = !!vm_finances.penalty
+            vm_finances.penaltyInput = false
+        }
+        if (g_status === CONST.G_BOOK_CANCLEING) {
+            // 更新实住以及房费为0
+            vm.orders.forEach(function (el) {
+                el.days = 0
+                el.sum = 0
+            })
+            vm._updateTotalInfo()
+        }
+    },
+
+    // 计算退房实住天数
+    _countCheckoutDays: function (item) {
+        var vm = vm_orders,
+            repo = vm_b_checkout_model.$originPrice,
+            today = avalon.vmodels.vm_b_checkout_model.CHECK_OUT_STATUS == 1 ? tmsky.date.today() : item.b_checkout || tmsky.date.today(),
+            start = item.start,
+            stop = item.stop,
+            checked = item.checked,
+            ret = {
+                days: 0,
+                sum: 0,
+                earlier: true
+            },
+            //    isBCOAction = avalon.vmodels['vm_b_checkout_model'].isBCOAction(),
+            checkDate = start < today
+
+        if (start == today) {
+            var startIndex = _.findIndex(avalon.vmodels.vm_b_checkout_model.$originPrice, {
+                'roomId': item.roomId,
+                'date': start
+            })
+            var priceList = avalon.vmodels.vm_b_checkout_model.$originPrice.slice(startIndex, startIndex + 1)
+            ret.days = 0
+            ret.sum = _.sum(priceList, 'price')
+            return ret
+        }
+
+        if (checkDate || !checked) {
+            //入住时间小于退房时间
+            var between = tmsky.date.getDatePeriod(start, today)
+            if (!checked) {
+                between = tmsky.date.getDatePeriod(start, stop)
+            }
+            var startIndex = _.findIndex(repo, {
+                'roomId': item.roomId,
+                'date': start
+            })
+            var priceList = repo.slice(startIndex, startIndex + between)
+            ret.days = between
+            ret.sum = _.sum(priceList, 'price')
+            if (avalon.vmodels.vm_b_checkout_model.CHECK_OUT_STATUS == 1 && item.days <= between) {
+                //正常退房
+                ret.days = item.days
+                ret.sum = item.sum
+                ret.earlier = false
+            }
+        }
+        return ret;
+    },
+
+    addItem: function (item) {
+        var vm = vm_orders,
+            repo = vm.$priceRep,
+            roomId = item.roomId,
+            date = item.date,
+            price = item.price,
+            id = item.id || null,
+            orderUid = item.orderUid,
+            room = roomUtil.getById(roomId)
+
+        if (!room)
+            return
+
+        if (price == null) {
+            var cell = CellUtil.getByRoomAndDate(room.id, date)
+            if (cell && cell.getPrice() != null) {
+                price = cell.getPrice()
+            }
+        }
+        if (!tmsky.isEmpty(item.hasSpecialPrice) && !item.hasSpecialPrice) {
+            if (item.hasMainOrder) {// 只在修改订单时按最后一天价格进行继承
+                var priceDay = vm.getLastRoomPrice(roomId)
+                if (priceDay && priceDay.date) {
+                    var cell = CellUtil.getByRoomAndDate(roomId, priceDay.date)
+                    if (cell && (!cell.hasSpecialPrice() || (cell.hasSpecialPrice() && cell.getPrice() != priceDay.price))) {
+                        if (priceDay && priceDay.price && priceDay.date < date) {  // priceDay以前的房间不进行价格继承
+                            price = priceDay.price
+                        }
+                    }
+                }
+            }
+        }
+
+        var itemPiece = {
+            id: item.id || null,
+            roomId: roomId,
+            roomNo: room.roomNo,
+            date: date,
+            nextDay: tmsky.date.plusDate(date, 1, 'd', 'yyyy-MM-dd'),
+            orderUid: orderUid,
+            price: price == null ? room.price : price
+        };
+        var isEquels = false
+        repo.forEach(function (el, i) {
+            if (itemPiece.roomId == el.roomId && itemPiece.date == el.date) {
+                isEquels = true
+            }
+        })
+        if (!isEquels) {
+            repo.push(itemPiece)
+        }
+    },
+
+    getLastRoomPrice: function (roomId) {
+        var repo = _.sortByOrder(vm_orders.$priceRep, ['roomId', 'date'])
+        return _.findLast(repo, 'roomId', roomId)
+    },
+
+    getReciprocalSecondRoomCell: function (roomId) {
+        var repo = _.sortByOrder(vm_orders.$priceRep, ['roomId', 'date'])
+        var right2 = _.takeRight(repo, 2)
+        return right2 && _.first(right2)
+    },
+
+    removeItem: function (roomId, date, long) {
+        var vm = vm_orders,
+            repo = vm.$priceRep,
+            long = long || 1
+
+        var index = _.findIndex(repo, {
+            'roomId': roomId,
+            'date': date
+        })
+        if (index != -1) {
+            repo.splice(index, long)
+        }
+    },
+
+    // 转化为订单数据
+    composeOrders: function () {
+        var vm = vm_orders,
+            repo = vm.$priceRep,
+            ordersArr = [], order
+        if (repo.length === 0)
+            return;
+        repo = _.sortByOrder(repo, ['roomId', 'date'])
+        order = _initOrder(repo[0])
+        repo[0].orderUid = order.uid
+        ordersArr.push(order)
+        if (repo.length > 1) {
+            repo.reduce(function (a, b) {
+                // 相邻
+                if (a.roomId != b.roomId || a.nextDay !== b.date) {
+                    order = _initOrder(b)
+                    ordersArr.push(order)
+                } else {
+                    order.days++
+                    order.stop = tmsky.date.plusDate(order.start, order.days, 'd', 'yyyy-MM-dd')
+                    order.sum = parseFloat(order.sum) + parseFloat(b.price)
+                }
+                b.orderUid = order.uid
+                return b;
+            })
+        }
+        ordersArr.forEach(function (el) {
+            if (!el.status) {
+                var sub = vm._findSub(el.roomId, el.start, el.stop)
+                if (sub && sub.id) {
+                    el.status = sub.status
+                }
+            }
+        })
+
+        vm.$priceRep = repo
+        vm.orders = ordersArr
+        tmsky.getVm("vm_idcard_main").convertPersonInSubOrders($.extend(true, [], ordersArr))
+        vm._updateFirstAndEndDate()
+        vm._updateTotalInfo()
+        vm._checkBtn()
+
+        function _initOrder(priceItem) {
+            var info = {
+                id: null,
+                start: priceItem.date,
+                stop: priceItem.nextDay,
+                roomId: priceItem.roomId,
+                sum: priceItem.price
+            }
+            return vm._getNewOrder(info)
+        }
+    },
+
+    _updateFirstAndEndDate: function (ordersArr) {
+        var vm = vm_orders, firstDate = null, endDate = null
+
+        vm.orders.forEach(function (el) {
+            if (firstDate == null || firstDate > el.start) {
+                firstDate = el.start
+            }
+            if (endDate == null || endDate < el.stop) {
+                endDate = el.stop
+            }
+        })
+        vm.firstDate = firstDate
+        vm.endDate = endDate
+    },
+
+    // 订单数据组装
+    _getNewOrder: function (info) {
+        var vm = vm_orders
+        var roomId = info.roomId
+        var room = roomUtil.getById(roomId)
+
+        if (!room)
+            return;
+        var def = {
+            uid: _.uniqueId(),
+            id: info.id || null,
+            start: info.start,
+            stop: info.stop || '',
+            roomId: info.roomId + '',
+            sum: info.sum || 0,
+            persons: [],  //新建order 加入persons
+            roomNo: room.roomNo,
+            roomtypeId: room.roomtype.id,
+            roomtypeName: room.roomtype.name,
+            days: info.days == null ? 1 : info.days,
+            daysPrefix: '',
+            daysList: [],
+            checked: true,
+            nocheck: true,
+            status: info.status || null
+        }
+        if (info.persons) {
+            def.persons = info.persons
+        }
+
+        def.sum = Number(def.sum).toFixed(2) * 1
+        return def
+    },
+
+    // 激活当前order price
+    activePrices: function (orderUid, e, onlyCalc) {
+        var vm = vm_orders,
+            repo = $.extend(true, [], vm.$priceRep),
+            offset = $(e.target).offset(),
+            arr = []
+        // var arr = _.filter(repo, 'orderUid', orderUid)
+        repo.forEach(function (el) {
+            if (el.orderUid === orderUid) {
+                el.textIn = false
+                arr.push(el)
+            }
+        })
+        vm.priceList = arr
+        if (!onlyCalc) {
+            vm.priceShow = true
+            vm.priceTop = offset.top + 35
+        }
+        vm._bindClosePrices(e.target)
+    },
+
+    closePrices: function () {
+        var vm = vm_orders
+        vm.priceShow = false
+        vm.priceShowByInfo = false
+        $(document).off('click.price-list')
+        $editor.children('.content-slide-body').off('scroll.price-list')
+    },
+
+    _bindClosePrices: function (target) {
+        var vm = vm_orders
+        // 点击消失
+        $(document).on('click.price-list', function (e) {
+            if (e.target != target && $(e.target).closest('div.price-list').length === 0 && e.target.className != 'form-control input-amount tabId') {
+                vm_orders.closePrices()
+            }
+        })
+        // 滚动跟随
+        $editor.children('.content-slide-body').on('scroll.price-list', function (e) {
+            vm.priceTop = $(target).offset().top + 35
+            vm.priceTopByInfo = vm.priceTop
+        })
+    },
+
+    changeTextIn: function (item, e) {
+        var vm = vm_orders,
+            arr = vm.priceList.$model
+
+        arr.forEach(function (el, i) {
+            if (el.roomId !== item.roomId || el.date !== item.date) {
+                vm.priceList[i].textIn = false
+            }
+        })
+        item.textIn = true
+        // focus
+        $(e.target).parent().find('input').focus()
+    },
+
+    // 添加其他消费
+    addSpend: function (item) {
+        var vm = vm_orders,
+            defaultSpend = {
+                id: '',
+                amount: '',
+                itemId: '0'
+            }
+        // 一个订单最多添加20个消费项
+        if (vm.spends.length >= 20) {
+            tmsky.ui.dialog.tips('一个订单最多添加20个消费项！', 'error')
+            return
+        }
+
+        vm.spends.push(defaultSpend)
+    },
+
+    // 更新总其他消费
+    updateSpendsFee: function () {
+        var vm = vm_orders,
+            arr = vm.spends.$model,
+            fee = 0
+
+        arr.forEach(function (el) {
+            if (el.itemId == '0')
+                return;
+
+            var p = (+el.amount) || 0
+            fee += p * el.no
+        })
+        vm.spendsFee = fee
+        vm.totalAmount = (+vm.roomFee) + fee
+    },
+    // 切换勾选
+    toggleChecked: function (item, type, nocheck, bool, e) {
+        if (type == 'view' && (!vm_orders.additionView || nocheck)) {
+            return
+        }
+
+        if (type == 'checkout' && (item.status != 3 || vm_b_checkout_model.isNoCheckInTruely(item.start))) {
+            return false
+        }
+        var vm = vm_orders,
+            arr = vm.orders.$model,
+            count = 0, i, len, el;
+        if (item.checked && !bool) {
+            for (i = 0, len = arr.length; i < len; i++) {
+                el = arr[i];
+                if (el.checked)
+                    count++
+            }
+
+            if (count <= 1) {
+                tmsky.ui.dialog.tips('最后一个，不能再取消了哟 ^_^', 'error')
+                return
+            }
+        }
+        item.checked = !tmsky.isEmpty(bool) ? bool : !item.checked
+        if (vm.$g_status === CONST.G_OUTING || vm.$g_status === CONST.G_RATEPLAN_OUTING) {
+            var retObj
+            if (avalon.vmodels.vm_b_checkout_model.CHECK_OUT_STATUS != 1) {
+                vm_b_checkout_model.houseDaysChange(item)
+            }
+            if (item.checked) {
+                //勾选
+                retObj = vm._countCheckoutDays(item)
+                item.days = retObj.days
+                item.sum = retObj.sum, item.daysPrefix = _OutingDaysPrefix
+            } else {
+                //取消勾选
+                retObj = _.find(_CacheOrders, 'id', item.id)
+                item.days = retObj.days
+                item.sum = retObj.sum
+                item.daysPrefix = ''
+            }
+            vm._updateTotalInfo()
+        }
+    },
+    // 重新计算每项总额
+    reCountSum: function (uid) {
+        var vm = vm_orders,
+            orders = vm.orders,
+            priceList = vm.priceList.$model, order
+
+        order = _.find(orders, {
+            'uid': uid
+        })
+        if (order) {
+            order.sum = _.sum(priceList, 'price');
+        }
+
+        vm._updateTotalInfo()
+    },
+
+    priceBlur: function (el) {
+        var price = parseFloat(el.price)
+
+        el.price = isNaN(price) ? 0 : price
+        // 保存价格，以及总价
+        vm_orders.reCountSum(el.orderUid)
+    },
+
+    // 点击下拉触发
+    beforeSelectDays: function (el, e) {
+        var vm = vm_orders,
+            roomId = el.roomId,
+            date = el.start,
+            offset = el.days - 1,
+            target = e && e.target, max, arrSize
+
+        if (!$(target).hasClass('open')) {
+            var max = CellUtil.maxTurnOnCells(roomId, date, offset)
+            max = max || 0
+            arrSize = max + el.days
+            if (arrSize > CONST.MAX_SELECT_DAYS) {
+                arrSize = CONST.MAX_SELECT_DAYS
+            }
+            el.daysList = _.map(new Array(arrSize), function (v, i) {
+                return i + 1;
+            })
+        }
+    },
+
+    // 选择天数
+    daysChange: function (el, e) {
+        var vm = vm_orders,
+            prev = el.days,
+            current = e.target.value,
+            overage = current - prev,
+            roomId = el.roomId,
+            repo = vm.$priceRep,
+            today = tmsky.date.today(), endDate,
+            date = el.start, startDate, i,
+            orders = vm_orders.orders.$model
+
+        CellUtil.turnOffCells(roomId, date, prev)
+        CellUtil.turnOnCells(roomId, date, current)
+
+        // 减少
+        if (overage < 0) {
+            startDate = tmsky.date.plusDate(date, current, 'd', 'yyyy-MM-dd')
+            console.log(startDate, Math.abs(overage))
+            vm.removeItem(roomId, startDate, Math.abs(overage))
+        }
+
+        // 增加
+        if (overage > 0) {
+            for (i = 0; i < overage; i++) {
+                startDate = tmsky.date.plusDate(date, prev + i, 'd', 'yyyy-MM-dd')
+                var cell = CellUtil.getByRoomAndDate(roomId, startDate)
+                var hasPrice = false
+                orders.forEach(function (el, i) {
+                    if (el.start == startDate && el.roomId == roomId) {
+                        hasPrice = true
+                    }
+                })
+                if (!hasPrice) {
+                    vm.addItem({
+                        'roomId': roomId,
+                        'date': startDate,
+                        'hasMainOrder': vm.$g_mainOrder == null ? false : vm.$g_mainOrder.id == null ? false : true,
+                        'hasSpecialPrice': cell ? cell.hasSpecialPrice() : false
+                    })
+                }
+            }
+        }
+
+        // 改变订单相关数据
+        vm_orders.composeOrders()
+
+        // 如果是新增的补录订单需要根据退房时间改变其按钮触发的动作（入住还是退房）
+        if (!vm_orders.$g_mainOrder) {
+            var BTN_ENUM = CONST.BTN_ENUM;
+            endDate = tmsky.date.plusDate(date, current, 'd', 'yyyy-MM-dd')
+            if (endDate < today) {
+                vm_btns.bottomCenter = BTN_ENUM.bulu_out_save
+            } else {
+                vm_btns.bottomCenter = BTN_ENUM.bulu_in_save
+            }
+        }
+    },
+
+    // 点击删除
+    deleteItem: function (el) {
+        var vm = vm_orders,
+            date = el.start,
+            days = el.days,
+            roomId = el.roomId
+
+        if (vm.orders.length === 1) {
+            return
+        }
+        vm.removeItem(roomId, date, days)
+        vm.composeOrders()
+        CellUtil.turnOffCells(roomId, date, days)
+    },
+
+    checkSum: function (el, e) {
+        var vm = vm_orders,
+            inputVal = e.target.value
+
+        if (inputVal !== '' && isNaN(inputVal = parseFloat(inputVal))) {
+            inputVal = 0
+        }
+        el.sum = inputVal
+        var priceList = vm.priceList.$model,
+            priceSum = _.sum(priceList, 'price'),
+            roomcell = CellUtil.getByRoomAndDate(el.roomId, el.start)
+        // 均分价格
+        priceList.forEach(function (el, i) {
+            if (priceSum == 0) {
+                vm.priceList[i].price = inputVal * (1 / priceList.length).toFixed(2) * 1
+            } else {
+                vm.priceList[i].price = (inputVal * (el.price / priceSum)).toFixed(2) * 1
+            }
+        })
+        //改变$priceRep
+        var prices = $.extend(true, [], vm_orders.$priceRep)
+        prices.forEach(function (el, i) {
+            priceList.forEach(function (el2, i2) {
+                if (el.orderUid == el2.orderUid && el.id == el2.id && el.date == el2.date) {
+                    el.price = el2.price
+                }
+            })
+        })
+        vm_orders.$priceRep = prices
+        // 记录最后一天均分价格
+        // roomcell && (roomcell.forthwithPrice = vm.priceList[vm.priceList.length - 1].price)
+        vm._updateTotalInfo()
+    },
+
+    checkSpend: function (el, e) {
+        var vm = vm_orders,
+            inputVal = e.target.value
+
+        if (inputVal !== '' && isNaN(inputVal = parseFloat(inputVal))) {
+            inputVal = 0
+        }
+        el.amount = inputVal
+
+        vm.updateSpendsFee()
+    },
+
+    spendChange: function (el, e) {
+        var vm = vm_orders
+
+        el.itemId = e.target.value
+
+        vm.updateSpendsFee()
+    },
+
+    checkRoomPrice: function (el, e) {
+        var vm = vm_orders,
+            inputVal = e.target.value
+
+        if (inputVal !== '' && isNaN(inputVal = parseFloat(inputVal))) {
+            inputVal = 0
+        }
+
+        el.price = inputVal
+        vm_orders.reCountSum(el.orderUid)
+
+        //改变$priceRep
+        var prices = $.extend(true, [], vm_orders.$priceRep)
+        prices.forEach(function (item, i) {
+            if (item.orderUid == el.orderUid && item.id == el.id && item.date == el.date) {
+                item.price = el.price
+            }
+        })
+        vm_orders.$priceRep = prices
+    },
+
+    reset: function () {
+        var vm = vm_orders
+
+        vm.spends.removeAll()
+        vm.orders.removeAll()
+        vm.priceList.removeAll()
+
+        vm.spendsFee = 0
+        vm.isRatePlan = false
+        vm.isFromDx = false
+        vm.isFromOTA = false
+        vm.important = true
+        vm.$priceRep = []
+        vm.$g_mainOrder = null
+        vm.firstDate = null
+
+        _CacheOrders = null
+    },
+
+    // 刷新到于 g_mainOrder 信息同步
+    flushMainOrder: function (g_mainOrder, state) {
+        var vm = vm_orders, orderArr = [], order, item
+        vm.reset()
+        vm.$g_mainOrder = g_mainOrder
+        vm.date = {
+            checkin: g_mainOrder.checkInAt,
+            checkout: g_mainOrder.checkOutAt
+        }
+        //可选择退房日期
+        var checkoutDate = []
+        for (var i = 0; i <= tmsky.date.diffDays(tmsky.date.today(), g_mainOrder.checkOutAt); i++) {
+            checkoutDate.push(tmsky.date.addDays(tmsky.date.today(), i, 'yyyy-MM-dd'))
+        }
+        avalon.vmodels['vm_b_checkout_model'].checkoutDate = checkoutDate
+        // 子订单
+        g_mainOrder.subOrders.forEach(function (el) {
+            var roomId = el.room.id + '',
+                item = {
+                    id: el.id,
+                    roomId: roomId,
+                    start: el.checkInAt,
+                    stop: el.checkOutAt,
+                    days: tmsky.date.getDatePeriod(el.checkInAt, el.checkOutAt),
+                    sum: el.roomPrice,
+                    status: el.status
+                }
+
+            if (el.persons) {
+                item.persons = el.persons
+            }
+
+            order = vm._getNewOrder(item)
+
+            if (order) {
+                // 价格
+                el.subOrderPrices.forEach(function (p) {
+                    var priceItem = {
+                        roomId: roomId,
+                        id: p.id,
+                        date: p.cdate,
+                        price: p.price,
+                        orderUid: order.uid
+                    }
+                    if (item.days >= 0) {
+                        vm.addItem(priceItem)
+                    }
+                })
+                orderArr.push(order)
+            }
+        })
+
+        // 消费
+        g_mainOrder.goodSpends.forEach(function (el) {
+            item = {
+                gsid: el.id,
+                amount: el.realPrice,
+                itemId: el.good.id,
+                no: el.goodNum,
+                spendAt: el.spendTime,
+                settleType: el.settleType,
+                goodId: el.good.id,
+                mainId: g_mainOrder.id,
+                pcid: null,
+                financeId: null
+            }
+
+            if (!tmsky.isEmpty(el.innFinanceRecord)) {
+                item.financeId = el.innFinanceRecord.id
+                item.pcid = el.innFinanceRecord.payChannel.id
+            }
+            vm.spends.push(item)
+        })
+
+        vm.isRatePlan = g_mainOrder.icon == 4
+        vm.isFromDx = CONST.ORDER_FROM.DXPT.indexOf(g_mainOrder.orderFrom) != -1 ? true : false
+        vm.isFromOTA = CONST.ORDER_FROM.OTA.indexOf(g_mainOrder.orderFrom) != -1 ? true : false
+        vm.important = g_mainOrder.important == 0 ? false : true
+        vm.roomFee = g_mainOrder.roomFee
+        vm.totalAmount = g_mainOrder.totalAmount
+        vm.orders = orderArr
+        tmsky.getVm("vm_idcard_main").convertPersonInSubOrders($.extend(true, [], orderArr))
+        vm._updateFirstAndEndDate()
+    },
+
+    // 改变子订单状态
+    _changeSubStatus: function (status, checked) {
+        var ret = status
+        if (checked) {
+            switch (status) {
+                case CONST.SUB_BOOK:
+                    ret = CONST.SUB_IN
+                    break;
+                case CONST.SUB_IN:
+                    ret = CONST.SUB_OUT
+                    break;
+            }
+        }
+        return ret
+    },
+
+    hasSelectedSubOrders: function () {
+        for (var i = 0, len = this.orders.$model.length; i < len; i++) {
+            if (this.orders.$model[i].checked === true) {
+                return true
+            }
+        }
+        return false
+    },
+
+    // ===== 提取值 ====
+    convertData: function (g_mainOrder, baseStatus) {
+        if (baseStatus == CONST.SUB_OUT && !this.hasSelectedSubOrders()) {
+            tmsky.ui.dialog.errorTips('没有可退房间！')
+            throw new Exception()
+        }
+        var vm = vm_orders,
+            orders = vm.orders.$model,
+            repo = vm.$priceRep,
+            //spends = vm.spends.$model,
+            g_status = vm.$g_status,
+            today = tmsky.date.today(),
+            subIdMap = {},
+            ret = {
+                updatedAt: vm.$g_mainOrder ? vm.$g_mainOrder.updatedAt : g_mainOrder.updatedAt,
+                subOrders: [],
+                //goodSpends : [],
+                roomFee: tmsky.number.fixFloat(vm.roomFee, 2),
+                totalAmount: tmsky.number.fixFloat(vm.totalAmount, 2),
+                orderStatus: null,
+                orderAction: null
+            },
+            isBCOAction = vm_b_checkout_model.isBCOAction() // 老板提前办理退房，保留占房
+
+        orders.forEach(function (el) {
+            var roomId = el.roomId,
+                orderUid = el.uid,
+                roomNo = el.roomNo,
+                status = el.status, item, sub
+
+            if (CONST.SUB_CANCLE === baseStatus) {
+                status = CONST.SUB_CANCLE
+            }
+            // 不存在勾选
+            else if (g_status !== CONST.G_PART_INING && g_status !== CONST.G_OUTING && g_status !== CONST.G_RATEPLAN_OUTING) {
+                status = vm._changeSubStatus(status, false)
+            } else {
+                status = vm._changeSubStatus(status, el.checked)
+            }
+
+            item = {
+                id: el.id,
+                checkInAt: el.start,
+                checkOutAt: el.checked && el.b_checkout ? el.b_checkout : el.stop,
+                roomPrice: el.sum,
+                status: status || baseStatus,
+                'room': {
+                    id: roomId,
+                    roomNo: roomNo
+                },
+                subOrderPrices: []
+            }
+            sub = vm._findSub(roomId, item.checkInAt, item.checkOutAt)
+            if (!item.id && sub && sub.id && !subIdMap[sub.id]) {
+                item.id = sub.id
+                subIdMap[sub.id] = true
+            }
+
+            var isCheckout = function () {
+                return sub && sub.status === CONST.SUB_IN && status === CONST.SUB_OUT
+            }
+
+            if (isCheckout() && !isBCOAction && item.checkInAt > today && !vm.isRatePlan) {
+                return true;
+            }
+            // 价格
+            _.filter(repo, 'orderUid', orderUid).forEach(function (p) {
+                item.subOrderPrices.push({
+                    id: p.id,
+                    cdate: p.date,
+                    price: p.price
+                })
+            })
+
+            //如果有persons则添加
+            if (el.persons) {
+                item.persons = el.persons
+            }
+
+            ret.subOrders.push(item)
+        })
+
+        var hasBook = false,
+            hasCheckin = false,
+            hasCheckout = false,
+            hasCancle = false
+
+        ret.subOrders.forEach(function (el) {
+            switch (el.status) {
+                case CONST.SUB_BOOK:
+                    hasBook = true
+                    break
+                case CONST.SUB_IN:
+                    hasCheckin = true
+                    break
+                case CONST.SUB_OUT:
+                    hasCheckout = true
+                    break
+                case CONST.SUB_CANCLE:
+                    hasCancle = true
+                    break
+            }
+        })
+        // 只有预定
+        if (hasBook && !hasCheckin) {
+            ret.orderAction = g_mainOrder.id == null ? CONST.ACT_BOOK : CONST.ACT_BOOK_UPDATE
+            ret.orderStatus = CONST.M_BOOK
+        }
+        // 预定和入住
+        if (hasBook && hasCheckin) {
+            ret.orderStatus = CONST.M_PART_IN
+            ret.orderAction = CONST.ACT_PART_IN
+        }
+        // 只有入住
+        if (!hasBook && hasCheckin && !hasCheckout) {
+            ret.orderAction = g_mainOrder.id == null ? CONST.ACT_IN : CONST.ACT_IN_UPDATE
+            if (g_mainOrder.orderStatus === CONST.M_BOOK || g_mainOrder.orderStatus === CONST.M_PART_IN) {
+                ret.orderAction = CONST.ACT_PART_IN
+            }
+            ret.orderStatus = CONST.M_IN
+        }
+        // 退房和入住
+        if (!hasBook && hasCheckin && hasCheckout) {
+            ret.orderStatus = CONST.M_PART_OUT
+            ret.orderAction = CONST.ACT_PART_OUT
+        }
+        // 退房
+        if (!hasBook && !hasCheckin && hasCheckout) {
+            ret.orderStatus = CONST.M_OUT
+            ret.orderAction = g_status === CONST.G_OUT_UPDATE ? CONST.ACT_OUT_UPDATE : CONST.ACT_OUT
+        }
+        // 取消
+        if (hasCancle) {
+            ret.orderStatus = CONST.M_CANCLE
+            ret.orderAction = CONST.ACT_BOOK_CANCLE
+        }
+
+        return ret
+    },
+
+    _findSub: function (roomId, checkin, checkout) {
+        if (!vm_orders.$g_mainOrder)
+            return;
+
+        var arr = vm_orders.$g_mainOrder.subOrders || []
+        var i, len, el;
+        for (i = 0, len = arr.length; i < len; i++) {
+            el = arr[i]
+            if (el.room.id == roomId) {
+                if (checkin >= el.checkInAt && el.checkOutAt >= checkin)
+                    return el
+                if (checkout >= el.checkInAt && el.checkOutAt >= checkout)
+                    return el
+            }
+        }
+    },
+
+    togglePriceList: function (e, orderUid) {
+        vm_orders.activePrices(orderUid, e, true);
+        vm_orders.priceShowByInfo = true;
+        vm_orders.priceTopByInfo = $(e.target).offset().top + 35;
+        vm_orders.adjustPriceListMaxWidth(vm_orders.priceList.length);
+    },
+
+    adjustPriceListMaxWidth: function (len) {
+        if (!len) {
+            len = vm_orders.priceList && vm_orders.priceList.length
+            len = len || 0
+        }
+        vm_orders.priceMaxWidth = len > MAX_PRICE_ITEM_LENGTH ? "312px" : "295px";
+    },
+
+    isTodayBeforeFirstCheckInDate: function () {
+        return vm_orders && tmsky.date.today() < vm_orders.firstDate;
+    },
+    isTodayEqualsFirstCheckInDate: function () {
+        return vm_orders && tmsky.date.today() == vm_orders.firstDate;
+    },
+    // 子订单是否全选（全部办入住/办退房）
+    orderAllChecked: function () {
+        var vm = vm_orders, arr = vm.orders.$model, flag = true
+        $.each(arr, function (i, el) {
+            if (!el.checked && !el.nocheck) {
+                flag = false
+                return false
+            }
+        });
+        return flag
+    },
+    houseEditShop: function (index) {
+        var spend = vm_orders.spends[index]
+        var vm_shopcost = avalon.vmodels.vm_shopcost,
+            vm_shop = avalon.vmodels.vm_shop
+        var shop = {
+            rooms: 2,  //无意义值
+            spendAt: spend.spendAt,
+            realPrice: spend.amount,
+            goodNum: spend.no,
+            name: vm_shop.getGoodsName(spend.itemId),
+            selectedShop: vm_shop.getGoodsIndex(spend.itemId),
+            gsid: spend.gsid,
+            goodId: spend.goodId,
+            settleType: spend.settleType,
+            mainId: spend.mainId,
+            pcid: spend.pcid,
+            financeId: spend.financeId
+        }
+        vm_shop.editShopCost(shop, 0)
+    },
+    houseDeleteShop: function (el, $index) {
+        avalon.vmodels.vm_shop.deleteShopCost(el, $index)
+    },
+    tabId: function () {
+        setTimeout(function () {
+            $('.tabId:first').focus()
+            $('.tabId:visible').each(function (index) {
+                $(this).attr('tabInd', index)
+            })
+            //新办订单需要初始化佣金金额
+            if (vm_orders.$g_mainOrder == null) {
+                vm_guests.commissionHandle()
+            }
+        }, 300)
+    }
+
+})
+// 监测总金额变化同步到 vm_finances
+vm_orders.$watch("totalAmount", function (val) {
+    vm_finances.totalAmount = val
+})
+vm_orders.spends.$watch("length", function (val) {
+    vm_orders.updateSpendsFee()
+})
+// 监听佣金
+vm_orders.$watch("roomFee", function (val) {
+    var vm = vm_orders
+    vm_finances.roomFee = val
+    if (vm.inputView) {
+        vm_guests.commissionHandle()
+    }
+})
+// 监听价格长度
+vm_orders.priceList.$watch("length", function (val, old) {
+    vm_orders.adjustPriceListMaxWidth(val);
+})
+vm_orders.$watch("inputView", function (val) {
+    if (vm_orders.inputView == true) {
+        vm_orders.tabId()
+    }
+})

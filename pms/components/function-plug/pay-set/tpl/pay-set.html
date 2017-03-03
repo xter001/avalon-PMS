@@ -1,0 +1,135 @@
+<div ms-controller="vm_pay_set">
+    <!--支付方式-->
+    <div ms-visible="funcBool.payChannel_plug" class="radius0 background_f">
+        <div class="ui_fun_contenter">
+            <h1 class="u_border_left">默认支付方式</h1>
+            <div class="ui_fun_wrap">
+                <h5>·设置后，在录入订单、账本时可记录支付方式，系统将自动生成报表。</h5>
+                <div>
+                    <span ms-repeat="PC_default" class="ui_inblock_grey_default">{{el.name}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="ui_fun_contenter">
+            <h1 class="u_border_left">自定义支付方式</h1>
+            <div class="ui_fun_wrap selfPayWay">
+                <div>
+                    <div id="payChannelSort">
+                        <span ms-click="toggleState()" ms-attr-payid="el.id" ms-repeat="PC_z" class="ui_inblock_grey pc_z">
+                                <span>{{el.name}}</span>
+                                <div class="hide">
+                                    <input ms-duplex="el.name" type="text">
+                                    <button ms-click="editPayWay(el.id,el.name)">确定</button>
+                                </div>
+                                <p ms-visible="el.canModify == 1"><i ms-click="canDelete(el,$index)"></i></p>
+                        </span>
+                    </div>
+                    <span class="ui_inblock_add cancelClick" ms-repeat="addData">
+                        <input ms-duplex="el.name" type="text">
+                        <a ms-click="ajaxAddPayWay(el.name)">确定</a>
+                    </span>
+                    <span class="ui_inblock_grey add cancelClick" ms-visible="addData.length==0" ms-click="addPayWay()">+ 自定义支付方式</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--支付方式-->
+
+    <!--未付款-->
+    <div ms-visible="funcBool.notPayAllSign_plug">
+        <div class="ui_fun_contenter">
+            <h1 class="u_border_left">功能说明</h1>
+            <div class="ui_fun_wrap">
+                <h5>·开启后，如果订单金额未付足，房态页里该订单中将会出现 ¥ 图标。</h5>
+                <div class="border-b"></div>
+                <img class="des_1" src="../images/des_3.png">
+            </div>
+        </div>
+    </div>
+    <!--快捷支付-->
+    <div ms-visible="funcBool.checkstand_plug">
+        <div class="ui_fun_contenter">
+            <h1 class="u_border_left">功能说明</h1>
+            <div class="ui_fun_wrap">
+                <h5>·开启后，客人办理入住或退房结算时，可以通过扫描二维码实现在线收款（支持微信支付、支付宝支付、银行卡和信用卡支付），方便客人支付订金和房费。</h5>
+                <div class="border-b"></div>
+                <div class="ui_yellow_part pay_quick">
+                    <h5>·<strong>转账费率：</strong>支付宝支付和微信支付(财付通)手续费全免。</h5>
+                    <h5>·<strong>结算周期</strong>：番茄来了结款方式目前为周结，将在每周五下午进行款项结算，结算内容为交易时间段为上次结算周期后至本周四晚24点期间的所有订单款项。</h5>
+                    <h5>·<strong>结算帐号</strong>：客栈需同意“番茄来了代收款协议”并录入正确的支付宝账号信息，番茄来了结款账号以“客栈管理—客栈信息—客栈收款信息”中录入的支付宝收款账号为准。</h5>
+                    <h5>·<strong>提醒短信</strong>：客户快捷支付成功后，将会短信通知到“客栈管理—客栈信息”中录入的手机号码；如需修改通知手机号码，请前往客栈信息中修改。</h5>
+                </div>
+                <img class="des_1" src="../images/des_4.png">
+            </div>
+        </div>
+    </div>
+
+
+    <div id="origin_paychannel_popups" class="tomasky-ui-popups" ms-visible="bool.deleteNo"><div class="tomasky-ui-popups-backdrop"></div>
+        <div id="origin_paychannel_dialog" class="ui-popups-dialog">
+            <em class="close" data-dismiss="popups" ms-click="closeBool()">×</em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">删除支付方式</h3>
+            </div>
+            <div class="ui-popups-body" style="overflow: inherit;">
+                <div id="content-wrap" style="text-align: center">
+                    <div>该<label class="desc">支付方式</label>已被使用，删除<label id="oper-name">{{deleteActive.name}}</label><label class="desc">渠道后，该支付方式下的所有订单将归属到：</label></div>
+                    <div class="tomasky-ui-dropdown" style="width:130px; margin: 20px auto 0;" data-ui="dropdown">
+                        <input type="hidden" class="deleteIdPay">
+                        <a href="javascript:;">
+                            <span data-role="value" class="payNoSelect">请选择支付方式</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list ui-dropdown-list-max-height-5 canPayWay">
+                            <a ms-repeat="deleteToWay" ms-data-value="el.id" data-role="item">{{el.name}}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ui-popups-foot">
+                <div class="ui-dialog-btns" data-dom="buttons">
+                    <button class="ui-dialog-btn ui-dialog-btn-on" ms-click="deletePayWay('replace')" callback="ok">确定</button>
+                    <button class="ui-dialog-btn" ms-click="closeBool()" callback="cancel">取消</button>
+                </div>
+                <div id="error" class="error"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!--<div ms-visible="funcBool.barCode_plug">-->
+        <!--&lt;!&ndash;条码支付&ndash;&gt;-->
+        <!--&lt;!&ndash;开启前&ndash;&gt;-->
+        <!--<div class="ui_fun_contenter" ms-visible="!hasSubOn">-->
+            <!--<h1 class="u_border_left">功能说明</h1>-->
+            <!--<div class="ui_fun_wrap">-->
+                <!--<h5>·开启后，在录入订单财务选择“条码支付”支付方式时，可以扫描客人支付宝钱包中的条码将买家的交易资金直接打入卖家支付宝账户。</h5>-->
+                <!--<div class="border-b" style="margin:10px 0"></div>-->
+                <!--<img class="des_1" src="../images/des_6.png">-->
+            <!--</div>-->
+        <!--</div>-->
+        <!--&lt;!&ndash;开启后&ndash;&gt;-->
+        <!--<div class="ui_fun_contenter background_f" ms-visible="hasSubOn">-->
+            <!--<h1 class="u_border_left">开通支付宝支付流程</h1>-->
+            <!--<div class="ui_fun_wrap">-->
+                <!--<h5>·开启后，在录入订单财务选择“条码支付”支付方式时，可以扫描客人支付宝钱包中的条码将买家的交易资金直接打入卖家支付宝账户。</h5>-->
+                <!--<h2 class="tm_title"><i>1</i>在支付宝后台登陆并开通条码支付。</h2>-->
+                <!--<a class="tm_btn1" href="https://www.alipay.com/">点击去支付宝后台开通 >></a>-->
+                <!--<h2 class="tm_title"><i>2</i>复制商户应用公钥并粘贴到支付宝后台。<a>操作指南>></a></h2>-->
+                <!--<textarea class="tm_textarea" ms-value="tmInfo.publicKey" disabled></textarea>-->
+                <!--<div class="tm_mar1">-->
+                    <!--<span class="btn_green" ms-click="copyStr()">复制公钥</span>-->
+                <!--</div>-->
+                <!--<h2 class="tm_title"><i>3</i>填写支付宝AppID</h2>-->
+                <!--<input type="text" ms-duplex="tmInfo.alipayAppId" class="tm_text fl">-->
+                <!--<span class="btn_green fl" ms-click="submitAppiId()">提交</span>-->
+            <!--</div>-->
+
+        <!--</div>-->
+    <!--</div>-->
+
+<!--</div>-->
+
+
+
+

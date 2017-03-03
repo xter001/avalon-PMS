@@ -1,0 +1,27 @@
+<div class="room-type-trash ms-controller" ms-controller="vm_room_trash">
+    <a class="btn btn-default btn-md mg-t10" ms-click="navigateToRoomType">
+        <i class="iconfont icon-back"></i>返回
+    </a>
+    <h1 class="callout-head">房间回收站</h1>
+    <div class="panel panel-callout">
+        <div class="panel-head">
+            <h3 class="panel-title">房间列表</h3>
+        </div>
+        <div class="panel-body">
+            <ul>
+                <li ms-repeat-el="rooms">
+                    <div class="room-box-head">
+                        <h4>{{el.roomNo}}</h4>
+                        <em class="triangle-up"></em>
+                    </div>
+                    <div class="room-box-body">
+                        <p>房型类型：{{el.roomtypeName}}</p>
+                        <p>房型价格：￥{{el.roomtypePrice}}</p>
+                        <button class="btn btn-default btn-xs" ms-click="restore($index)">还原</button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</div>

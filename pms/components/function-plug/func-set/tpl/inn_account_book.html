@@ -1,0 +1,51 @@
+<!--客栈账本-->
+<div ms-visible="funcBool.accountBook_plug" ms-controller="vm_accountBook">
+    <div class="ui_fun_contenter payOut bg_white">
+        <h1 class="u_border_left">费用支出项目</h1>
+        <div class="ui_fun_wrap payout_book_list">
+            <div id="outBookSortable" style="display: inline;">
+                <div class="ui_inblock_grey outBook" ms-repeat-elout="outList" ms-attr-id="elout.id"
+                     style="cursor: move"
+                     ms-click="toggleState(elout.canModify)"
+                     style="cursor: move">
+                    <span class="txt">{{elout.name}} </span>
+                    <div class="hide">
+                        <input type="text" ms-duplex="elout.name" placeholder="支出项目名称">
+                        <button ms-click="updateBook(elout.id,elout.itemType,elout.name)">确定</button>
+                    </div>
+                    <i ms-click="delBook(elout.id,elout.itemType,$index)" ms-if="elout.canModify==1"></i>
+                </div>
+            </div>
+
+            <div class="ui_inblock_add" ms-repeat="addOutData">
+                <input ms-duplex="el.name" type="text" placeholder="支出项目名称">
+                <a ms-click="ajaxAddBook('2',el.name)">确定</a>
+            </div>
+
+            <span class="ui_inblock_grey add addBookOut" ms-click="addBook('out')">+ 费用支出项目</span>
+        </div>
+    </div>
+    <div class="ui_fun_contenter income bg_white">
+        <h1 class="u_border_left">其他收入项目</h1>
+        <div class="ui_fun_wrap income_book_list">
+            <div id="inBookSortable" style="display: inline">
+                <div class="ui_inblock_grey inBook" ms-repeat-elin="inList" style="cursor: move" ms-attr-id="elin.id"
+                     ms-class-disabled="true" ms-click="toggleState(elin.canModify)">
+                    <span class="txt">{{elin.name}} </span>
+                    <div class="hide">
+                        <input type="text" ms-duplex="elin.name" placeholder="收入项目名称">
+                        <button ms-click="updateBook(elin.id,elin.itemType,elin.name)">确定</button>
+                    </div>
+                    <i ms-click="delBook(elin.id,elin.itemType,$index)" ms-if="elin.canModify==1"></i>
+                </div>
+            </div>
+
+            <div class="ui_inblock_add" ms-repeat="addInData">
+                <input ms-duplex="el.name" type="text" placeholder="收入项目名称">
+                <a ms-click="ajaxAddBook('1',el.name)">确定</a>
+            </div>
+            <span class="ui_inblock_grey add addBookIn" ms-click="addBook('in')">+ 其他收入项目</span>
+
+        </div>
+    </div>
+</div>

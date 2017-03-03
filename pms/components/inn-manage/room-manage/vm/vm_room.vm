@@ -1,0 +1,204 @@
+var CommonUtil = require('../../../common/js/utils/common-util.js'),
+    User = require('../../../header/user.js')
+
+var vm_room = avalon.define({
+    $id : 'vm_room',
+    roomManageNav : [false, false, true],
+    isRoomType : false,
+    isRoomNum : false,
+    isAddClose : false,//添加锁房记录
+    errorstate : false,//锁房未成功提示
+    isCanUpdate : true,//不能修改
+    errorMsg : '',
+    innId : '', //当前客栈id
+    allRoomList : [],
+    roomList : [],
+    roomCloseList : [],//该客栈所有锁房记录
+    allRoomId : [],//该客栈所有房间id
+    roomClose : {    //当前该锁房的所有信息
+        typeIndex : '',
+        numIndex : '',
+        roomId : '',
+        roomTypeValue : '',//当前选中的房型
+        roomNumValue : '',//当前选中的房间号
+        startDate : '',
+        endDate : '',
+        note : ''
+    },
+    ROOM_CLOSE_STATUS_MAP : {
+        pupOperate : '-1',//非法操作
+        delFalse : '0',//删除失败
+        hasReserve : '1',//已有预定记录
+        hasIn : '2',//已有入住记录
+        hasOut : '3',//已有退房记录
+        hasClose : '9',//已有锁房记录
+        errorFlag : '10'//备注信息最多10个
+    },
+    dragRoomMsg : {},      //当前拖拽房间信息
+
+
+    init : function () {
+        vm_room.innId = User.getUserInfo().innId
+        vm_room.getAllCloseRoom()
+    },
+
+    changeManageType : function (type) {
+        if (type == 'sort') {
+            vm_room.roomManageNav = [true, false, false]
+        } else if (type == 'close') {
+            vm_room.roomManageNav = [false, true, false]
+        } else if (type == 'edit') {
+            vm_room.roomManageNav = [false, false, true]
+        }
+    },
+
+    addRoomClose : function () {
+        vm_room.isAddClose = true
+        CommonUtil.bindingDatepictureOnload('div.add-lock-time', 'input.time-start', 'input.time-end', 'true')
+    },
+
+    //获得房型
+    getRoomType : function () {
+        vm_room.isRoomType = !vm_room.isRoomType
+        vm_room.isRoomNum = false
+
+    },
+
+    //选择房型
+    getTypeName : function (index) {
+        vm_room.roomClose.typeIndex = index
+        vm_room.roomClose.roomTypeValue = vm_room.allRoomList[index].name
+        vm_room.isRoomType = false
+        vm_room.roomClose.roomNumValue = ''
+
+    },
+
+    //获得该房型下的所有房间号
+    getRoomAllNum : function () {
+        vm_room.isRoomType = false
+        if (vm_room.roomClose.typeIndex !== '') {
+            vm_room.isRoomNum = !vm_room.isRoomNum
+            vm_room.roomList = vm_room.allRoomList[vm_room.roomClose.typeIndex].$model.rooms
+
+        } else {
+            tmsky.ui.dialog.errorTips('请选择房型！')
+        }
+    },
+
+    //选择房间号
+    getRoomNum : function (index) {
+        vm_room.roomClose.roomNumValue = vm_room.roomList[index].name
+        vm_room.roomClose.roomId = vm_room.roomList[index].id
+        vm_room.isRoomNum = false
+        vm_room.roomClose.numIndex = index
+    },
+
+    //锁房
+    addRoomCloses : function () {
+        var datas = {
+            innId : vm_room.innId,
+            roomId : vm_room.roomClose.roomId,
+            startDate : vm_room.roomClose.startDate,
+            endDate : vm_room.roomClose.endDate,
+            note : vm_room.roomClose.note
+        }
+        $.post('/room/close/save', datas).done(function (rs) {
+            var alertMsg = vm_room.roomCloseCheckMsgByResultCode(rs, datas.startDate, datas.endDate)
+            if (alertMsg == '') {
+                vm_room.isAddClose = false
+                vm_room.errorstate = false
+                vm_room.roomClose = {    //当前该锁房的所有信息
+                    typeIndex : '',
+                    numIndex : '',
+                    roomId : '',
+                    roomTypeValue : '',//当前选中的房型
+                    roomNumValue : '',//当前选中的房间号
+                    startDate : '',
+                    endDate : '',
+                    note : ''
+                }
+            } else {
+                vm_room.errorMsg = alertMsg
+                vm_room.showErrors(alertMsg, 'room-close-error')
+                vm_room.errorstate = true
+            }
+        })
+    },
+
+    roomCloseCheckMsgByResultCode : function (data, startDate, endDate) {
+        var alertMsg = "";
+        var isSameDate = startDate == endDate;
+        if (data == vm_room.ROOM_CLOSE_STATUS_MAP.pupOperate) {
+            alertMsg = "非法操作！";
+        } else if (data == vm_room.ROOM_CLOSE_STATUS_MAP.delFalse) {
+            alertMsg = "删除失败！";
+        } else if (data == vm_room.ROOM_CLOSE_STATUS_MAP.hasReserve) {
+            alertMsg = isSameDate ? "该房间已预定！" : "预定记录！";
+        } else if (data == vm_room.ROOM_CLOSE_STATUS_MAP.hasIn) {
+            alertMsg = isSameDate ? "该房间已入住！" : "入住记录！";
+        } else if (data == vm_room.ROOM_CLOSE_STATUS_MAP.hasOut) {
+            alertMsg = isSameDate ? "该房间有退房记录！" : "退房记录！";
+        } else if (data == vm_room.ROOM_CLOSE_STATUS_MAP.hasClose) {
+            alertMsg = isSameDate ? "该房间已锁！" : "锁房记录！";
+        } else if (data == vm_room.ROOM_CLOSE_STATUS_MAP.errorFlag) {
+            alertMsg = "备注信息最多填写10个字！";
+        }
+        if ("" != alertMsg) {
+            if (data != -1 && data != 0) {
+                alertMsg = isSameDate ? alertMsg : "操作的房间在指定的锁房时段内已存在" + alertMsg;
+            }
+        }
+        return alertMsg;
+    },
+
+    showErrors : function (errors, divId) {
+        $("." + divId).slideDown().delay(2000).slideUp('slow');
+    },
+
+    //获取全部锁房记录
+    getAllCloseRoom : function () {
+        var datas = {
+            innId : vm_room.innId
+        }
+        $.get('/room/close/get', datas).done(function (rs) {
+            if (rs.status == '200') {
+                vm_room.roomCloseList = rs
+            }
+        })
+    },
+
+    //修改锁房信息
+    updateRoomClose : function (roomId, startDate, endDate, flag) {
+        vm_room.isCanUpdate = false
+        CommonUtil.bindingDatepictureOnload('div.add-lock-time', 'input.time-start', 'input.time-end', 'true')
+    },
+
+    //删除锁房记录========================================(现在是模拟数据)
+    deleteRoomClose : function (roomId, startDate, endDate, flag) {
+        tmsky.ui.dialog.confirm('你确定要删除此锁房设置?', function () {
+            var datas = {
+                "innId" : 141,
+                "roomId" : 238190,
+                "startDate" : "2016-05-02",
+                "endDate" : "2016-05-03",
+                "flag" : "36d48577-6450-4459-b727-52d327927fb5"
+            }
+            $.post('/room/close/delete', datas).done(function (rs) {
+                if (rs == "-1") {
+                    tmsky.ui.dialog.tips('非法操作！', 'error');
+                    return;
+                }
+                if (rs == "ok") {
+                    tmsky.ui.dialog.tips('删除锁房设置成功！', 'success');
+                } else {
+                    tmsky.ui.dialog.tips('删除锁房设置失败！', 'error');
+                }
+            })
+        })
+    },
+
+})
+
+
+
+

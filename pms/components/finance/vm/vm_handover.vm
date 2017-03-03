@@ -1,0 +1,344 @@
+var vm_handover = avalon.define({
+    $id : 'vm_handover',
+    isColRed : false,
+    page : {pageNo : 1, pageSize : 15, totalPages : -1, totalCount : -1},
+    data : {from : '', to : '', userCode : '', password : ''},
+    urls : {
+        getHandovers : '/finance/getHandovers',
+        saveHandover : '/finance/saveHandover',
+        getDetail : '/finance/getFinanceReport',
+        getHandoverDate : '/finance/getHandoverDate',
+    },
+    handover : {
+        id : '',
+        note : '',
+        fromDate : '',
+        toDate : '',
+        handoverMan : {id : '', userCode : ''},
+        successorMan : {id : '', userCode : ''},
+        handoverName : '',
+        successorName : ''
+    },
+    handoverEdit : {hasHandoverMan : false, hasSuccessorMan : false, isDisabled : true, isEdit : false},
+    totalFee : {},
+    deposit : {},
+    goods : {},
+    account : {},
+    totalCount : {},
+    handoverList : [],
+    payChannels : [],
+    func : [],
+    plug : {},
+    handover_login_popups : false,
+    account_reg_popups : false,
+    handoverTempData : {
+        from : '',
+        to : ''
+    },
+
+    init : function () {
+        var vm = vm_handover
+        vm.handoverTempData.from = tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00'
+        vm.handoverTempData.to = tmsky.date.addDays(new Date(), 1, 'yyyy-MM-dd') + ' 00:00'
+
+        $("#handover_from").datetimepicker({
+            changeMonth : true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(selectedDate, vm.handoverTempData.to))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#handover_to").datetimepicker("setDate", tmsky.date.addDays(selectedDate, 31));
+                }
+                vm.handoverTempData.from = tmsky.date.format(selectedDate, 'yyyy-MM-dd hh:mm')
+            }
+        })
+        $("#handover_to").datetimepicker({
+            changeMonth : true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(vm.handoverTempData.from, selectedDate))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#handover_from").datetimepicker("setDate", tmsky.date.addDays(selectedDate, -31));
+                }
+                vm.handoverTempData.to = tmsky.date.format(selectedDate, 'yyyy-MM-dd hh:mm')
+            }
+        })
+
+
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('handover_div'))
+        return this
+    },
+    getHandovers : function (pageNo, type) {
+        if (vm_handover.page.totalPages > 0 && vm_handover.page.totalPages < pageNo) {
+            return;
+        }
+        var data = {
+            from : vm_handover.data.from,
+            to : vm_handover.data.to,
+            pageNo : pageNo || vm_handover.page.pageNo
+        };
+        if (type == 'export') {
+            vm_handover.exportExcel(data)
+        } else {
+            vm_handover.ajaxGetRecords(data)
+        }
+    },
+    exportExcel : function (data) {
+        tmsky.ui.dialog.loading();
+        data.pageNo = ''
+        var loadUrl = vm_handover.urls.exportExcel
+        var $form = $('<form></form>').attr({
+            'action' : loadUrl,
+            'method' : 'POST'
+        });
+        for (prop in data) {
+            if (data.hasOwnProperty(prop)) {
+                var $input = $('<input />')
+                $input.attr('name', prop).attr('value', data[prop]).appendTo($form);
+            }
+        }
+        $form.hide().appendTo($("body")).submit();
+        tmsky.ui.dialog.loading.close();
+    },
+    ajaxGetRecords : function (data) {
+        tmsky.ui.dialog.loading();
+        var url = vm_handover.urls.getHandovers + tmsky.util.generateUrlEndStr()
+        $.post(url, data).done(function (rs) {
+            if (rs.status == 200) {
+                vm_handover.handoverList = rs.page.result
+                var page = rs.page
+                tmsky.getVm('vm_finance_main').initPage('handover_page', page, function () {
+                    var pageInfo = tmsky.ui.page.getParams("handover_page")
+                    vm_handover.page.pageNo = pageInfo.pageNo
+                    vm_handover.getHandovers(pageInfo.pageNo)
+                })
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    handStatus : function (x) {
+        if (x == 1) {
+            return '正常'
+        } else if (x == 2) {
+            return '财务记录被修改'
+        }
+    },
+    setColRed : function (x) {
+        if (x == 1) {
+            return false
+        } else if (x == 2) {
+            return true
+        }
+    },
+
+    handover_login : function () {
+        var vm = vm_handover
+        var timeDef = tmsky.date.diffDays(vm.handover.fromDate, vm.handover.toDate)
+        if (timeDef > 3) {
+            tmsky.ui.dialog.alert('交接时间不能超过3天，请重新选择！')
+        } else {
+            vm_handover.handover_login_popups = true
+        }
+
+    },
+    close_handover_login : function () {
+        vm_handover.handover_login_popups = false
+    },
+    saveHandover : function () {
+        var url = vm_handover.urls.saveHandover
+        var data = {
+            innId : CommonCacheUtil.innBaseInfo.user.innId,
+            userCode : vm_handover.data.userCode,
+            passWord : vm_handover.data.password,
+            handover : {
+                id : vm_handover.handover.id,
+                note : vm_handover.handover.note,
+                fromDate : vm_handover.handover.fromDate,
+                toDate : vm_handover.handover.toDate
+            }
+        }
+        tmsky.ui.dialog.loading();
+        $.post(url, tmsky.ajax.serialize(data)).done(function (rs) {
+            if (rs.status == 200) {
+                document.location.reload()
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    handovering : function () {
+        var url = vm_handover.urls.getHandoverDate
+        vm_handover.handoverEdit.isDisabled = false
+        vm_handover.handoverEdit.isEdit = true
+        var curTime = tmsky.date.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+
+        $("#global_handover_from").datetimepicker({
+            maxDate : curTime,
+            onSelect : function (selectedDate) {
+
+                $("#global_handover_to").datetimepicker("option", "minDate", selectedDate);
+                $("#global_handover_to").datetimepicker("option", "maxDate", curTime);
+                vm_handover.handover.fromDate = selectedDate + ':00'
+                vm_handover.handover.toDate = tmsky.date.format(vm_handover.handover.toDate, 'yyyy-MM-dd hh:mm:ss')
+            }
+        })
+        $("#global_handover_to").datetimepicker({
+            minDate : curTime,
+            onSelect : function (selectedDate) {
+
+
+                vm_handover.handover.toDate = selectedDate + ':00'
+
+                vm_handover.handover.fromDate = tmsky.date.format(vm_handover.handover.fromDate, 'yyyy-MM-dd hh:mm:ss')
+                var time = {
+                    fromDate : vm_handover.handover.fromDate,
+                    toDate : vm_handover.handover.toDate
+                }
+                var timeDef = tmsky.date.diffDays(time.fromDate, time.toDate)
+                if (timeDef > 3) {
+                    tmsky.ui.dialog.alert('交接时间不能超过3天，请重新选择！')
+                } else if (new Date(selectedDate).getTime() > new Date().getTime()) {
+                    tmsky.ui.dialog.alert('交接时间不能超过当前时间，请重新选择！')
+                } else {
+                    vm_handover.getDetail(time)
+                }
+            }
+        })
+
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                var def = tmsky.date.diffDays(rs.fromDate, new Date())
+                if (rs.fromDate == '' || rs.fromDate == null || def > 3) {     //第一次交接班，缺省时间是今天0.0分。到当前时间
+                    rs.fromDate = tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00:00'
+                }
+                var el = {
+                    fromDate : rs.fromDate,
+                    toDate : rs.toDate
+                }
+                el.handoverMan = {id : 1, userCode : CommonCacheUtil.innBaseInfo.user.code}
+                el.handoverName = CommonCacheUtil.innBaseInfo.user.name
+                vm_handover.getDetail(el)
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        })
+    },
+    getDetail : function (el, flag) {
+        vm_handover.isColRed = false
+        vm_handover.handover = el
+        if (el.status == 2) {
+            vm_handover.isColRed = true
+        }
+        if (flag) {
+            vm_handover.handoverEdit.isDisabled = true
+            vm_handover.handoverEdit.isEdit = false
+        }
+        vm_handover.handoverEdit.hasHandoverMan = (el.handoverMan && el.handoverMan.id) ? true : false
+        vm_handover.handoverEdit.hasSuccessorMan = (el.successorMan && el.successorMan.id) ? true : false
+        var data = {
+            from : vm_handover.handover.fromDate,
+            to : vm_handover.handover.toDate
+        }
+        var url = vm_handover.urls.getDetail
+        tmsky.ui.dialog.loading();
+        $.post(url, data).done(function (rs) {
+            if (rs.status == 200) {
+                vm_handover.payChannels = vm_handover.initPayChannels(rs.totalFee, rs.deposit, rs.account, rs.goods)
+                vm_handover.totalCount = vm_handover.countEachPay(rs.totalFee, rs.deposit, rs.account, rs.goods, vm_handover.payChannels.$model)
+                vm_handover.totalFee = rs.totalFee
+                vm_handover.deposit = rs.deposit
+                vm_handover.goods = rs.goods
+                vm_handover.account = rs.account
+                $('#handover_detail_popups').popups()
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        }).always(function () {
+            tmsky.ui.dialog.loading.close();
+        });
+    },
+    initPayChannels : function (totalFee, deposit, account, goods) {
+        var list = []
+        list = vm_handover.initPc(totalFee, list)
+        list = vm_handover.initPc(deposit, list)
+        list = vm_handover.initPc(account, list)
+        list = vm_handover.initPc(goods, list)
+        return list
+    },
+    countEachPay : function (totalFee, deposit, account, goods, pcs) {
+        var map = {}
+        for (var i = 0; i < pcs.length; i++) {
+            var key = pcs[i]
+            var money = (totalFee[key] || 0.0) + (deposit[key] || 0.0) + (account[key] || 0.0) + (goods[key] || 0.0)
+            map[key] = money
+        }
+        return map
+    },
+    initPc : function (map, list) {
+        for (var key in map) {
+            if (list.indexOf(key) == -1) {
+                list.push(key)
+            }
+        }
+        return list
+    },
+    headShopClick : function () {
+        avalon.vmodels.vm_shopcost.openShopCost()
+        // 百度统计
+        _hmt.push(['_trackEvent', 'finance', 'click', '打开记一笔'])
+    },
+    jumpHandoverLog : function () {
+        var url = '/public/views/1/finance.html#tab=handover'
+        window.open(url)
+    },
+    jumpAcDetail : function () {
+        if (vm_handover.handover.id == null || vm_handover.handover.id == undefined || vm_handover.handover.snapshot == 0) {
+            //var isNew = avalon.vmodels.vm_finance_main.isNewUser
+            //if (isNew) {
+                var url = '/public/views/1/finance.html#tab=inCome'
+            //} else {
+            //    var url = '/public/views/1/finance.html?tab=accountBook&detailDate=1&from=' + vm_handover.handover.fromDate +
+            //        '&to=' + vm_handover.handover.toDate
+            //}
+        } else if (vm_handover.handover.id) {
+            var url = '/public/views/1/finance.html?from=' + vm_handover.handover.fromDate +
+                '&to=' + vm_handover.handover.toDate +
+                '&snapshot=' + vm_handover.handover.snapshot +
+                '&handoverId=' + vm_handover.handover.id + '#tab=handoverDetail'
+        }
+
+        window.open(url)
+    },
+    //    选择时间
+    openHandoverTimeBox : function () {
+        var vm = vm_handover
+        $(this).next().show();
+    },
+    searchHandover : function () {
+        var vm = vm_handover
+        var defTime = parseInt(tmsky.date.diffDays(vm.handoverTempData.from, vm.handoverTempData.to))
+        if (vm.data.from == vm.handoverTempData.from && vm.data.to == vm.handoverTempData.to) {
+            $(this).parent().hide()
+            return
+        }
+        if (defTime < 0) {
+            tmsky.ui.dialog.errorTips('开始日期不能大于结束日期，请重新选择！')
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.data.from = vm.handoverTempData.from
+            vm.data.to = vm.handoverTempData.to
+            vm.getHandovers(1)
+            $(this).parent().hide()
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的财务信息！')
+        }
+    },
+
+})
+

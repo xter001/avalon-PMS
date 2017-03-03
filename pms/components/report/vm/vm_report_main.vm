@@ -1,0 +1,84 @@
+var vm_report_main = avalon.define({
+    $id : 'vm_report_main',
+    urls : {
+        baseInfo : '/inn/info/base/PC,ALLPC,AC,FI,FIM,AD'
+    },
+    tabShow : {
+        accountBook : true,
+    },
+    access: {},
+    plug: {},
+    pcs : [],
+    allpcs : [],
+    acs : [],
+    fis : [],
+    ads : [],
+    init : function () {
+        vm_report_main.initPayChannels()
+        vm_report_main.access = Access
+        vm_report_main.plug = Plug
+        return this
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+    changeTabs: function(type, params) {
+        var map = {accountBook : false};
+        for(var key in map){
+            if(key == type){
+                map[key] = true;
+                break;
+            }
+        }
+        switch (type){
+            case 'accountBook':
+                if(AccountBook.getVm().books.length == 0){
+                    AccountBook.getVm().data.type = (params && params.switchroom)?params.switchroom:AccountBook.getVm().data.type
+                    AccountBook.getVm().data.from = (params && params.from)?params.from:AccountBook.getVm().data.from
+                    AccountBook.getVm().data.to = (params &&params.to)?params.to:AccountBook.getVm().data.to
+                    AccountBook.getVm().getFinanceRecords(1, '', (params) && params.detailDate)
+                }
+                break;
+            default :
+                break;
+        }
+        vm_report_main.tabShow = map;
+    },
+    initPayChannels : function () {
+        var url = vm_report_main.urls.baseInfo
+        $.get(url).done(function(rs) {
+            if(rs.status == 200){
+            	rs = rs.result
+                vm_report_main.pcs = rs.PC
+                vm_report_main.allpcs = rs.ALLPC
+                vm_report_main.acs = rs.AC
+                vm_report_main.fis = rs.FI
+                vm_report_main.ads = rs.AD
+            }
+        })
+    },
+    initPage : function (id, page, callback) {
+        var list = [];
+        tmsky.ui.page.render({
+            id : id,
+            callbackParams : list,
+            callback : callback, // 或click : click
+            pages : page.totalPages,
+            pageNo : page.pageNo,
+            skin : 'red',
+            align : 'center',
+            totalCount : page.totalCount
+        })
+    },
+    removeObj : function (list, el) {
+        var point = 0;
+        for (var i = 0; i < list.length; i++) {
+            var obj = list[i];
+            if (obj == el || obj.id == el.id) {
+                point = i;
+            }
+        }
+        list.splice(point, 1);
+    }
+})

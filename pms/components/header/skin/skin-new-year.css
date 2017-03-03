@@ -1,0 +1,217 @@
+/**
+ * Created by dai on 2017/01/09.
+ * 新年皮肤---start
+ */
+
+/*header*/
+#header {
+    background: url("../images/skin-new-year/new_bg_header.png") no-repeat center;
+    background-size: cover;
+}
+
+#main-nav a {
+    color: #ffffff;
+}
+
+.header-txt-overflow, #main-nav a {
+    color: #ffffff;
+}
+
+#main-nav .active a {
+    background-color: #ffffff;
+    color: #a60011;
+}
+
+#main-nav a:hover {
+    text-decoration: none;
+    color: #a60011;
+    background-color: #ffffff;
+}
+
+.christmas-icon-arrowdown:before, .icon-search:before {
+    color: #ffffff;
+}
+
+.fq-annouce, .fq-annouce:link, .fq-annouce:hover {
+    color: #FBCB51;
+    background: url('../images/skin-new-year/new_annouce-icon.gif') no-repeat center left;
+
+}
+
+/*#main-nav a.activity {*/
+/*background: url("../images/skin-christmas/christmas_icon_new.png") no-repeat 50px 6px;*/
+/*}*/
+
+#main-nav a.activity:hover {
+    background-color: #ffffff;
+}
+
+#sub-nav s {
+    width: 26px;
+    height: 45px;
+    background: url("../images/skin-new-year/new_split_line.png") no-repeat center;
+    background-size: 100% 100%;
+    border: none;
+    top: -9px;
+}
+
+.shopSellIcon {
+    background: url("../images/skin-new-year/new_img_qiu.png") no-repeat center;
+    background-size: 80% 80%;
+    width: 63px;
+    height: 101px;
+    z-index: 9;
+    top: -30px;
+}
+
+.shopSellIcon:hover {
+    top: -25px;
+    color: #EFEFEF
+}
+
+/*.shopSellIcon span {*/
+/*top: 40px;*/
+/*left: 3px;*/
+/*}*/
+
+.content-box {
+    bottom: 55px !important;
+}
+
+.bottomBar {
+    background: url("../images/skin-new-year/new_bg_foot.png") no-repeat center;
+    background-size: 100% 100%;
+    height: 54px;
+    border-top: none;
+}
+
+.bottomBar ul {
+    position: relative;
+    top: 20px;
+}
+
+.bottomBar li a, .christmas-col-write {
+    color: #FFCECE;
+}
+
+.bottomBar li:hover a, .christmas-col-write:hover {
+    color: #ffffff !important;
+}
+
+/*editor.css*/
+.info-top-head {
+    background: url("../images/skin-new-year/new_order_top.png") no-repeat center;
+    background-size: cover;
+    color: #ffffff;
+}
+
+.content-slide-foot {
+    background: url("../images/skin-new-year/new_order_bottom.png") no-repeat center;
+    background-size: 100% 100%;
+}
+
+.content-slide-foot .btn {
+    position: relative;
+}
+
+.content-slide-foot > .christmas-btn-p:before {
+    content: '';
+    display: inline-block;
+    width: 140px;
+    height: 62px;
+    background: url("../images/skin-new-year/new_btn_p.png") no-repeat center;
+    background-size: 100% 100%;
+    position: absolute;
+    top: -21px;
+    left: -22px;
+}
+
+.content-slide-foot > .christmas-btn:before {
+    content: '';
+    display: inline-block;
+    width: 100% !important;
+    height: 71px;
+    background: url("../images/skin-new-year/new_btn.png") no-repeat center !important;
+    background-size: 100% 100%;
+    position: absolute;
+    top: -25px;
+    left: -1px;
+}
+
+/*footnav.css*/
+.bottomBar li .icon1, .bottomBar li .icon1:hover {
+    background: url("../images/skin-new-year/new_icon_finance.png") no-repeat 0px 1px;
+}
+
+.bottomBar li .icon2, .bottomBar li .icon2:hover {
+    background: url("../images/skin-new-year/new_icon_share.png") no-repeat 0px 1px;
+}
+
+.bottomBar li .icon3, .bottomBar li .icon3:hover {
+    background: url("../images/skin-new-year/new_icon_room.png") no-repeat 0px 1px;
+}
+
+.bottomBar li .icon4, .bottomBar li .icon4:hover {
+    background: url("../images/skin-new-year/new_icon_qq.png") no-repeat 0px 1px;
+}
+
+.bottomBar li a.icon7, .bottomBar li a.icon7:hover {
+    background: url("../images/skin-new-year/new_icon_customer.png") no-repeat 0px 1px;
+}
+
+.bottomBar li .icon5:hover, .bottomBar li .icon5 {
+    background: url("../images/skin-new-year/new_icon_msg.png") no-repeat 0px 1px;
+}
+
+.bottomBar li a, .bottomBar li a.icon4, .bottomBar li .icon5 {
+    padding-left: 32px;
+}
+
+.bottomBar li .icon6 {
+    background: url('../images/skin-new-year/new_icon_message.gif') no-repeat 0px 0;
+}
+
+.bottomBar li a.icon6 {
+    color: #FFCECE;
+}
+
+/*house-grid.css*/
+.date-panel-wrap {
+    background: url("../images/skin-new-year/new_bg_calender.png") no-repeat center;
+    background-size: 100% 100%;
+    color: #ffffff;
+}
+
+.icon-arrowleft:before, .icon-arrowright:before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: url("../images/skin-new-year/new_calender_dd.png") no-repeat center;
+    background-size: 100% 100%;
+    position: absolute;
+}
+
+.icon-arrowleft:before {
+    top: 3px;
+    left: -10px;
+}
+
+.icon-arrowright:before {
+    top: 3px;
+    left: -1px;
+}
+
+/*老  header 样式*/
+.span-txt-overflow a span {
+    color: #ffffff;
+}
+
+#main-nav .tc-active a {
+    background-color: #ffffff;
+    color: #a60011;
+}
+
+/**
+ * 新年皮肤---end
+ */

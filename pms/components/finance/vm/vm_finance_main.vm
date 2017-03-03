@@ -1,0 +1,286 @@
+var vm_finance_main = avalon.define({
+    $id : 'vm_finance_main',
+    urls : {
+        baseInfo : '/inn/info/base/PC,ALLPC,AC,FI,FIM,AD,GS,CN,ALLCF'
+    },
+    tabShow : {
+        accountBook : false,
+        baseInfo : false,
+        sale : false,
+        collection : false,
+        handover : false,
+        handoverDetail : false,
+        financeIndex : true,
+        roomSale : false,
+        goodSale : false,
+        //dayIncome : false,
+        inCome : false,
+        customerIn : false
+    },
+    isNewUser : false, //是否是新用户
+    access : {},
+    plug : {},
+    pcs : [],
+    allpcs : [],
+    acs : [],
+    fis : [],
+    ads : [],
+    guide : {
+        show : false,
+        step : -1
+    },//引导
+    guideId : '',
+    changeGuide : function (index) {
+        vm_finance_main.guide.step = index
+        if (index == -1) {
+            vm_finance_main.guide.show = false
+            var data = {
+                id : vm_finance_main.guideId
+            }
+            $.get(' /guide/finishGuide', data, {
+                t : new Date().valueOf()
+            }).done(function (rs) {
+                if (window.localStorage) {
+                    window.localStorage.setItem('finance-guide', 1)
+                }
+            })
+        }
+    },
+    initGuideParam : function () {
+        if (window.localStorage) {
+            var param = window.localStorage.getItem('finance-guide')
+            if (param) {
+                //存在缓存，则记一笔引导已完成
+                return false
+            }
+        }
+        //缓存没有则请求
+        var data = {
+            guideTag : 'FINANCE_GUIDE',
+            systemTag : 'PMS',
+            innId : CommonCacheUtil.innBaseInfo.user.innId,
+            userCode : CommonCacheUtil.innBaseInfo.user.code,
+            version : '2017-01-05'
+        }
+        $.get('/guide/getInnGuide', data, {
+            t : new Date().valueOf()
+        }).done(function (rs) {
+            if (rs.status == 200) {
+                if (rs.guide.status == 0) {
+                    vm_finance_main.guide = {
+                        show : true,
+                        step : 0
+                    }
+                    vm_finance_main.guideId = rs.guide.id
+                }
+                if (rs.guide.status == 1) {
+                    if (window.localStorage) {
+                        window.localStorage.setItem('finance-guide', 1)
+                    }
+                }
+            }
+        })
+    },
+    init : function () {
+        vm_finance_main.initPayChannels()
+        vm_finance_main.access = Access
+        vm_finance_main.plug = Plug
+        return this
+    },
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+    changeTabs : function (type, params) {
+        if (type != 'inCome') {
+            vm_finance_main.guide.show = false
+        }
+        location.hash = '#tab=' + type
+        var map = {
+            accountBook : false,
+            baseInfo : false,
+            sale : false,
+            collection : false,
+            handover : false,
+            handoverDetail : false,
+            financeIndex : false,
+            roomSale : false,
+            goodSale : false,
+            //dayIncome : false,
+            inCome : false,
+            customerIn : false
+        };
+        for (var key in map) {
+            if (key == type) {
+                map[key] = true;
+                break;
+            }
+        }
+        switch (type) {
+            case 'accountBook':
+                if (tmsky.getVm('vm_account_book').books.length == 0) {
+                    tmsky.getVm('vm_account_book').data.type = (params && params.switchroom) ? params.switchroom : tmsky.getVm('vm_account_book').data.type
+                    tmsky.getVm('vm_account_book').data.from = (params && params.from) ? params.from : tmsky.getVm('vm_account_book').data.from
+                    tmsky.getVm('vm_account_book').data.to = (params && params.to) ? params.to : tmsky.getVm('vm_account_book').data.to
+                    tmsky.getVm('vm_account_book').getFinanceRecords(1, '', (params) && params.detailDate)
+                }
+                break;
+            case 'baseInfo':
+                if (tmsky.getVm('vm_bank_info').regions.length == 0) {
+                    tmsky.getVm('vm_bank_info').getInnInfo()
+                }
+                break;
+            case 'sale':
+                if (tmsky.getVm('vm_bill_check').bills.length == 0) {
+                    tmsky.getVm('vm_bill_check').getCheckBills(1)
+                    tmsky.getVm('vm_bill_check').getSettlementInfo()
+                } else {
+                    tmsky.getVm('vm_bill_check').setViews(true, false)
+                }
+                break;
+            case 'collection':
+                //if (tmsky.getVm('vm_collect_check').collectionList.length == 0) {
+                //    tmsky.getVm('vm_collect_check').getCollection(1)
+                //}
+                tmsky.getVm('vm_collect_check').init()
+                break;
+            case 'handover':
+                if (tmsky.getVm('vm_handover').handoverList.length == 0) {
+                    tmsky.getVm('vm_handover').getHandovers(1)
+                }
+                break;
+            case 'handoverDetail':
+                tmsky.getVm('vm_handover_detail').init()
+                break;
+
+            case 'financeIndex':
+                tmsky.getVm('vm_financeIndex').init()
+                break;
+            case 'roomSale':
+                tmsky.getVm('vm_roomSale').initJson()
+                break;
+            case 'goodSale':
+                tmsky.getVm('vm_goodSale').initJson()
+                break;
+            //case 'dayIncome':
+            //    //if (AccountBook.getVm().books.length == 0) {
+            //    //    AccountBook.getVm().data.type = (params && params.switchroom) ? params.switchroom : AccountBook.getVm().data.type
+            //    //    AccountBook.getVm().data.from = (params && params.from) ? params.from : AccountBook.getVm().data.from
+            //    //    AccountBook.getVm().data.to = (params && params.to) ? params.to : AccountBook.getVm().data.to
+            //    //    AccountBook.getVm().getFinanceRecords(1, '', (params) && params.detailDate)
+            //    //}
+            //    tmsky.getVm('vm_dayIncome').initJson()
+            //    break;
+            case 'inCome':
+                setTimeout(function () {
+                    avalon.vmodels.vm_shopcost.hasDonedAllGuides('', vm_finance_main.initGuideParam)
+                }, 2000)
+                tmsky.getVm('vm_inCome').reset()
+                break;
+
+            case 'customerIn':
+                tmsky.getVm('vm_customerIn').init()
+                break;
+
+            default :
+                map = {
+                    accountBook : false,
+                    baseInfo : false,
+                    sale : false,
+                    collection : false,
+                    handover : false,
+                    handoverDetail : false,
+                    financeIndex : true,
+                    roomSale : false,
+                    goodSale : false,
+                    //dayIncome : false,
+                    inCome : false,
+                    customerIn : false
+                };
+                tmsky.getVm('vm_financeIndex').init()
+                break;
+        }
+        vm_finance_main.tabShow = map;
+    },
+    initPayChannels : function () {
+        var url = vm_finance_main.urls.baseInfo
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                rs = rs.result
+                vm_finance_main.pcs = rs.PC
+                vm_finance_main.allpcs = rs.ALLPC
+                vm_finance_main.acs = rs.AC
+                vm_finance_main.fis = rs.FI
+                vm_finance_main.ads = rs.AD
+                tmsky.getVm('vm_account_book').accountBooks = vm_account_book.initAccountBooks(rs.AC)
+                tmsky.getVm('vm_handover').payChannels = rs.PC
+
+                tmsky.getVm('vm_roomSale').cfList = rs.ALLCF//渠道来源
+                tmsky.getVm('vm_roomSale').cnList = rs.CN//佣金
+
+                tmsky.getVm('vm_goodSale').PClist = rs.ALLPC//支付方式
+                tmsky.getVm('vm_goodSale').GSlist = rs.GS//商品
+
+                tmsky.getVm('vm_customerIn').cfList = rs.ALLCF//渠道来源
+
+                for (var i = 0; i < rs.AD.length; i++) {
+                    if (rs.AD[i].inn.id == CommonCacheUtil.innBaseInfo.user.innId) {
+                        tmsky.getVm('vm_bill_check').innInfo = rs.AD[i].inn
+                        break;
+                    }
+                }
+                var inAcs = [], outAcs = []
+                for (var i = 0; i < rs.AC.length; i++) {
+                    if (rs.AC[i].itemType == '1') {
+                        //收入
+                        inAcs.push(rs.AC[i])
+                        tmsky.getVm('vm_account_book').showView.noInCome = false
+                    } else if (rs.AC[i].itemType == '2') {
+                        //支出
+                        outAcs.push(rs.AC[i])
+                        tmsky.getVm('vm_account_book').showView.noPayOut = false
+                    }
+                }
+
+                tmsky.getVm('vm_inCome').baseCallBack(inAcs, outAcs, rs.AD, rs.ALLPC)
+            }
+        })
+    },
+    initPage : function (id, page, callback) {
+        var list = [];
+        tmsky.ui.page.render({
+            id : id,
+            callbackParams : list,
+            callback : callback, // 或click : click
+            pages : page.totalPages,
+            pageNo : page.pageNo,
+            skin : 'red',
+            align : 'center',
+            totalCount : page.totalCount
+        })
+    },
+    removeObj : function (list, el) {
+        var point = 0;
+        for (var i = 0; i < list.length; i++) {
+            var obj = list[i];
+            if (obj == el || obj.id == el.id) {
+                point = i;
+            }
+        }
+        list.splice(point, 1);
+    },
+    //    格式化时间：如（16-09-08）
+    formatTime : function (time, hhmmss) {
+        var t = ''
+        if (time == '' || time == null) {
+            return '请选择时间'
+        }
+        if (hhmmss) {
+            t = tmsky.date.format(time, 'yy-MM-dd hh:mm')
+        } else {
+            t = tmsky.date.format(time, 'yy-MM-dd')
+        }
+        return t
+    },
+
+})

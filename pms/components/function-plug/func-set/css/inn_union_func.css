@@ -1,0 +1,99 @@
+.inn_union_l {
+    width: 315px;
+    height: 290px;
+    margin-top: 20px;
+}
+
+.inn_union_l .ui_box_content {
+    height: 175px;
+}
+
+.ui_func_box {
+    border: 1px solid #cdcdcd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.ui_func_box .ui_box_title {
+    height: 35px;
+    line-height: 35px;
+    background-color: #e4e9ea;
+    font-size: 14px;
+    color: #323231;
+    text-align: left;
+    text-indent: 15px;
+}
+
+.ui_func_box .ui_box_content {
+    padding: 15px;
+}
+
+.border-btm {
+    height: 100%;
+    border-bottom: 1px dashed #b1ae87;
+}
+
+.inn_union_l .ui_box_footer button {
+    width: 120px;
+    height: 30px;
+    border: 1px solid #CCCCCC;
+    border-radius: 2px;
+    background-color: #e3e3e3;
+    float: left;
+    margin: 0 18px;
+    line-height: 30px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ui_box_footer .selected {
+    border: none !important;
+    background-color: #87c150 !important;
+    color: #ffffff !important;
+}
+
+.inn_union_r {
+    margin-left: 35px;
+    margin-top: 20px;
+}
+
+.inn_union_r .ui_func_box {
+    width: 660px;
+}
+
+.bg_white {
+    background-color: #ffffff;
+}
+
+.u_btn {
+    width: 90px;
+    height: 30px;
+    line-height: 30px;
+    background-color: #e3e3e3;
+    color: #616161;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+.u_input {
+    width: 90px;
+    height: 30px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    text-indent: 10px;
+}
+.ui_inblock_grey .u_price,.ui_inblock_add .u_price{
+    width: 43px;
+    text-indent: 0;
+    text-align: center;
+}
+
+/*客栈联盟*/
+.func_union_on .vip_list{
+    min-height: 62px;
+    margin-top: 10px;
+}
+
+

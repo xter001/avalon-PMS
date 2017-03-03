@@ -1,0 +1,76 @@
+#message-r {
+    width: 100%;
+    padding: 0 2% 0 160px;
+    float: right;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing:border-box;
+}
+
+#message-r .select-time {
+    margin: 8px 0;
+}
+
+.message-info {
+    height: 600px;
+    width: 100%;
+    clear: both;
+    margin-bottom: 20px;
+}
+
+.message-info-one {
+    min-height: 35px;
+    width: 100%;
+    cursor: pointer;
+    padding: 15px 0;
+    background: #ffffff;
+    border-bottom: 1px #ccc solid;
+}
+
+.message-info-one:hover {
+    background: #f6f6f6;
+}
+
+.message-info-one h3.message-title {
+    font-size: 14px;
+}
+
+.message-info-one .message-date {
+    font-size: 12px;
+    margin-left: 15px;
+    color: rgba(126, 124, 124, 1);
+}
+
+.message-con-sl {
+    font-size: 12px;
+    color: rgba(126, 124, 124, 1);
+    margin-top: 5px;
+}
+
+.message-con-all {
+    font-size: 12px;
+    color: rgba(126, 124, 124, 1);
+    width: 100%;
+    margin-top: 5px;
+}
+
+.message-info-one i {
+    background: url('images/noReadIcon.png') no-repeat;
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+.message-info-one i.has-read {
+    background: url('images/hasReadIcon.png') no-repeat;
+}
+
+#messageTips {
+    margin: 40px 0;
+    float: left;
+}

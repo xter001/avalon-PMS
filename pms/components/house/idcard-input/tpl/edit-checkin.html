@@ -1,0 +1,90 @@
+<!--录入证件信息-->
+<div id="vm_idcard_input" class="tomasky-ui-popups edit-msg-dialog" ms-visible="editMsgDialog" ms-controller="vm_idcard_input">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog" style="width: 555px">
+        <em class="close" data-dismiss="popups" ms-click="closeDialog('editMsgDialog')">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">证件信息</h3>
+            <!--<h3 class="ui-popups-title">使用读卡器读取证件信息</h3>-->
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x">
+            <div class="ui-edit-top">
+                <!--<a class="msg-area" ms-attr-value="0" ms-click="checkIsForeign(0)"
+                   ms-class-checked="editData.iSForeign==0"><i></i>境内</a>
+                <a class="msg-area" ms-attr-value="1" ms-click="checkIsForeign(1)"
+                   ms-class-checked="editData.iSForeign==1"><i></i>境外</a>-->
+                <div class="check-img">
+                    <img ms-attr-src="editData.picStream" />
+                    <!--<div class="check-img-foot">选择图片</div>-->
+                </div>
+            </div>
+            <ul class="edit-msg-centent">
+                <li>
+                    <label>证件类型：</label>
+                    <select name="" style="width:100px;height: 30px" ms-attr-readonly="inputType==2" ms-change="cardTypeChange()" ms-duplex-value="editData.cardType">
+                        <option ms-repeat="editInitData.cardTypes" ms-attr-value="el.Code">{{el.Name}}</option>
+                    </select>
+                    <label class="margin-left">证件号码：</label>
+                    <input type="text" style="width: 220px" maxlength="18" ms-duplex="editData.cardNo" ms-blur="byIdcard()">
+                </li>
+                <li>
+                    <label>姓名：</label>
+                    <input type="text" maxlength="15" style="width: 100px;" ms-duplex="editData.name">
+
+                    <label class="margin-left">出生日期：</label>
+                    <input ms-attr-disabled="editData.cardType == '11'" id="birthday" ms-duplex="editData.birthday" type="text" class="idcard-birthday">
+
+                    <label class="margin-left" style="width:40px;">性别：</label>
+                    <!--<input type="text"  ms-attr-readonly="editData.cardType == '11'" style="width: 60px" ms-duplex="editData.sex">-->
+
+                    <select style="width:62px;height:30px;" ms-attr-disabled="editData.cardType == '11'" ms-change="sexChange()">
+                        <option ms-repeat="editInitData.sex" ms-attr-value="el.Code" ms-attr-selected="editData.sex == el.Code">{{el.Name}}</option>
+                    </select>
+                </li>
+                <li style="display: flex; align-items: center;">
+                    <label>民族：</label>
+                    <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu order-idcard-nation" data-ui="dropdown">
+                        <a>
+                            <span class="">{{editData.nation}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list idcard-input-select2">
+                            <em class="tomasky-ui-dropdown-search-in">
+                                <input old-value="" placeholder="搜索.." data-role="search"
+                                       class="tomasky-ui-dropdown-search-input-in">
+                            </em>
+                            <a ms-repeat="editInitData.nations" class="nationList" data-role="item" ms-attr-data-code="el.Code" ms-attr-title="el.Name">{{el.Name}}</a>
+                            <!--<p href="javascript:void(0)" class="tomasky-ui-dropdown-search-notexist c-red">很遗憾，没有你要找的信息！</p>-->
+                        </div>
+                    </div>
+                    <label class="margin-left" style="margin-left: 15px;">省市县：</label>
+                    <div class="tomasky-ui-dropdown tomasky-ui-dropdown-menu order-idcard-addr" data-ui="dropdown">
+                        <a>
+                            <span class="">{{editData.ssx}}</span>
+                            <i class="iconfont icon-arrowdown"></i>
+                        </a>
+                        <div class="ui-dropdown-list idcard-input-select2">
+                            <em class="tomasky-ui-dropdown-search-in">
+                                <input old-value="" placeholder="搜索.." data-role="search"
+                                       class="tomasky-ui-dropdown-search-input-in">
+                            </em>
+                            <a ms-repeat="editInitData.cardAddr" ms-attr-data-code="el.Code" class="addrList" data-role="item" ms-attr-title="el.Name">{{el.Name}}</a>
+                            <!--<p href="javascript:void(0)" class="tomasky-ui-dropdown-search-notexist c-red">很遗憾，没有你要找的信息！</p>-->
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <label>详细地址：</label><input type="text" maxlength="100" style="width: 398px" ms-duplex="editData.address">
+                </li>
+            </ul>
+        </div>
+        <div class="ui-popups-foot">
+            <span class="ui-edit-hint">已添加 {{persons.length}} 人信息</span>
+            <div class="fr">
+                <!--<button class="btn-add btn" ms-attr-disabled="cardInfoValid && (persons.length >= (maxPerson-1))" ms-click="saveThisMsg('encore')">再录入一位客人</button>-->
+                <button class="btn-save btn" ms-attr-disabled="cardInfoValid" ms-click="saveThisMsg('save')">保存</button>
+                <button class="btn-cancel btn" ms-click="editBackList()">取消</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,151 @@
+var CommonUtil = require('../../common/js/utils/common-util.js'),
+    Total = require('../handler/totalStyle.js')
+
+
+var vm_goodSale = avalon.define({
+    $id : 'vm_goodSale',
+    timeData : {
+        from : ''
+    },
+    goodList : [],
+    PClist : [],
+    GSlist : [],
+    totalDatas : {
+        totalPrice : 0
+    },
+    init : function () {
+        var vm = vm_goodSale
+        var params = tmsky.location.params
+        if (params.tab == 'goodSale' && params._time != null) {
+            vm.timeData.from = params._time
+        } else {
+            vm.timeData.from = tmsky.date.today()
+        }
+        $("#goodSale_time").datepicker({
+            onSelect : function (selectedDate) {
+                vm.timeData.from = selectedDate
+                vm.getGoodSaleList()
+            }
+        })
+
+    },
+    initJson : function () {
+        var vm = vm_goodSale
+        if (vm.goodList.length == 0) {
+            vm.getGoodSaleList()
+        }
+    },
+    getGoodSaleList : function () {
+        tmsky.ui.dialog.loading()
+
+        var vm = vm_goodSale,
+            list = []
+        vm.goodList = []
+
+        var data = {
+            from : vm.timeData.from
+        }
+        $.ajax({
+            type : 'GET',
+            data : $.param(data, true),
+            url : '/finance/getGoodsFeeList',
+            error : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert(rs.message)
+            },
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    if (rs.list) {
+                        rs.list.forEach(function (tr) {
+                            var orderNo = '',
+                                roomnosArr = '',
+                                checkinsArr = '',
+                                checkoutsArr = '';
+                            if (tr.roomnos != null) {
+                                roomnosArr = tr.roomnos.split(',')
+                            }
+                            if (tr.checkins != null) {
+                                checkinsArr = tr.checkins.split(',')
+                            }
+                            if (tr.checkouts != null) {
+                                checkoutsArr = tr.checkouts.split(',')
+                            }
+
+                            //订单号
+                            if (tr.otaOrderNo != null) {
+                                orderNo = tr.otaOrderNo
+                            } else {
+                                orderNo = tr.orderNo
+                            }
+                            var item = {
+                                spendTime : tr.spendTime,
+                                orderNo : orderNo,
+                                roomnos : [],
+                                contactUser : tr.contactUser,
+                                goods : vm.gsMap(tr.goodsId),//项目
+                                realPrice : tr.realPrice,
+                                goodNum : tr.goodNum,
+                                totalPrice : tr.realPrice * tr.goodNum,
+                                orderStatus:tr.orderStatus,
+                                payChannel : vm.pcMap(tr.payChannelId)
+
+                            }
+                            if (roomnosArr.length > 0) {
+                                roomnosArr.forEach(function (xx, i) {
+                                    var room = {
+                                        roomNo : xx,
+                                        checkin : checkinsArr[i],
+                                        checkout : checkoutsArr[i],
+                                    }
+                                    item.roomnos.push(room)
+                                })
+                            }
+                            list.push(item)
+
+                        })
+                        vm.goodList = list
+                        Total.cssInit($('#goodSale_div'), 11)
+                        vm.countFee()
+                    }
+                } else {
+                    tmsky.ui.dialog.alert(rs.message)
+                }
+            }
+        })
+    },
+    //支付方式
+    pcMap : function (id) {
+        var vm = vm_goodSale, pc = '';
+        if (vm.PClist) {
+            vm.PClist.forEach(function (x) {
+                if (x.id == id) {
+                    pc = x.name
+                }
+            })
+        }
+        return pc
+    },
+//    商品
+    gsMap : function (id) {
+        var gsList = vm_goodSale.GSlist, gs = ''
+        if (gsList) {
+            gsList.forEach(function (x) {
+                if (x.id == id) {
+                    gs = x.name
+                }
+            })
+        }
+        return gs
+    },
+    countFee : function () {
+        var vm = vm_goodSale
+        vm.totalDatas.totalPrice = 0
+        if (vm.goodList) {
+            vm.goodList.forEach(function (x) {
+                vm.totalDatas.totalPrice = vm.totalDatas.totalPrice + x.totalPrice
+            })
+        }
+    },
+
+})

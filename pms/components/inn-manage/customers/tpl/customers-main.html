@@ -1,0 +1,18 @@
+<div class="ms-controller" ms-controller="vm_customers">
+    <div class="fl customers-list-item">
+        <ul>
+            <li ms-class-active="tabShow.datas" ms-click="changeTab('datas')" class="customer-datas">客户资料</li>
+            <li ms-class-active="tabShow.checkIn" ms-click="changeTab('checkIn')" class="checkin">入住客人</li>
+            <li ms-class-active="tabShow.blacklist" ms-click="changeTab('blacklist')" class="black-list">黑名单</li>
+            <li ms-class-active="tabShow.vipManage" ms-click="changeTab('vipManage')" class="vip-manage" ms-visible="isMainInn">会员管理</li>
+            <li ms-class-active="tabShow.checkIn_new" ms-click="changeTab('checkIn_new')" class="checkin"  ms-visible="!isPsb" >入住客人列表<i class="ui-tips-new"></i></li>
+        </ul>
+    </div>
+    <div class="customers-content">
+        <div ms-visible="tabShow.datas" id="datas_div"></div>
+        <div ms-visible="tabShow.checkIn" id="checkIn_div"></div>
+        <div ms-visible="tabShow.blacklist" id="blacklist_div"></div>
+        <div ms-visible="tabShow.vipManage" id="vipManage_div" ms-visible="isMainInn"></div>
+        <div ms-visible="tabShow.checkIn_new" id="checkIn_new_div" ms-visible="!isPsb"></div>
+    </div>
+</div>

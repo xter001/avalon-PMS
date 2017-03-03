@@ -1,0 +1,64 @@
+<div ms-controller="vm_checkIn">
+    <!--<div class="c-content-title">-->
+        <!--<p>选择时间段内在住客人信息表</p>-->
+    <!--</div>-->
+    <!--ul class="u-li-title">
+        <li ms-class-selected="searchPersonType==1" ms-click="Tab(1)">在住客人</li>
+        <li ms-class-selected="searchPersonType==2" ms-click="Tab(2)">全部客人</li>
+    </ul-->
+    <div class="c-content-title">
+        <p>重要提示： “入住客人”&nbsp;列表将于<span style="color: red;font-size: 13px;">2017年5月1日</span>删除，您可以使用新的“入住客人列表”查看客人信息。</p>
+    </div>
+    <div class="finance-nav-head">
+        <h1 style="top: 10px">一共有<a class="u-stand-out">{{totalNum}}</a>条记录</h1>
+        <div class="time-list-box fr">
+                <div class="time-cover small-box fl" ms-click="openTimeBox" style="height: 34px;margin-right: 3px;line-height: 34px">
+                    <i></i>{{formatTime(datas.from)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(datas.to)}}
+                </div>
+                <div class="time-select small-time-select" style="top: 108px;right: 383px;">
+                    <input id="c_checkin_from" ms-duplex="tempTime.from" type="text" placeholder="开始时间" style="padding: 0">
+                    到
+                    <input id="c_checkin_to" ms-duplex="tempTime.to" type="text" placeholder="结束时间" style="padding: 0"></br>
+                    <button class="btn-sure" ms-click="sureTime">确定</button>
+                </div>
+                <!--select class="check-status" ms-duplex="searchDateType">
+                    <option value="1">离店</option>
+                    <option value="2">入住</option>
+                </select-->
+
+            <input class="u-input-txt" type="text" placeholder="姓名" ms-duplex="datas.input">
+            <button class="btn btn-search" ms-click="getOrderPersons(1)">搜索</button>
+            <button class="btn btn-excel" ms-if="!isPsb"  ms-click="exportExcel()"><i class="icon-excel"></i>导出Excel</button>
+        </div>
+    </div>
+    <table class="table table-hover table-bordered">
+    <thead>
+    <tr>
+        <th>姓名</th>
+        <th>联系电话</th>
+        <th>身份证</th>
+        <th>户籍</th>
+        <th>地址</th>
+        <th>入住时间</th>
+        <th>房间号</th>
+        <th>入住天数</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ms-repeat-el="datasList" ms-if="datasList.length">
+        <td>{{el.name}}</td>
+        <td>{{el.phone}}</td>
+        <td>{{el.cardNo}}</td>
+        <td>{{el.origin}}</td>
+        <td>{{el.address}}</td>
+        <td>{{el.checkInAt}}</td>
+        <td>{{el.roomNo}}</td>
+        <td>{{el.days}}</td>
+    </tr>
+    <tr ms-if="!datasList.length">
+    <td colspan="8">暂无客人信息！</td>
+    </tr>
+    </tbody>
+    </table>
+    <div id="checkin_page"></div>
+</div>

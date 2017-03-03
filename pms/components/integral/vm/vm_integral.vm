@@ -1,0 +1,272 @@
+var User = require('../../header/user.js'),
+    CommonUtil = require('../../common/js/utils/common-util.js')
+
+var vm_integral = avalon.define({
+    $id : 'vm_integral',
+    innId : '',
+    jfExchange : false,
+    jfRule : false,
+    timeBox : false,
+
+    detFlag : 0,
+    currentInn : {},
+    detList : [],//积分名称明细
+    defNav : {
+        exchange : true,
+        jfDetails : false
+    },
+    datas : {
+        from : '',
+        to : ''
+    },
+    tempData:{
+        from:'',
+        to:''
+    },
+    yesIntegral : '',
+    goods : [
+        {
+            id : 1,
+            name : '100条短信',
+            score : 100,
+            img:'/public/c/views/1/integral/images/'+'duanxin.jpg',
+            hoverMsg:['1、兑换获得的短信永久有效。'],
+        },
+        {
+            id : 2,
+            name : '客栈民宿行业实战指南',
+            score : 790,
+            img:'/public/c/views/1/integral/images/'+'inn_book.jpg',
+            hoverMsg:['1、兑换后，我们会在3个工作日内联系您进行邮寄。'],
+        }
+    ],
+    jfCash : {
+        num : 1,
+        totalScore : 0
+    },
+    curGood:{},
+    jfTaskMap : {
+        '1' : '主管控制',
+        '100' : '直连订单奖励',
+        '107' : '每日离店间夜奖励',
+        '101' : '每日登录奖励',
+        '110':'积分兑换'
+    },
+
+    init : function () {
+        var vm = vm_integral
+        vm.innId = User.getUserInfo().innId
+        vm.currentInn = User.getCurrentInn()
+        vm.getYesIntegral()
+
+        vm.datas.from = tmsky.date.format(tmsky.date.addMonths(tmsky.date.today(), '-1'))
+        vm.tempData.from = tmsky.date.format(tmsky.date.addMonths(tmsky.date.today(), '-1'))
+        vm.datas.to = tmsky.date.format(tmsky.date.today())
+        vm.tempData.to = tmsky.date.format(tmsky.date.today())
+
+
+        CommonUtil.bindingDatepickerByElement($('#jf_from'), true, "#jf_from", "#jf_to", true);
+        CommonUtil.bindingDatepickerByElement($('#jf_to'), false, "#jf_to", "#jf_to", true);
+    },
+
+    changeTabs : function (type) {
+        var vm = vm_integral
+        var map = {
+            exchange : false,
+            jfDetails : false
+        };
+        for (var key in map) {
+            if (key == type) {
+                map[key] = true;
+                break;
+            }
+        }
+        switch (type) {
+            case 'jfDetails':
+                if (vm_integral.detFlag == 0) {
+                    vm.getJFDetails(1);
+                }
+                break;
+
+
+            default:
+        }
+        vm.defNav = map
+    },
+    toExchange : function (el) {
+        vm_integral.jfExchange = true
+        vm_integral.curGood=el
+    },
+    closeJFExchange : function () {
+        vm_integral.jfCash.num = 1
+        vm_integral.jfCash.totalScore = 0
+        vm_integral.jfExchange = false
+    },
+    //减
+    numJian : function () {
+        if(isNaN(vm_integral.jfCash.num) || vm_integral.jfCash.num==''){
+            vm_integral.jfCash.num=1
+        }
+        if (vm_integral.jfCash.num > 0) {
+            vm_integral.jfCash.num = parseInt(vm_integral.jfCash.num) - 1
+            vm_integral.numChange()
+        }
+    },
+    //加
+    numAdd : function () {
+        if(isNaN(vm_integral.jfCash.num) || vm_integral.jfCash.num==''){
+            vm_integral.jfCash.num=0
+        }
+        if (vm_integral.jfCash.num >= 0) {
+            vm_integral.jfCash.num = parseInt(vm_integral.jfCash.num) + 1
+            vm_integral.numChange()
+        }
+
+    },
+    numChange : function () {
+        vm_integral.jfCash.totalScore = vm_integral.jfCash.num * vm_integral.goods[0].score
+    },
+    //获取积分明细
+    getJFDetails : function (pageNo) {
+        tmsky.ui.dialog.loading()
+        var datas = {
+                from : vm_integral.datas.from,
+                to : vm_integral.datas.to,
+                pageNo : pageNo || 1
+            },
+            url = '/task/getDetail?innId=' + vm_integral.innId;
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm_integral.detFlag = 1
+                if (rs.page.result.length > 0) {
+                    var arr = []
+                    rs.page.result.forEach(function (x, i) {
+                        var item = {
+                            id : x.id,
+                            createdAt : tmsky.date.format(new Date(x.createdAt), 'yyyy-MM-dd hh:mm'),
+                            taskType : x.taskType,
+                            taskId : x.taskId,
+                            task : vm_integral.jfTaskMap[x.taskId],
+                            score : x.score,
+                            note : x.note
+                        }
+                        arr.push(item)
+                    })
+                    vm_integral.detList = arr
+                    avalon.nextTick(function () {
+                        vm_integral.renderPage('jf-page-div', rs)
+                    })
+                } else {
+                    vm_integral.detList = []
+                }
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    renderPage : function (id, rs) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("jf-page-div")
+                vm_integral.getJFDetails(pageInfo.pageNo)
+            },
+            pageNo : rs.page.pageNo,
+            pageSize : rs.page.pageSize,
+            pages : rs.page.pages,
+            totalCount : rs.page.totalCount,
+            //maxPages : 10,//default
+            align : "center",
+            skin : "red",
+            returnParams : false
+        })
+    },
+    //积分规则
+    openJfRule : function () {
+        vm_integral.jfRule = true
+    },
+    closeJfRule : function () {
+        vm_integral.jfRule = false
+    },
+    //积分兑换
+    exchangeGoods : function () {
+        if(vm_integral.jfCash.num<1){
+            tmsky.ui.dialog.errorTips('请选择兑换数量！')
+            return
+        }
+        var datas = {
+                goodsId : vm_integral.curGood.id,
+                goodsNum : vm_integral.jfCash.num
+            },
+            url = '/task/exchangeGoods?innId=' + vm_integral.innId
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            if (rs.status == 200) {
+                vm_integral.detFlag=0
+                vm_integral.currentInn.availableIntegral=vm_integral.currentInn.availableIntegral-vm_integral.jfCash.num*vm_integral.curGood.score
+                $('#availableIntegral').text('番币'+vm_integral.currentInn.availableIntegral)
+                tmsky.ui.dialog.successTips('兑换成功！')
+                vm_integral.closeJFExchange()
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    //获取昨日积分
+    getYesIntegral : function () {
+        var date = tmsky.date.format(tmsky.date.yesterday()),
+            url = '/task/getAdditions/' + date
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                vm_integral.yesIntegral = rs.score
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+        })
+    },
+    //输入正整数
+    checkNumber : function (x) {
+        var val = parseInt(x)
+        if (isNaN(val) || val < 0 ||val == '') {
+            vm_integral.jfCash.num = ''
+        } else {
+            vm_integral.jfCash.num = val
+        }
+    },
+    //    格式化时间：如（16-09-08）
+    formatTime : function (time, hhmmss) {
+        var t = ''
+        if (hhmmss) {
+            t = tmsky.date.format(time, 'yy-MM-dd hh:mm')
+        } else {
+            t = tmsky.date.format(time, 'yy-MM-dd')
+        }
+        return t
+    },
+    openTimeBox:function(){
+        var vm=vm_integral
+        vm.timeBox=true
+    },
+    //搜索全部订单
+    searchJfDel : function () {
+        var vm = vm_integral
+        var defTime = parseInt(tmsky.date.diffDays(vm.tempData.from, vm.tempData.to))
+        if (vm.datas.from == vm.tempData.from && vm.datas.to == vm.tempData.to) {
+            vm.timeBox = false
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.datas.from = vm.tempData.from
+            vm.datas.to = vm.tempData.to
+            vm.getJFDetails()
+            vm.timeBox = false
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的订单信息！')
+        }
+    },
+
+    scan : function () {
+        avalon.scan(document.getElementById('content'))
+        return this
+    },
+})

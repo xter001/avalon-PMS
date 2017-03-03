@@ -1,0 +1,34 @@
+<div class="order-item {{type}}" style="background: {{cfColorValue}};width: {{width}}px;">
+	<em class="iconfont icon-{{type}}"></em>
+	<h3 class="{{multDaysFlag}}">
+		{{guest}}
+		{{#if needPlane}}
+		<i class="bg-plane"></i>
+		{{/if}}
+		{{#if needCar}}
+		<i class="bg-qiche"></i>
+		{{/if}}
+		{{#if needSpe}}
+		<i class="bg-zhongyaoxiaoxi"></i>
+		{{/if}}
+		{{#if needRatePlan}}
+            <i class="icon-xyz"></i>
+        {{else}}
+            {{#if needdanbao}}
+                <i class="icon-danbao"></i>
+            {{else}}
+                {{#if weifu}}
+                    <i class="bg-money"></i>
+                {{/if}}
+            {{/if}}
+        {{/if}}
+		{{#if hasRemind}}
+		<i class="bg-clock"></i>
+		{{/if}}
+	</h3>
+	<ul class="roomcell-list" {{#if maskWidth}}style="width: {{maskWidth}}px;"{{/if}}>
+		{{#each days}}
+		<li days="{{@index}}" role="orderitem"></li>
+		{{/each}}
+	</ul>
+</div>

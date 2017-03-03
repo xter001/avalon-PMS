@@ -1,0 +1,69 @@
+<!--脏房-->
+<div class="ui_fun_contenter" ms-visible="funcBool.dirtyRoom_plug">
+    <h1 class="u_border_left">功能说明</h1>
+    <div class="ui_fun_wrap">
+        <h5>·开通该功能办理退房之后，房态页面房间号出现脏房的标签。房间打扫之后，点击房间号在右侧边栏将其设置为干净房。</h5>
+        <div class="border-b"></div>
+        <img class="des_1" src="../images/dirty_room.png" alt="">
+    </div>
+</div>
+<!--交接班-->
+<div class="ui_fun_contenter" ms-visible="funcBool.handover_plug">
+    <h1 class="u_border_left">功能说明</h1>
+    <div class="ui_fun_wrap">
+        <h5>·开启后，可以进行交接班，展示当班收支数据。交接后，财务记录不能修改。注：建议给每个前台建立独立账号。</h5>
+        <div class="border-b"></div>
+        <img class="des_1" src="../images/handover.png" alt="">
+    </div>
+</div>
+
+<!--房型折叠-->
+<div class="ui_fun_contenter" ms-visible="funcBool.foldRoomStatus_plug">
+    <h1 class="u_border_left">功能说明</h1>
+    <div class="ui_fun_wrap">
+        <h5>·开启该功能后，房态页面所有房型可折叠，点击房型名称，房型下所有的房间收起为一行，每天的格子显示该房型的剩余房间数以及总房间数 再次点击房型名称可展开。</h5>
+        <h5>注：默认房态&横版房态中，按照房间号排序功能自动关闭，不可使用，只能按照房型排序！</h5>
+        <div class="border-b"></div>
+        <img class="des_1" src="../images/roomtype_fold.png" alt="">
+    </div>
+</div>
+
+<!--商品销售-->
+<div ms-visible="funcBool.accountBook_plug">
+    <!--开启前-->
+    <!--<div class="ui_fun_contenter" ms-visible="!hasSubOn">-->
+        <!--<h1 class="u_border_left">功能说明</h1>-->
+        <!--<div class="ui_fun_wrap">-->
+            <!--<h5>.开通该功能之后，可以在在订单中添加商品消费或直接通过快捷入口添加商品消费信息。</h5>-->
+            <!--<img style="margin-top: 15px" src="../images/goods_sale.png" alt="">-->
+        <!--</div>-->
+    <!--</div>-->
+    <!--开启后-->
+    <div class="ui_fun_contenter bg_white" ms-controller="vm_funcSet">
+        <h1 class="u_border_left">商品销售项目</h1>
+        <div class="func_goods_list">
+            <div class="good_item">
+                <div id="dragGood" style="display: inline">
+                    <div class="ui_inblock_grey goodItem" ms-repeat-el="goodList" style="cursor: move"
+                         ms-click="toggleState" ms-attr-id="el.id">
+                        <span class="txt">{{el.name}} &nbsp;&nbsp;&nbsp;&nbsp;￥{{el.price==null?0:el.price}}</span>
+                        <div class="hide">
+                            <input type="text" ms-duplex="el.name" maxlength="8" style="width: 85px" placeholder="商品名称">
+                            <input type="text" ms-duplex="el.price" class="u_price" placeholder="零售价" maxlength="8" ms-keyup='checkPrice(el.price)'>
+
+                            <button ms-click="updateGood(el.id,el.name,el.price)" style="margin-left: 0">确定</button>
+                        </div>
+                        <i ms-click="delGood(el.id,$index,el.name)"></i>
+                    </div>
+                </div>
+
+                <div class="ui_inblock_grey" ms-repeat="addData">
+                    <input type="text" ms-duplex="el.name" maxlength="8" style="width: 85px" placeholder="商品名称">
+                    <input type="text" ms-duplex="el.price" class="u_price" placeholder="零售价" maxlength="8" ms-keyup="checkPrice(el.price)">
+                    <button ms-click="ajaxAddGood(el.name,el.price) " style="margin-left: 0">确定</button>
+                </div>
+                <span class="ui_inblock_grey add addGood" ms-click="addGood" style="margin-left: -4px">+ 商品销售项目</span>
+            </div>
+        </div>
+    </div>
+</div>

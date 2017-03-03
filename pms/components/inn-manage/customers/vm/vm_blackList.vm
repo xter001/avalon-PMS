@@ -1,0 +1,210 @@
+var vm_blackList = avalon.define({
+    $id : 'vm_blackList',
+    blacklistBase : {
+        blackLists : []
+    },
+    addDialogVisible : false,
+    addDatas : {
+        name : '',
+        contact : '',
+        cardNo : '',
+        remark : '',
+        addHint : ''
+    },
+    init : function () {
+        vm_blackList.getBlackList(1)
+    },
+
+    getBlackList : function (pageNo) {
+        tmsky.ui.dialog.loading()
+        var vm = vm_blackList
+        var url = '/inns/blackList/index/' + pageNo + '?temp=' + new Date().getTime()
+        $.get(url).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.blacklistBase = rs
+                var page = {};
+                page.totalPages = rs.totalPage;
+                page.pageNo = rs.pageNo;
+                page.pageSize = 20;
+                avalon.nextTick(function () {
+                    tmsky.getVm('vm_customers').renderPage('blackList_page', page, function () {
+                        var pageInfo = tmsky.ui.page.getParams("blackList_page")
+                        vm.getBlackList(pageInfo.pageNo)
+                    })
+                })
+
+            }else{
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+    },
+    openAddBlackDialog : function () {
+        var vm = vm_blackList
+        vm.addDialogVisible = true
+    },
+    closeAddBlackDialog : function () {
+        var vm = vm_blackList
+        vm.addDialogVisible = false
+        vm.addDatas = {
+            name : '',
+            contact : '',
+            cardNo : '',
+            remark : '',
+            addHint : ''
+        }
+    },
+    ajaxToAdd : function () {
+        var vm = vm_blackList
+        var url = '/inns/blackList/saveOrUpdate?temp=' + new Date().getTime(),
+            datas = {
+                name : vm.addDatas.name,
+                contact : vm.addDatas.contact,
+                cardNo : vm.addDatas.cardNo,
+                remark : vm.addDatas.remark
+            }
+        if (datas.contact == '' && datas.cardNo == '') {
+            vm.addDatas.addHint = '手机号和身份证不能同时为空！'
+            return
+        } else if (datas.remark == '') {
+            vm.addDatas.addHint = '必须备注客人被加入黑名单的原因！'
+            return
+        } else {
+            vm.addDatas.addHint = ''
+        }
+        if (datas.contact != '') {
+            var stat = vm.checkTel(datas.contact)
+            if (!stat) {
+                vm.addDatas.addHint = '请输入正确的手机号！'
+                return
+            }
+        }
+        tmsky.ui.dialog.loading()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.closeAddBlackDialog()
+                vm.blacklistBase.blackLists.splice(0, 0, rs.result)
+                vm.blacklistBase.myListNum=vm.blacklistBase.myListNum+1
+                vm.blacklistBase.allListNum=vm.blacklistBase.allListNum+1
+            } else {
+                vm.addDatas.addHint = rs.message
+            }
+        })
+    },
+//    验证手机号
+    checkTel : function (x) {
+        var tel = /^0?1[3|4|5|7|8][0-9]\d{8}$/
+        return tel.test(x)
+    },
+//    编辑
+    modifyDialogVisible : false,
+    curModifyDatas : {
+        id : '',
+        name : '',
+        contact : '',
+        cardNo : '',
+        remark : '',
+        modifyHint : '',
+        index : 0
+    },
+    openModifyDialog : function (el, index) {
+        var vm = vm_blackList
+        vm.modifyDialogVisible = true
+        vm.curModifyDatas = {
+            id : el.id,
+            name : el.name,
+            contact : el.contact,
+            cardNo : el.cardNo,
+            remark : el.remark,
+            index : index,
+            modifyHint:''
+        }
+    },
+    closeModifyDialog : function () {
+        var vm = vm_blackList
+        vm.modifyDialogVisible = false
+        vm.curModifyDatas = {
+            id : '',
+            name : '',
+            contact : '',
+            cardNo : '',
+            remark : '',
+            modifyHint : ''
+        }
+    },
+    ajaxToModify : function () {
+        var vm = vm_blackList
+        var datas = {
+                id : vm.curModifyDatas.id,
+                name : vm.curModifyDatas.name,
+                contact : vm.curModifyDatas.contact,
+                cardNo : vm.curModifyDatas.cardNo,
+                remark : vm.curModifyDatas.remark
+            },
+            url = '/inns/blackList/saveOrUpdate?temp=' + new Date().getTime()
+        if (datas.contact == '' && datas.cardNo == '') {
+            vm.curModifyDatas.modifyHint = '手机号和身份证不能同时为空！'
+            return
+        } else if (datas.remark == '') {
+            vm.curModifyDatas.modifyHint = '必须备注客人被加入黑名单的原因！'
+            return
+        } else {
+            vm.curModifyDatas.modifyHint = ''
+        }
+        if (datas.contact != '') {
+            var stat = vm.checkTel(datas.contact)
+            if (!stat) {
+                vm.curModifyDatas.modifyHint = '请输入正确的手机号！'
+                return
+            }
+        }
+        tmsky.ui.dialog.loading()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.blacklistBase.blackLists.splice(vm.curModifyDatas.index,1,rs.result)
+                tmsky.ui.dialog.successTips('编辑成功！')
+                vm.closeModifyDialog()
+            } else {
+                vm.curModifyDatas.modifyHint = rs.message
+            }
+        })
+    },
+//    删除
+    delDialogVisible : false,
+    curDelDatas : 0,
+    openDelDialog : function (index) {
+        var vm = vm_blackList
+        vm.delDialogVisible = true
+        vm.curDelDatas = index
+    },
+    closeDelDialog : function () {
+        var vm = vm_blackList
+        vm.delDialogVisible = false
+        vm.curDelDatas = 0
+
+    },
+    delBlack : function () {
+        var vm = vm_blackList, index = vm.curDelDatas
+        var datas = {
+                id : vm.blacklistBase.blackLists[index].id,
+                temp : new Date().getTime()
+            },
+            url = '/inns/blackList/remove'
+        tmsky.ui.dialog.loading()
+        $.post(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.blacklistBase.blackLists.splice(index, 1)
+                vm.blacklistBase.myListNum=vm.blacklistBase.myListNum-1
+                vm.blacklistBase.allListNum=vm.blacklistBase.allListNum-1
+                vm.closeDelDialog()
+            } else {
+                tmsky.ui.dialog.alert(rs.message)
+            }
+        })
+
+    },
+
+})

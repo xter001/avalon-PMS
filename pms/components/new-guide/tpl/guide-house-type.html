@@ -1,0 +1,180 @@
+<!--房型引导-->
+<div class="new-guide-cover ms-controller" ms-controller="vm_guide_house">
+    <div class="border-orange room-type-guide" ms-if="roomStep.one">
+        <div class="box-tips-guide data-grid-tips">
+            <div class="triangle-up-bg triangle-up-room-step1"></div>
+            <div class="triangle-up-border triangle-up-white-room-step1"></div>
+            <h2 class="guide-h2">日期轴</h2>
+            <p class="guide-p">默认显示40天房态信息，你可以在最左侧调整月份/日期。</p>
+            <p class="guide-p">(如图)在日期中按住鼠标左键，可左右拖动！</p>
+            <div><img src="../images/data-grid-exmple.png"></div>
+            <div>
+                <button class="guide-btn-orange" ms-click="nextStep('one')">下一步</button>
+            </div>
+        </div>
+    </div>
+    <div class="border-orange room-type-cell-guide" ms-if="roomStep.two">
+        <div class="box-tips-guide room-type-cell-tips">
+            <div class="triangle-left-bg triangle-left-room-step2"></div>
+            <div class="triangle-left-border triangle-left-white-room-step2"></div>
+            <h2 class="guide-h2">房型轴</h2>
+            <p class="guide-p">这里显示您所有的房型/房间。</p>
+            <p class="guide-p">功能库中的“房型折叠”开启后，点击这里
+                的房型名称可显示当天该房型剩余房量。</p>
+            <div style="text-align: center">
+                <button class="guide-btn-orange" ms-click="nextStep('two')">下一步</button>
+            </div>
+        </div>
+    </div>
+    <div class="border-orange bottom-bar-guide" ms-if="roomStep.three">
+        <div class="box-tips-guide bottom-bar-tips">
+            <div class="triangle-down-bg triangle-down-bg-room-step3"></div>
+            <div class="triangle-down-border triangle-down-border-room-step3"></div>
+            <h2 class="guide-h2">底部工具栏</h2>
+            <div class="guide-p">单日财务：可查看单日财务总览。</div>
+            <div class="guide-p">共享房态：用于与第三方分享当前房态。</div>
+            <div class="guide-p">房态风格：多种房态风格等你来使用！</div>
+            <div class="guide-p">客服QQ/客户经理：联系到我们</div>
+            <div>
+                <button class="guide-btn-orange" ms-click="nextStep('three')">下一步</button>
+            </div>
+        </div>
+    </div>
+    <div ms-if="roomStep.four">
+        <div ms-visible="roomStep1.four.smallType" class="border-orange room-cell-guide" ms-click="_click">
+            <div class="box-tips-guide room-cell-tips">
+                <div class="triangle-up-bg triangle-up-room-step4"></div>
+                <div class="triangle-up-border triangle-up-white-room-step4"></div>
+                <h2 class="guide-h2">点击格子建立订单</h2>
+            </div>
+        </div>
+        <div ms-visible="!roomStep1.four.smallType">
+            <div class="guide-house-order border-orange guide-house-right">
+                <div class="triangle-right-bg guide-house-right-bg"></div>
+                <div class="triangle-right-border guide-house-right-border"></div>
+                <h2>录入订单信息</h2>
+                <p>输入住客姓名与手机号，系统将记录该客人信息。再次入住时系统会提醒。</p>
+                <p>您可以通过修改入住几晚和单日房费的修改来调整订单总金额。</p>
+                <p>在“收取房费”“收取押金”中准确填入您收到的金额，系统会在财务“日收支流水表”中进行统计。（需升级为正式版）</p>
+            </div>
+            <div class="guide-house-btn-explain border-orange guide-house-right">
+                <div class="triangle-right-bg guide-house-btn-explain-bg"></div>
+                <div class="triangle-right-border guide-house-btn-explain-border"></div>
+                点击这里为住客预定房间
+            </div>
+            <div class="guide-house-btn" ms-click="guideHouseBtn"></div>
+        </div>
+
+    </div>
+
+    <!--<div ms-click="_click" style="height: 50px;background-color: rgba(0, 0, 255, 0.43)">-->
+        <!--点点点点-->
+    <!--</div>-->
+    <!--<div ms-if="roomStep.five">
+        <div ms-visible="roomStep1.five.smallType">
+            <div class="guide-house-order border-orange guide-house-right">
+                <h2>录入订单信息</h2>
+                <p>输入住客姓名与手机号，系统将记录该客人信息。再次入住时系统会提醒。</p>
+                <p>您可以通过修改入住几晚和单日房费的修改来调整订单总金额。</p>
+                <p>在“收取房费”“收取押金”中准确填入您收到的金额，系统会在财务“日收支流水表”中进行统计。（需升级为正式版）</p>
+            </div>
+            <div class="guide-house-btn-explain border-orange guide-house-right">
+                点击这里为住客预定房间
+            </div>
+        </div>
+        <div class="guide-house-btn" ms-click="guideHouseBtn"></div>
+    </div>-->
+
+    <div ms-if="roomStep.five">
+        <div ms-visible="roomStep1.five.smallType">
+            <div class="guide-house-btn-explain border-orange guide-house-right">
+                <div class="triangle-right-bg guide-house-btn-explain-bg"></div>
+                <div class="triangle-right-border guide-house-btn-explain-border"></div>
+                住客到店后，点击这里为他办理入住
+            </div>
+            <div class="guide-house-btn" ms-click="guideHouseBtn"></div>
+        </div>
+        <div ms-visible="!roomStep1.five.smallType" class="guide-house-btn-check border-orange guide-house-right">
+            <div class="triangle-right-bg guide-house-btn-explain-bg"></div>
+            <div class="triangle-right-border guide-house-btn-explain-border"></div>
+            <h2>当住客入住时</h2>
+            <p>确定订单中收款情况与您实际的收入符合后，点击“确认入住”即可将订单修改为入住状态。</p>
+            <div class="guide-house-btn" ms-click="guideHouseBtn" style="right: -173px;bottom: -4px;width: 123px;"></div>
+        </div>
+
+    </div>
+    <div ms-if="roomStep.six">
+        <div ms-visible="roomStep1.six.smallType">
+            <div class="box-tips-guide guide-house-check-out">
+                <div class="triangle-up-bg guide-house-check-out-up1"></div>
+                <div class="triangle-up-border guide-house-check-out-up2"></div>
+                <h2 class="guide-h2">订单的三种状态</h2>
+                <p class="guide-house-check-out-color guide-house-check-out-green">绿色表示房间被预定。</p>
+                <p class="guide-house-check-out-color guide-house-check-out-yellow">橙色表示客人已经入住。</p>
+                <p class="guide-house-check-out-color guide-house-check-out-gray">灰色表示客人已退房离店。</p>
+            </div>
+            <div class="guide-house-btn-explain border-orange guide-house-right">
+                <div class="triangle-right-bg guide-house-btn-explain-bg"></div>
+                <div class="triangle-right-border guide-house-btn-explain-border"></div>
+                住客离店时，点击这里办理
+            </div>
+        </div>
+        <div  ms-visible="!roomStep1.six.smallType">
+            <div class="guide-house-order border-orange guide-house-right">
+                <div class="triangle-right-bg guide-house-right-bg"></div>
+                <div class="triangle-right-border guide-house-right-border"></div>
+                <h2>提前退房</h2>
+                <p>选择客人离店的时间，房态页会同步在订单中显示客人的住离天数。</p>
+                <p>当日入住、当日退房的订单（钟点房）在办理退房后，订单将不在本页面展示。您可以在“订单”页面找到它。</p>
+                <p>如果一个订单中有多个房间，在入住和退房时，点击房间号前的“√”可针对选中的房间办理分开入住或分开退房。</p>
+            </div>
+            <div class="guide-house-btn-explain border-orange guide-house-right">
+                <div class="triangle-right-bg guide-house-btn-explain-bg"></div>
+                <div class="triangle-right-border guide-house-btn-explain-border"></div>
+                确认订单信息后，点击“确认退房”
+            </div>
+        </div>
+        <div class="guide-house-btn" ms-click="guideHouseBtn" style="right: 186px;width: 123px;"></div>
+    </div>
+    <div ms-if="roomStep.seven">
+        <div class="border-orange guide-house-unlock-top guide-house-unlock-all"></div>
+        <div class="box-tips-guide guide-house-unlock guide-house-unlock-all">
+            <div class="guide-house-unlock-suo">
+                <img src="../images/lock.png" alt="">
+                <p>订单页已解锁！</p>
+            </div>
+            <h2 class="guide-h2">所有订单都在这里</h2>
+            <p class="guide-house-unlock-suo-p">您在房态页办理的所有订单（包括被取消的订单）都保存在这里等您查阅。</p>
+            <p class="guide-house-unlock-suo-p">您也可以在订单页办理入住和离店的订单。</p>
+            <div class="guide-house-unlock-btn" ms-click="nextStep('seven')">朕知道了</div>
+        </div>
+    </div>
+    <!--<div ms-if="roomStep.eight">-->
+        <!--<div class="box-tips-guide guide-house-finish">
+            <h2 class="guide-h2">新手引导完成！</h2>
+            <div class="guide-house-unlock-wx">
+                <img src="../images/index_wx..png" alt="">
+            </div>
+            <p class="guide-house-unlock-suo-p">关注“番茄来了”微信公众号，绑定您的客栈。及时获取代销订单、账单信息！</p>
+            <div class="guide-house-unlock-btn" ms-click="nextStep('eight')">开始使用番茄系统</div>
+        </div>-->
+
+    <div class="tomasky-ui-popups " id="roomStepLL">
+        <div class="ui-popups-dialog box-tips-guide">
+            <div class="ui-popups-body " style="width: 234px">
+                <h2 class="guide-h2">新手引导完成！</h2>
+                <div class="guide-house-unlock-wx">
+                    <img src="../images/index_wx..png" alt="">
+                </div>
+                <p class="guide-house-unlock-suo-p">关注“番茄来了”微信公众号，绑定您的客栈。及时获取代销订单、账单信息！</p>
+                <div class="guide-house-unlock-btn" ms-click="nextStep('eight')">开始使用番茄系统</div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!--</div>-->
+</div>
+<link rel="stylesheet" href="../css/guide-house-type.css?__inline">
+

@@ -1,0 +1,926 @@
+var REPORT_CONST = require('../common/const.js')
+var COMMON = require('../../common/js/const.js'),
+    COMMON_UTIL = require('../../common/js/utils/common-util.js')
+
+var vm_inCome = avalon.define({
+    $id : 'vm_inCome',
+    init : function () {
+
+    },
+    baseCallBack : function (inAcs, outAcs, ads, pcs) {
+        inAcs.forEach(function (el) {
+            el.submitName = el.name
+            el.name += '（其他收入）'
+            el.isAcount = true
+            el.isChecked = true
+        })
+        outAcs.forEach(function (el) {
+            el.submitName = el.name
+            el.name += '（费用支出）'
+            el.isAcount = true
+            el.isChecked = true
+        })
+        ads.forEach(function (el) {
+            el.isChecked = true
+        })
+        pcs.forEach(function (el) {
+            el.isChecked = true
+        })
+
+        vm_inCome.pcs = pcs//支付方式
+        vm_inCome.inAcs = vm_inCome.inAcs.concat(inAcs)
+        vm_inCome.outAcs = vm_inCome.outAcs.concat(outAcs)
+        vm_inCome.operates = ads
+
+        //if(location.hash == '#tab=inCome'){
+        //    vm_inCome.getBopReport()
+        //}
+    },
+    tab : {
+        orderDetail : true,
+        costList : false
+    },
+    costRecord : false,//修改历史记录
+    shopRecordList : [],
+    costRecordList : [],
+    costRecordIndex : 0, //0是商品，1是账本
+    operateTypeText : function (num) {
+        if (num == 1) {
+            return '新增'
+        }
+        if (num == 2) {
+            return '修改'
+        }
+        if (num == 3) {
+            return '删除'
+        }
+        return ''
+    },
+    openCostRecord : function (el) {
+        tmsky.ui.dialog.loading()
+        if (el.accountBookId == -1) {
+            //商品
+            $.ajax({
+                type : "GET",
+                url : '/finance/get/' + el.financeRecordId,
+                success : function (rs) {
+                    tmsky.ui.dialog.loading.close()
+                    if (rs.status == 200) {
+                        if (tmsky.isEmpty(rs.result) || tmsky.isEmptyObject(rs.result)) {
+                            tmsky.ui.dialog.alert('暂无修改记录')
+                            return false
+                        }
+                        var historys = []
+                        var str = rs.result.rmk, name = '', d_price = '', num = ''
+                        if (!tmsky.isEmpty(str)) {
+                            name = str.split('[单价:')[0]
+                            d_price = str.split('[单价:')[1].split(';数量:')[0]
+                            num = str.split('[单价:')[1].split(';数量:')[1].split(';总价:')[0]
+                        }
+                        rs.result.name = name
+                        rs.result.d_price = d_price
+                        rs.result.num = num
+                        rs.result.operateType = vm_inCome.operateTypeText(rs.result.operateType)
+                        //operateType 1,新增 2修改3删除
+                        historys.push($.extend(true, {}, rs.result))
+
+                        if (rs.result.recordHistorys.length != 0) {
+                            rs.result.recordHistorys.forEach(function (item, i) {
+                                if (item.rmk == null) {
+                                    var name = '-',
+                                        d_price = '-',
+                                        num = '-'
+                                } else {
+                                    var str = item.rmk, name = '', d_price = '', num = ''
+                                    if (!tmsky.isEmpty(str)) {
+                                        name = str.split('[单价:')[0]
+                                        d_price = str.split('[单价:')[1].split(';数量:')[0]
+                                        num = str.split('[单价:')[1].split(';数量:')[1].split(';总价:')[0]
+                                    }
+                                }
+
+                                item.name = name
+                                item.d_price = d_price
+                                item.num = num
+                                item.operateType = vm_inCome.operateTypeText(item.operateType)
+                                historys.push($.extend(true, {}, item))
+                            })
+                        }
+                        vm_inCome.shopRecordList = historys
+                        vm_inCome.costRecord = true
+                        vm_inCome.costRecordIndex = 0
+                    } else {
+                        tmsky.ui.dialog.tips(rs.message, 'error')
+                    }
+                },
+                error : function () {
+                    tmsky.ui.dialog.loading.close()
+                    tmsky.ui.dialog.tips("获取记一笔流水修改历史记录失败！", 'error')
+                }
+            })
+        } else {
+            //账本
+            $.ajax({
+                type : "GET",
+                url : COMMON.DOMAIN.PMS + '/finance/getAccountLogs',
+                data : {
+                    id : el.accountBookId,
+                    innId : CommonCacheUtil.innBaseInfo.secure.innId
+                },
+                success : function (rs) {
+                    tmsky.ui.dialog.loading.close()
+                    if (rs.status == 200) {
+                        if (rs.page.result.length == 0) {
+                            tmsky.ui.dialog.alert('暂无修改记录')
+                            return false
+                        }
+                        rs.page.result.forEach(function (el2) {
+                            el2.data.date = tmsky.date.format(el2.data.date, 'yyyy-MM-dd hh:mm')
+                        })
+                        vm_inCome.costRecordList = rs.page.result
+                        vm_inCome.costRecord = true
+                        vm_inCome.costRecordIndex = 1
+                    } else {
+                        tmsky.ui.dialog.tips(rs.message, 'error')
+                    }
+                },
+                error : function () {
+                    tmsky.ui.dialog.loading.close()
+                    tmsky.ui.dialog.tips("获取记一笔流水修改历史记录失败！", 'error')
+                }
+            })
+        }
+    },
+    closeCostRecord : function () {
+        vm_inCome.costRecord = false
+    },
+    tempTime : {
+        from : '',
+        to : ''
+    },
+    data : {
+        from : '',
+        to : ''
+    },
+    changeSubTab : function (item) {
+        vm_inCome.tab = {
+            orderDetail : false,
+            costList : false
+        }
+        vm_inCome.tab[item] = true
+        if (item == 'orderDetail') {
+            vm_inCome.getOrderFiDetail()
+        } else {
+            vm_inCome.getOrderAcDetail()
+        }
+    },
+    $originData : {
+        inAcs : [],
+        outAcs : [],
+        operates : [],
+        pcs : []
+    },
+    saveOringinData : function () {
+        if ($('.income-list:visible').length == 0) {
+            //缓存勾选前的
+            vm_inCome.$originData = {
+                inAcs : $.extend(true, [], vm_inCome.inAcs.$model),
+                outAcs : $.extend(true, [], vm_inCome.outAcs.$model),
+                operates : $.extend(true, [], vm_inCome.operates.$model),
+                pcs : $.extend(true, [], vm_inCome.pcs.$model)
+            }
+        } else {
+            vm_inCome.inAcs = $.extend(true, [], vm_inCome.$originData.inAcs)
+            vm_inCome.outAcs = $.extend(true, [], vm_inCome.$originData.outAcs)
+            vm_inCome.operates = $.extend(true, [], vm_inCome.$originData.operates)
+            vm_inCome.pcs = $.extend(true, [], vm_inCome.$originData.pcs)
+        }
+    },
+    toggleList : function (e) {
+        var e = window.event || e
+        if (e.target.tagName == 'SPAN' || e.target.tagName == 'I' || e.target.tagName == 'LI') {
+            //toggle下拉框
+            vm_inCome.saveOringinData()
+            if ($(this).closest('li').find('.income-list').css('display') == 'none') {
+                //打开
+                $('.income-list').hide()
+            }
+            $(this).closest('li').find('.income-list').toggle()
+            vm_inCome.updateAllSelect()
+        }
+    },
+    bind : function () {
+        $(document).on('click', function (e) {
+            var e = e || window.event;
+            if ($(e.target).closest('.income-part1').length == 0) {
+                vm_inCome.saveOringinData()
+                $('.income-list').hide()
+            }
+        })
+    },
+    updateAllSelect : function () {
+        $('.income-list-bar').each(function () {
+            var selectNum = $(this).siblings('dl').find('dd.income-seleted').length,
+                ddNum = $(this).siblings('dl').find('dd').length
+            if (selectNum == ddNum) {
+                $(this).addClass('income-seleted')
+            } else {
+                $(this).removeClass('income-seleted')
+
+            }
+
+            if (selectNum == 0) {
+                $(this).find('.income-search').addClass('income-search-disabled')
+            } else {
+                $(this).find('.income-search').removeClass('income-search-disabled')
+            }
+        })
+    },
+    searchParamName : {
+        pay : [],
+        in : [],
+        out : [],
+        operate : []
+    },
+    selectListValue : function (el) {
+        el.isChecked = !el.isChecked
+        vm_inCome.updateAllSelect()
+    },
+    selectAllValue : function (item) {
+        //全选
+        if ($(this).parent().hasClass('income-seleted')) {
+            var list = vm_inCome[item]
+            list.forEach(function (el) {
+                el.isChecked = false
+            })
+            vm_inCome[item] = list
+            $(this).parent().removeClass('income-seleted')
+        } else {
+            $(this).parent().addClass('income-seleted')
+            var list = vm_inCome[item]
+            list.forEach(function (el) {
+                el.isChecked = true
+            })
+            vm_inCome[item] = list
+        }
+        vm_inCome.updateAllSelect()
+    },
+    searchBtn : function (item) {
+        if ($(this).hasClass('income-search-disabled')) return
+        //搜索
+        $(this).closest('li').find('.income-list').hide()
+
+        var pay = [], ins = [], out = [], operate = []
+        if (!$('.income-list-bar').eq(0).hasClass('income-seleted')) {
+            vm_inCome.pcs.forEach(function (el, i) {
+                if (el.isChecked) {
+                    pay.push({
+                        id : el.id,
+                        name : el.name
+                    })
+                }
+            })
+        }
+        if (!($('.income-list-bar').eq(1).hasClass('income-seleted') && $('.income-list-bar').eq(2).hasClass('income-seleted'))) {
+            vm_inCome.inAcs.forEach(function (el, i) {
+                if (el.isChecked) {
+                    ins.push({
+                        id : el.id,
+                        item : el.name,
+                        submitName : el.submitName,
+                        isAcount : el.isAcount
+                    })
+                }
+            })
+        }
+
+        if (!($('.income-list-bar').eq(1).hasClass('income-seleted') && $('.income-list-bar').eq(2).hasClass('income-seleted'))) {
+            vm_inCome.outAcs.forEach(function (el, i) {
+                if (el.isChecked) {
+                    out.push({
+                        id : el.id,
+                        item : el.name,
+                        submitName : el.submitName,
+                        isAcount : el.isAcount
+                    })
+                }
+            })
+        }
+
+        if (!$('.income-list-bar').eq(3).hasClass('income-seleted')) {
+            vm_inCome.operates.forEach(function (el, i) {
+                if (el.isChecked) {
+                    operate.push({
+                        id : el.id,
+                        recordUser : el.userCode
+                    })
+                }
+            })
+        }
+
+        vm_inCome.searchParamName = {
+            in : ins,
+            pay : pay,
+            out : out,
+            operate : operate
+        }
+        vm_inCome.convertReportData()
+    },
+    pcs : [],
+    inAcs : [{
+        id : 3,
+        name : '收取押金',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 2,
+        name : '收取房费',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 1,
+        name : '收取订金',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 11,
+        name : '积分抵扣',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 9,
+        name : '商品收入',
+        isAcount : false,
+        isChecked : true
+    }],//1 收入  2 支出
+    outAcs : [{
+        id : 6,
+        name : '退还押金',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 5,
+        name : '退还房费',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 4,
+        name : '退还订金',
+        isAcount : false,
+        isChecked : true
+    }, {
+        id : 10,
+        name : '商品支出',
+        isAcount : false,
+        isChecked : true
+    }],
+    operates : [],//操作人
+    costListShowDel : true,
+    changeSelect : function () {
+        vm_inCome.costListShowDel = !vm_inCome.costListShowDel
+        vm_inCome.getOrderAcDetail(1)
+    },
+    //    选择时间
+    openIncomeTimeBox : function () {
+        var vm = vm_inCome
+        $(this).next().show();
+        $("#income_from").datetimepicker({
+            changeMonth : true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(selectedDate, vm.tempTime.to))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#income_to").datetimepicker("setDate", tmsky.date.addDays(selectedDate, 31));
+                }
+                vm.tempTime.to = tmsky.date.format(vm.tempTime.to, 'yyyy-MM-dd hh:mm')
+            }
+        })
+        $("#income_to").datetimepicker({
+            changeMonth : true,
+            onSelect : function (selectedDate) {
+                var defTime = parseInt(tmsky.date.diffDays(vm.tempTime.from, selectedDate))
+                if (defTime < 0 || defTime >= 30) {
+                    $("#income_from").datetimepicker("setDate", tmsky.date.addDays(selectedDate, -31));
+                }
+                vm.tempTime.from = tmsky.date.format(vm.tempTime.from, 'yyyy-MM-dd hh:mm')
+            }
+        })
+    },
+    searchIncome : function () {
+        var vm = vm_inCome
+        var defTime = parseInt(tmsky.date.diffDays(vm.tempTime.from, vm.tempTime.to))
+        if (vm.data.from == vm.tempTime.from && vm.data.to == vm.tempTime.to) {
+            $(this).parent().hide()
+            return
+        }
+        if (defTime < 0) {
+            tmsky.ui.dialog.errorTips('开始日期不能大于结束日期，请重新选择！')
+            return
+        }
+        if (defTime >= 0 && defTime <= 31) {
+            vm.data.from = vm.tempTime.from
+            vm.data.to = vm.tempTime.to
+            vm_inCome.getBopReport()
+            $('.time-select').hide()
+        } else {
+            tmsky.ui.dialog.errorTips('最多查看连续31天的财务信息！')
+        }
+    },
+    reports : [], //收支流水原始数据
+    //收支流水概览
+    getBopReport : function () {
+        tmsky.ui.dialog.loading()
+
+        var data = CommonCacheUtil.innBaseInfo.secure
+        data.from = vm_inCome.data.from
+        data.to = vm_inCome.data.to
+        //COMMON.DOMAIN.RP
+        $.ajax({
+            type : "GET",
+            url : COMMON.DOMAIN.RP + "/finance/getBopReport",
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    if (rs.finance.length != 0) {
+                        rs.finance.forEach(function (el, i) {
+                            el.payChannelName = vm_inCome.getPayNameById(el.payChannelId)
+                        })
+                    }
+                    var total = rs.account.concat(rs.finance)
+                    vm_inCome.reports = total
+                    vm_inCome.convertReportData()
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("获取收支流水概览信息失败！", 'error')
+            }
+        })
+    },
+    //通过支付id获取name
+    getPayNameById : function (id) {
+        var pcs = vm_inCome.pcs.$model, name
+        pcs.forEach(function (el, i) {
+            if (el.id == id) {
+                name = el.name
+            }
+        })
+        return name
+    },
+    convertReportData : function () {
+        var data = vm_inCome.reports
+        //   if (data.length == 0)return
+        var items = [], datas = [], nums = {
+            in : 0,
+            out : 0,
+            remain : 0
+        }, param = vm_inCome.searchParamName, pcs = vm_inCome.pcs
+
+        pcs.forEach(function (el, i) {
+            //删选支付方式
+            if (param.pay.length != 0 && !vm_inCome.isContainArr(el, 'name', param.pay))return
+            items.push(el.name)
+            datas.push({
+                in : 0,
+                out : 0,
+                remain : 0
+            })
+        })
+
+        datas.length = items.length
+        data.forEach(function (el, i) {
+            items.forEach(function (el2, i2) {
+                if (el.payChannelName == el2) {
+                    if (param.operate.length != 0 && !vm_inCome.isContainArr(el, 'recordUser', param.operate))return
+                    if (el.type == 1) {
+                        if ((param.in.length != 0 && !vm_inCome.isContainArr(el, 'item', param.in)) || (param.in.length == 0 && param.out.length != 0))return
+                        //收入
+                        datas[i2]['in'] += parseFloat(el.fee.toFixed(2))
+                    } else if (el.type == 2) {
+                        if ((param.out.length != 0 && !vm_inCome.isContainArr(el, 'item', param.out)) || (param.out.length == 0 && param.in.length != 0))return
+                        //支出
+                        datas[i2]['out'] += parseFloat(el.fee.toFixed(2))
+                    }
+                }
+            })
+        })
+
+        datas.forEach(function (el, i) {
+            el.remain = parseFloat((el.in - el.out).toFixed(2))
+            nums.in = parseFloat((nums.in + el.in).toFixed(2))
+            nums.out = parseFloat((nums.out + el.out).toFixed(2))
+            nums.remain = parseFloat((nums.remain + el.remain).toFixed(2))
+        })
+
+        //收支流水概览项目，金额
+        vm_inCome.reportItems = items
+        vm_inCome.reportsData = datas
+
+        //收支流水概览合计
+        vm_inCome.reportTotal = nums
+
+        vm_inCome.updateDetailRecords()
+
+    },
+    updateDetailRecords : function (page) {
+        if (vm_inCome.tab.orderDetail) {
+            vm_inCome.getOrderFiDetail(page)
+        }
+        if (vm_inCome.tab.costList) {
+            vm_inCome.getOrderAcDetail(page)
+        }
+    },
+    reportItems : [],
+    reportsData : [],
+    reportTotal : {
+        in : 0,
+        out : 0,
+        remain : 0
+    },
+    detailConvertData : function (pageNo, noPageNum) {
+        var data = $.extend(true, {}, CommonCacheUtil.innBaseInfo.secure)
+        data.from = vm_inCome.data.from
+        data.to = vm_inCome.data.to
+        if (!noPageNum) {
+            data.pageNo = pageNo || 1
+        }
+        var payId = [], payName = [], accountItems = [], fianceItems = [], operate = []
+        //组装数据
+        vm_inCome.searchParamName.pay.forEach(function (el, i) {
+            payId.push(el.id)
+            payName.push(el.name)
+        })
+        vm_inCome.searchParamName.in.forEach(function (el, i) {
+            if (el.isAcount) {
+                accountItems.push(el.submitName)
+            } else {
+                fianceItems.push(el.id)
+            }
+        })
+        vm_inCome.searchParamName.out.forEach(function (el, i) {
+            if (el.isAcount) {
+                accountItems.push(el.submitName)
+            } else {
+                fianceItems.push(el.id)
+            }
+        })
+        vm_inCome.searchParamName.operate.forEach(function (el, i) {
+            operate.push(el.recordUser)
+        })
+        if (payId.length != 0) {
+            data.pcIds = payId
+        }
+        if (payName.length != 0) {
+            data.pcNames = payName
+        }
+        if (operate.length != 0) {
+            data.operators = operate
+        }
+        if (fianceItems.length != 0) {
+            data.fianceItems = fianceItems
+        }
+        if (accountItems.length != 0) {
+            data.accountItems = accountItems
+        }
+        if (vm_inCome.tab.costList) {
+            data.showDeleted = vm_inCome.costListShowDel
+        }
+
+        //判断filer 0: 同时查账本和财务   2：只查询账本   1：只查询财务
+        if (accountItems.length > 0 && fianceItems.length > 0) {
+            data.filer = 0
+        }
+        if (accountItems.length > 0 && fianceItems.length == 0) {
+            data.filer = 2
+        }
+        if (accountItems.length == 0 && fianceItems.length > 0) {
+            data.filer = 1
+        }
+        data.pageSize = 10
+        return $.param(data, true)
+    },
+    orderList : [],
+    //订单收支明细
+    getOrderFiDetail : function (pageNo) {
+        tmsky.ui.dialog.loading()
+
+        var data = vm_inCome.detailConvertData(pageNo)
+
+        $.ajax({
+            type : "GET",
+            url : COMMON.DOMAIN.RP + "/finance/getOrderFiDetail",
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    vm_inCome.orderList = rs.page.result
+                    avalon.nextTick(function () {
+                        vm_inCome.renderPage('page-div', rs, pageNo)
+                    })
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("获取收支流水概览信息失败！", 'error')
+            }
+        })
+    },
+    notesList : [],
+    //记一笔收支明细
+    getOrderAcDetail : function (pageNo) {
+        tmsky.ui.dialog.loading()
+
+        var data = vm_inCome.detailConvertData(pageNo)
+
+        $.ajax({
+            type : "GET",
+            url : COMMON.DOMAIN.RP + "/finance/getOrderAcDetail",
+            data : data,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    if (rs.page.result.length != 0) {
+                        rs.page.result.forEach(function (el) {
+                            el.delete = false
+                            if (el.accountBookId == -1) {
+                                //商品收入
+                                var str = el.note, name = '', note = ''
+                                if (!tmsky.isEmpty(str)) {
+                                    name = str.split('[单价:')[0]
+                                    note = str.split(name)[1]
+                                    if (note.substr(0, 1) == '[') {
+                                        note = note.substr(1);
+                                        note = note.substr(0, note.length - 1);
+                                    }
+                                }
+
+                                el.item = name + '（' + el.item + '）'
+                                el.note = note
+                            } else {
+                                //账本   type=1收入  type=2支出
+                                if (el.type == 1) {
+                                    el.item += '（其他收入）'
+                                }
+                                if (el.type == 2) {
+                                    el.item += '（费用支出）'
+                                }
+                            }
+                        })
+                        vm_inCome.notesList = rs.page.result
+                    } else {
+                        vm_inCome.notesList = []
+                    }
+                    avalon.nextTick(function () {
+                        vm_inCome.renderPage('page-div', rs, pageNo)
+                    })
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.tips("获取收支流水明细失败！", 'error')
+            }
+        })
+    },
+    renderPage : function (id, rs, pageNo) {
+        tmsky.ui.page.render({
+            id : id,
+            callback : function () {
+                var pageInfo = tmsky.ui.page.getParams("page-div");
+                var pageNo = pageInfo.pageNo
+                vm_inCome.updateDetailRecords(pageNo)
+            },
+            pageNo : rs.page.pageNo,
+            pages : rs.page.totalPages,
+            totalCount : rs.page.totalCount,
+            align : "center",
+            skin : "red"
+        })
+    },
+    removeNoteBook : function (el) {
+        tmsky.ui.dialog.confirm('您确定要删除这条商品销售/费用支出/其他收入的财务记录吗?', function () {
+            tmsky.ui.dialog.loading('加载中...');
+            if (el.accountBookId == -1) {
+                //商品
+                var callback = function (rs) {
+                    var goodSpends = rs.mainOrder.goodSpends, gsid = ''
+                    goodSpends.forEach(function (el2, i2) {
+                        if (el.financeRecordId == el2.innFinanceRecord.id) {
+                            gsid = el2.id
+                        }
+                    })
+                    $.ajax({
+                        type : 'GET',
+                        url : "/goods/order/del/" + rs.mainOrder.id + "/" + gsid,
+                        success : function (data) {
+                            tmsky.ui.dialog.loading.close()
+                            if (data.status == 200) {
+                                tmsky.ui.dialog.tips('操作成功!', 'success');
+                                var pageInfo = tmsky.ui.page.getParams("page-div");
+                                var pageNo = pageInfo.pageNo
+                                vm_inCome.getOrderAcDetail(pageNo)
+                            } else {
+                                tmsky.ui.dialog.tips(data.message, 'error')
+                            }
+                        },
+                        error : function () {
+                            tmsky.ui.dialog.loading.close()
+                            tmsky.ui.dialog.tips("删除失败！", 'error')
+                        }
+                    })
+                }
+                vm_inCome.getInfosByCode(el.uniqueCode, 'shop', callback)
+            } else {
+                //删除账本
+                $.ajax({
+                    type : "POST",
+                    url : '/innBook/removeAccount',
+                    data : {id : el.accountBookId},
+                    success : function (rs) {
+                        tmsky.ui.dialog.loading.close()
+                        if (rs.status == 200) {
+                            tmsky.ui.dialog.tips('操作成功!', 'success');
+                            var pageInfo = tmsky.ui.page.getParams("page-div");
+                            var pageNo = pageInfo.pageNo
+                            vm_inCome.getOrderAcDetail(pageNo)
+                        } else {
+                            tmsky.ui.dialog.tips(rs.errors, 'error')
+                        }
+                    },
+                    error : function () {
+                        tmsky.ui.dialog.loading.close()
+                        tmsky.ui.dialog.tips("删除失败！", 'error')
+                    }
+                })
+            }
+        })
+    },
+    //编辑商品
+    editShopRecord : function (el) {
+        var callback = function (rs) {
+            var goodSpends = rs.mainOrder.goodSpends, spend = {}
+            goodSpends.forEach(function (el2, i2) {
+                if (el.financeRecordId == el2.innFinanceRecord.id) {
+                    spend = el2
+                }
+            })
+            var data = {
+                financeId : spend.innFinanceRecord.id,
+                goodId : spend.good.id,
+                //goodName:spend.good.name,
+                goodNum : spend.goodNum,
+                gsid : spend.id,
+                mainId : rs.mainOrder.id,
+                pcid : spend.innFinanceRecord.payChannel.id,
+                realPrice : spend.realPrice,
+                rooms : [],
+                settleType : 2,
+                spendAt : spend.spendTime
+            }
+            avalon.vmodels.vm_shop.editShopCost(data, 0)
+        }
+        vm_inCome.getInfosByCode(el.uniqueCode, 'shop', callback)
+    },
+    //导出excel
+    exportOrderDetail : function () {
+        var data = vm_inCome.detailConvertData('', true)
+        var url = COMMON.DOMAIN.RP + '/export/exportOrderFiDetail'
+        if (vm_inCome.tab.costList) {
+            url = COMMON.DOMAIN.RP + '/export/exportOrderAcDetail'
+        }
+        url += '?' + data
+        location.href = url
+    },
+    getInfosByCode : function (code, type, callback) {
+        if (type == 'room') {
+            var newWindow = window.open('about:blank', '_blank', 'width=' + window.screen.width + ',height=' + window.screen.height + ', ...');
+        }
+        $.ajax({
+            type : "GET",
+            url : '/order/code/' + code,
+            success : function (rs) {
+                tmsky.ui.dialog.loading.close()
+                if (rs.status == 200) {
+                    if (type == 'room') {
+                        //查看订单
+                        var id = rs.mainOrder.id,
+                            checkInAt = rs.mainOrder.checkInAt,
+                            url = 'index.html?changeRoom=' + id + '&&' + 'checkInAt=' + checkInAt;
+                        newWindow.blur();
+                        newWindow.opener.focus();
+                        newWindow.location = url;
+                    } else {
+                        //商品订单
+                        if (callback) {
+                            callback(rs)
+                        }
+                    }
+                } else {
+                    tmsky.ui.dialog.tips(rs.message, 'error')
+                }
+            },
+            error : function () {
+                tmsky.ui.dialog.loading.close()
+            }
+        })
+    },
+    exportExcelByJs : function (id) {
+        COMMON_UTIL.exportToExcel(id)
+    },
+    openSpentWindow : function (el) {
+
+        if (el.accountBookId == -1) {
+            //商品
+            vm_inCome.editShopRecord(el)
+        } else {
+            //记一笔
+            var tabIndex = el.type == 1 ? 2 : 1
+            avalon.vmodels.vm_shopcost.openShopCost('', function () {
+                if (el.type == 2) {
+                    avalon.vmodels.vm_shopcost.tabIndex = 1
+                } else if (el.type == 1) {
+                    avalon.vmodels.vm_shopcost.tabIndex = 2
+                }
+                var spentList = [{
+                    accountBookId : el.accountBookId,
+                    note : el.note,//备注
+                    streamMoney : el.fee,
+                    payIndex : vm_inCome.getIndexByPayName(el.payChannelName),
+                    payChannelName : el.payChannelName,
+                    itemIndex : vm_inCome.getIndexByItemName(el.item),
+                    item : el.item
+                }]
+                avalon.vmodels.vm_spent.spentList = spentList
+                avalon.vmodels.vm_spent.changeData()
+                avalon.vmodels.vm_spent.editing = true
+            }, tabIndex)
+
+        }
+    },
+    //通过支付名称获取下标
+    getIndexByPayName : function (name) {
+        var pcs = avalon.vmodels.vm_shopcost.costPayList.$model, index = 0
+        pcs.forEach(function (el, i) {
+            if (el.name == name) {
+                index = i
+            }
+        })
+        return index
+    },
+    //通过项目名称获取下标
+    getIndexByItemName : function (name) {
+        var acs = avalon.vmodels.vm_spent.acs, index = 0
+        acs.forEach(function (el, i) {
+            if (el.name == name) {
+                index = i
+            }
+        })
+        return index
+    },
+    isContainArr : function (el, item, arr) {
+        var count = 0
+        arr.forEach(function (el2, i) {
+            if (el[item] == el2[item]) {
+                count++
+            }
+        })
+
+        if (count > 0) {
+            return true
+        } else {
+            return false
+        }
+    },
+    reset : function () {
+        vm_inCome.tab = {
+            orderDetail : true,
+            costList : false
+        }
+        vm_inCome.data = {
+            from : tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00',
+            to : tmsky.date.addDays(new Date(), 1, 'yyyy-MM-dd') + ' 00:00'
+        }
+        vm_inCome.tempTime = {
+            from : tmsky.date.format(new Date(), 'yyyy-MM-dd') + ' 00:00',
+            to : tmsky.date.addDays(new Date(), 1, 'yyyy-MM-dd') + ' 00:00'
+        }
+        vm_inCome.costListShowDel = true
+
+        var params = tmsky.util.urlParams()
+        if (params.sub == 'costList') {
+            vm_inCome.tab = {
+                orderDetail : false,
+                costList : true
+            }
+        }
+
+        $('.income-list').hide()
+        vm_inCome.getBopReport()
+        vm_inCome.bind()
+    }
+})

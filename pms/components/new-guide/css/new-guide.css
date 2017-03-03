@@ -1,0 +1,129 @@
+/*新手引导*/
+.new-guide-cover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    min-width: 1280px;
+}
+
+.guide-btn-green {
+    background: #6bb458;
+    border-radius: 4px;
+    width: 210px;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 18px;
+    color: #ffffff;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.guide-btn-green:hover {
+    color: #ffffff
+}
+
+.border-orange {
+    border: 3px solid #FFA74F;
+    border-radius:10px;
+}
+.box-tips-guide {
+    position: absolute;
+    border:3px solid #ffa74f;
+    border-radius:10px;
+    background: #ffffff;
+    box-shadow: 0px 2px 8px 0px rgba(143,108,74,0.38);
+    padding: 10px 36px;
+}
+.triangle-up-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 18px solid #FFA74F;
+}
+.triangle-up-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-bottom: 16px solid #fff;
+}
+.triangle-left-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 18px solid transparent;
+    border-right: 18px solid #FFA74F;
+    border-bottom: 18px solid transparent;
+}
+.triangle-left-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-right: 16px solid #fff;
+    border-bottom: 16px solid transparent;
+}
+.triangle-right-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 18px solid transparent;
+    border-left: 18px solid #FFA74F;
+    border-bottom: 18px solid transparent;
+}
+.triangle-right-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-left: 16px solid #fff;
+    border-bottom: 16px solid transparent;
+}
+.triangle-down-border {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 18px solid #fff;
+}
+.triangle-down-bg {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 16px solid #FFA74F;
+}
+.guide-btn-orange {
+    background:#ffa74f;
+    border-radius:2px;
+    width:250px;
+    height:36px;
+    color: #fff;
+    cursor: pointer;
+    margin: 15px 0;
+}
+.guide-h2 {
+    padding: 10px 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color:#413b35
+}
+.guide-p {
+    font-weight: bold;
+    color: #413b35;
+    padding: 10px 0 10px 24px;
+    background: url("../images/guide-p-bg.png") no-repeat 0px 10px;
+}
+.guide-p span {
+    color: #ffa74f;
+}
+

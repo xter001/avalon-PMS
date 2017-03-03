@@ -1,0 +1,49 @@
+<div class="new-guide-cover ms-controller" ms-visible="guideRoomStep == 1" ms-controller="vm_guide_roomtype">
+    <div class="new-guide-room-add border-orange" ms-click="guideRoomFunByStep(2)"></div>
+    <div class="box-tips-guide guide-room-tips1">
+        <div class="triangle-up-bg triangle-room-1"></div>
+        <div class="triangle-up-border triangle-white-room-1"></div>
+        <h2 class="guide-h3">点击这里</h2>
+        <p class="guide-h3">为您的客栈添加房型和房间</p>
+    </div>
+</div>
+<div class="box-tips-guide guide-room-tips2" ms-controller="vm_guide_roomtype" ms-visible="guideRoomStep == 2">
+    <div class="triangle-right-bg triangle-room-2"></div>
+    <div class="triangle-right-border triangle-white-room-2"></div>
+    <h2 class="guide-h2">完善房型信息！</h2>
+    <p class="guide-p">房型简称主要用于APP移动端显示。</p>
+    <p class="guide-p">如果您要按床位收费（适用于青旅），请将房型名称填做房间名称，将房间号填为床位号即可！</p>
+</div>
+<div class="new-guide-cover ms-controller" ms-controller="vm_guide_roomtype" ms-visible="guideRoomStep == 3">
+    <div class="box-tips-guide guide-room-tips3">
+        <div class="triangle-up-bg triangle-room-3"></div>
+        <div class="triangle-up-border triangle-white-room-3"></div>
+        <h2 class="guide-h2">编辑与修改房型信息！</h2>
+        <p class="guide-p">您可以在“操作”中编辑或删除房型。</p>
+        <p class="guide-p">如您的房型有周末价和特殊价（节日价）可以在“价格设置”下修改，系统将优先显示特殊价。</p>
+        <div>
+            <button style="width:100%" class="guide-btn-orange" ms-click="guideRoomFunByStep(4)">下一步</button>
+        </div>
+    </div>
+</div>
+<div class="new-guide-cover ms-controller" ms-controller="vm_guide_roomtype" ms-visible="guideRoomStep == 4">
+    <div class="guide-cover-white"></div>
+    <div class="guide-room-tips4">
+        <a class="new-guide-room-func border-orange" ms-click="guideRoomToFuncPlug()"></a>
+        <div class="guide-room-menu">
+            <a class="guide-room-un-click">客栈信息</a>
+            <a class="guide-room-un-click">房间管理</a>
+            <a class="guide-room-click">功能库</a>
+            <a class="guide-room-un-click">账号管理</a>
+            <a class="guide-room-un-click">客户资料</a>
+            <a class="guide-room-un-click">操作记录</a>
+        </div>
+    </div>
+    <div class="box-tips-guide guide-room-tips4-1">
+        <div class="triangle-right-bg triangle-room-4"></div>
+        <div class="triangle-right-border triangle-white-room-4"></div>
+        <h2 class="guide-h3">点击这里</h2>
+        <p class="guide-h3">为您的客栈添加房型和房间</p>
+    </div>
+</div>
+<link rel="stylesheet" href="../css/guide-room-type.css?__inline">

@@ -1,0 +1,123 @@
+<div ms-visible="inOutGuide" class="finance-guide-cover">
+    <div class="ui-guide-step1 ui-guide-back">
+        <i class="ui-guide-triangle"></i>
+        <span class="icon3_3 onoff ui-guide-icon" style="margin-left: 6px;"><i></i>商品销售</span>
+        <span class="icon3_1 onoff ui-guide-icon" style="margin-left: 34px;"><i></i>客栈账本</span>
+        <h4>· 商品销售和账本合并为“记一笔”</h4>
+        <h4>· 该功能与原“账本”一样默认开启</h4>
+        <span class="ui-guide-btn" ms-click="closeGuideParam()">朕知道了</span>
+    </div>
+    <div class="ui-guide-step2"><img src="../images/inOut.jpg"></div>
+</div>
+
+<div class="funcs">
+    <!--左侧-->
+    <h2 class="func_title">功能库</h2>
+    <div class="func_l">
+        <div class="func_menu">
+            <h4>订单信息管理</h4>
+            <ul>
+                <li class="on icon1_1 onoff" funcid="6" name="origin_plug"><i></i>客人来源</li>
+                <li class="icon1_3 onoff" funcid="1" closeId="1,20,21" name="card_plug"><i></i>身份证登记
+                    <!--<span
+                        ms-visible="getLevel(1)"></span>
+                    <label ms-visible="!getLevel(1)" data-ui="popups" data-target="#apply_popups" text="身份证记录">{{accountState}}</label>-->
+                </li>
+                <!--<li class="icon1_2" funcid="9" ms-class-onoff="getOnOff(9)" name="peopleRegister_plug"><i></i>多人登记<span
+                        ms-visible="getLevel(9)"></span>
+                    <label ms-visible="!getLevel(9)" text="多人登记" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>-->
+                <li class="icon1_4" funcid="17" ms-class-onoff="getOnOff(17)" name="print_plug"><i></i>打印<span
+                        ms-visible="getLevel(17)"></span>
+                    <label ms-visible="!getLevel(17)" text="打印" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+            </ul>
+        </div>
+        <div class="func_menu">
+            <h4>支付设置</h4>
+            <ul>
+                <li class="icon2_1 onoff" funcid="13" name="payChannel_plug"><i></i>支付方式</li>
+                <li class="icon2_3" funcid="10" ms-class-onoff="getOnOff(10)" name="notPayAllSign_plug">
+                    <i></i>未付全款标识<span ms-visible="getLevel(10)"></span>
+                    <label ms-visible="!getLevel(10)" text="未付全款标识" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+                <!--<li class="icon2_2" funcid="27" ms-class-onoff="getOnOff(27)" name="barCode_plug"><i></i>条码支付<span></span></li>-->
+                <!--<li class="icon2_4" funcid="24" ms-class-onoff="getOnOff(24)" name="checkstand_plug"><i></i>快捷支付<span
+                        ms-visible="getLevel(24)"></span>
+                    <label ms-visible="!getLevel(24)" text="快捷支付" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>-->
+            </ul>
+        </div>
+        <div class="func_menu">
+            <h4>功能设置</h4>
+            <ul>
+                <li class="icon3_1 onoff" funcid="12" name="accountBook_plug"><i></i>记一笔<b class="ui-tips-new"></b></li>
+                <li class="icon3_2" funcid="18" ms-class-onoff="getOnOff(18)" name="foldRoomStatus_plug">
+                    <i></i>房型折叠<span ms-visible="getLevel(18)"></span>
+                    <label ms-visible="!getLevel(18)" text="房型折叠" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+                <li class="icon3_4" funcid="2" ms-class-onoff="getOnOff(2)" name="msg_plug"><i></i>智能短信<span
+                        ms-visible="getLevel(2)"></span>
+                    <label ms-visible="!getLevel(2)" text="智能短信" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+                <!--<li class="icon3_3" funcid="5" ms-class-onoff="getOnOff(5)" name="spend_plug"><i></i>商品销售<span ms-visible="getLevel(5)"></span>-->
+                <!--<label  ms-visible="!getLevel(5)" text="商品销售" data-ui="popups" data-target="#apply_popups">{{accountState}}</label></li>-->
+                <li class="icon3_5" funcid="29" ms-class-onoff="getOnOff(29)" name="handover_plug"><i></i>交接班<span
+                        ms-visible="getLevel(29)"></span>
+                    <label ms-visible="!getLevel(29)" text="交接班" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+                <li class="icon3_7" funcid="11" ms-class-onoff="getOnOff(11)" name="autoCheckOut_plug"><i></i>自动退房<span
+                        ms-visible="getLevel(11)"></span>
+                    <label ms-visible="!getLevel(11)" text="自动退房" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+                <li class="icon3_6" funcid="26" ms-class-onoff="getOnOff(26)" name="dirtyRoom_plug"><i></i>脏房<span
+                        ms-visible="getLevel(26)"></span>
+                    <label ms-visible="!getLevel(26)" text="脏房" data-ui="popups" data-target="#apply_popups">{{accountState}}</label>
+                </li>
+                <!--<li class="icon3_8" funcid="28" ms-class-onoff="getOnOff(28)" name="union_plug"><i></i>客栈联盟<span ms-visible="getLevel(28)"></span>
+                <label ms-visible="!getLevel(28)" text="客栈联盟" data-ui="popups" data-target="#apply_popups">{{accountState}}</label></li>-->
+
+            </ul>
+        </div>
+    </div>
+    <!--右侧-->
+    <div class="func_r"></div>
+</div>
+
+<div class="cover" ms-visible="alertBool.closeOnOff"></div>
+<div class="popuplayer" id="remove_func" ms-visible="alertBool.closeOnOff">
+    <!--通用删除类弹出层-->
+    <div class="registered">
+        <h3 class="font_red">
+            <img src="/public/images/photo_guan.png" width="83" height="84"><br>
+            您确认要关闭该功能吗？
+        </h3>
+        <div class="button">
+            <a href="javascript:void(0)" class="button_quxiao" ms-click="sureAlertOnoff()">确认关闭</a>
+            <a href="javascript:void(0)" class="button_fanhui" ms-click="closeAlertOnoff()">不关闭</a>
+        </div>
+    </div>
+</div>
+
+<div class="tomasky-ui-popups" ms-visible="apply_popups">
+    <div class="tomasky-ui-popups-backdrop"></div>
+    <div class="ui-popups-dialog">
+        <em class="close" ms-click="accountRegOpen(false)" data-dismiss="popups">X</em>
+        <div class="ui-popups-head">
+            <h3 class="ui-popups-title">提示信息</h3>
+        </div>
+        <div class="ui-popups-body tomasky-hidden-x">
+            <div class="container">
+                <div id="account-reg" class="func-reg">
+                    <h4>您正在申请开通<span>条码支付</span>!</h4>
+                    <h5 style="border: 0;">我们将通知您所在区域的客户经理为您办理，请耐心等待。</h5>
+                </div>
+            </div>
+        </div>
+        <div class="ui-popups-foot">
+            <button class="btn btn-success" ms-click="accountRegOpen(false,true)" data-ui="popups" style="width:228px">
+                确定
+            </button>
+        </div>
+    </div>
+</div>

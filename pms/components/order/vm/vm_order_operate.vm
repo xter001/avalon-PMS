@@ -1,0 +1,673 @@
+var COMMON_CONST = require('../../common/js/const.js'),
+    ORDER_CONST = require('../common/const.js'),
+    OrderHandler = require('../handler/order-handler.js'),
+    OrderInitHandler = require('../handler/order-init-handler.js'),
+    UserInfoHandler = require('../handler/order-userinfo-handler.js'),
+    OrderSpendHandler = require('../handler/order-spend-handler.js'),
+    OrderFinanceHandler = require('../handler/order-finance-handler.js'),
+    MemberUnionHandler = require('../handler/order-member-handler.js'),
+    OrderButtonHandler = require('../handler/order-button-handler.js'),
+    today = tmsky.date.today(),
+    _KUAIJIE_ID_ = 1,// 快捷支付
+    _SAOMA_ID_ = 6,// 条码支付
+    _defaultPay = { "id": 4, "name": '现金' },
+    _JI_FEN_PAY_ = { "id": null, "name": '积分' }
+
+
+var vm_order_operate = avalon.define({
+    $id: 'vm_order_operate',
+    __dom__: $('#order-operate-popups'),
+    // data, models
+    text: {
+        title: '办理入住'
+    },
+    plugs: {},
+    ec_del_order: false,
+    isFromDx: false, // 是否来自代销平台
+    isFromOTA: false, // 是否来自ota
+    $payEnumMap: { 1: '快捷支付', 6: '条码支付' },
+    orderOperateFlag: ORDER_CONST.ORDER_OPERATE.VIEW,//当前订单操作action标识，默认view：查看操作
+    isBeforeCheckOut: false,
+    isPartOpr: false, //是否为部分入住、退房操作
+    allCheckout: true,//统一退房
+    showInputView: false,
+    hasViewShow: false,  //是否以消息展示类型显示
+    hasInputShow: true,  //是否以input表单类型显示
+    payEnum: [],
+    funcPrint: false,
+    disabledIndex: null,
+    checkoutFlag: false,
+    checkoutDate: [],
+    ajaxPrice: {
+        weekPrices: null,
+        givenPrices: null
+    },
+    accessBtn: {
+        shop: false
+    },
+    allCheckOutDate: tmsky.date.today(),
+    nowActiveId: 0,//计算1~100晚总价
+    hasSpendItem: false,
+    enums: {
+        financeEnum: COMMON_CONST.FINANCE_ITEMS,
+        cardTypes: COMMON_CONST.CARD_TYPE,
+        nations: COMMON_CONST.NATIONS,
+        orderFlags: COMMON_CONST.ORDER_FLAG
+    },
+    order: {
+        subOrders: [
+            {
+                active: true,
+                dayOptions: []
+            }
+        ]
+    },
+    initAccountRecords: function () {
+        var vm = vm_order_operate,
+            overage = vm.order.$model.overage,
+            payment = vm.order.$model.paidPayment;
+
+        if (overage > 0) {
+            //支付房费
+            vm.backRoomFee.financeId = 2
+        } else if (overage < 0) {
+            //退还房费
+            vm.backRoomFee.financeId = 5
+            overage = -overage
+        }
+
+        if (payment > 0) {
+            //退还押金
+            vm.backPayment.show = true;
+            vm.backPayment.financeId = 6
+        } else if (payment < 0) {
+            //支付押金
+            vm.backPayment.show = true
+            vm.backPayment.financeId = 5
+            payment = -payment
+        } else if (payment == 0) {
+            vm.backPayment.show = false
+        }
+        vm.backRoomFee.amount = overage
+        vm.backPayment.amount = payment
+        //提前退房不显示
+        if (vm.isBeforeCheckOut) {
+            vm.backRoomFee.amount = ''
+        }
+    },
+
+    backRoomFee: {
+        amount: '',
+        financeId: 5,
+        payId: _defaultPay.id,
+        payName: _defaultPay.name,
+        canModify: true
+    },
+
+    backPayment: {
+        amount: '',
+        financeId: 6,
+        payId: _defaultPay.id,
+        payName: _defaultPay.name,
+        canModify: true,
+        show: true
+    },
+
+    payChange: function (el, e) {
+        var vm = vm_order_operate,
+            payEnumMap = vm.$payEnumMap
+
+        el.payId = e.target.value
+        el.payName = payEnumMap[el.payId]
+
+    },
+
+    itemChange: function (el, e) {
+        if (el.item == 11) {
+            el.payChannel = {
+                id: 67264
+            }
+        }
+    },
+
+    initPayEnum: function (list) {
+        var vm = vm_order_operate
+        var vm_finance_detail = avalon.vmodels['vm_finance_detail']
+        list = list || []
+        list.forEach(function (el) {
+            if (el.name === '积分') {
+                _JI_FEN_PAY_.id = el.id
+                return true
+            }
+
+            var obj = {
+                id: el.id,
+                name: el.name,
+                show: true
+            }
+            vm.payEnum.push(obj)
+            vm.$payEnumMap[el.id] = el.name
+
+            // 财务详情
+
+            vm_finance_detail.payEnum.push(obj)
+            vm_finance_detail.$payEnumMap[el.id] = el.name
+
+        })
+
+        //vm_finance_detail.payEnum.splice(1, 0, {id : 1, name : '快捷支付', show : true})
+        //vm.payEnum.splice(1, 0, {id : 1, name : '快捷支付', show : true})
+    },
+
+    payEnumClick: function (el, e, $index) {
+        var vm = vm_order_operate
+        //当item为1,2,3时才能选择快捷支付
+        var nowPay = vm.finance.values.$model;
+        var nowItem = nowPay[$index].item;
+        var kuaijieNum = 0;
+        if (nowItem == 1 || nowItem == 2 || nowItem == 3) {
+            vm.payChannels[1].show = true;
+
+            //房态页快捷支付只能存在一个
+
+            nowPay.forEach(function (e, i) {
+                if (e.payChannel.id == 1) {
+                    kuaijieNum++;
+                }
+            })
+            if (kuaijieNum > 0) {
+                vm.payChannels[1].show = false;
+            } else {
+                vm.payChannels[1].show = true;
+            }
+        } else {
+            vm.payChannels[1].show = false;
+        }
+    },
+
+    checkPrice: function (el, e) {
+        var vm = vm_order_operate,
+            inputVal = e.target.value
+
+        if (inputVal !== '' && isNaN(inputVal = parseFloat(inputVal))) {
+            inputVal = 0
+        }
+        el.amount = inputVal
+        // vm.updateAmount()
+    },
+
+    financeChange: function (el, e) {
+        var vm = vm_order_operate,
+            financeEnum = vm.enums.financeEnum,
+            payEnumMap = vm.$payEnumMap,
+            financeObj
+
+        el.financeId = e.target.value
+        financeObj = financeEnum[el.financeId]
+        el.financeName = financeObj.name
+
+        if (financeObj && financeObj.value === -1 && (el.payId == _KUAIJIE_ID_ || el.payId == _SAOMA_ID_)) {
+            el.payId = _defaultPay.id
+            el.payName = payEnumMap[el.payId]
+        }
+        // vm_finances.updateAmount()
+    },
+
+    customerFrom: {
+        oid: null,
+        commission: null,
+        currId: 4,//当前客人来源id
+        curr: {},
+        datas: {},
+        disabled: false,
+        init: function () {
+            vm_order_operate.customerFrom.curr = vm_order_operate.order.customerFrom
+            vm_order_operate.customerFrom.commission = vm_order_operate.order.commission
+            vm_order_operate.customerFrom.currId = vm_order_operate.customerFrom.curr.id
+            vm_order_operate.customerFrom.oid = vm_order_operate.customerFrom.curr.id
+            vm_order_operate.customerFrom.disabled = vm_order_operate.customerFrom.isDisabled()
+        },
+        isDisabled: function () {
+            return tmsky.isEmpty(vm_order_operate.customerFrom.datas[vm_order_operate.customerFrom.currId])
+        }
+    },
+
+    commissions: {},
+    payChannels: OrderFinanceHandler.payChannels,
+    msgTemplate: [],
+    printTemplate: [],
+
+    // handlers
+    user: UserInfoHandler,
+    orderHandle: OrderHandler,
+    spend: OrderSpendHandler,
+    finance: OrderFinanceHandler,
+    memberUnion: MemberUnionHandler,
+    remark: { curr: OrderInitHandler.initDefaultRemind() },
+    buttonHandler: OrderButtonHandler,
+
+    // methods
+    init: OrderInitHandler.init,
+    bindEvents: OrderInitHandler.bindEvents,
+
+    dayChange: function (el, index) {
+        var vm = avalon.vmodels.vm_order_operate
+        el.checkOutAt = tmsky.date.plusDate(el.checkInAt, el.days, 'd', 'yyyy-MM-dd')
+        /*当日住当日退房可选已住1~100晚上*/
+        vm.renderLockAndPrice(el, el.checkInAt, el.checkOutAt, index, el.days)
+    },
+
+    //计算住1~100晚上的总价
+    renderLockAndPrice: function (el, start, end, index, days) {
+        var vm = avalon.vmodels.vm_order_operate
+        var order = vm.order
+        //子订单与上一个不一样时请求ajax 否则直接调用已有数据
+        if (vm.nowActiveId == 0) {
+            vm.ajaxTotalPrices(el, start, end, index, days);
+        } else if (vm.nowActiveId != 0 && vm.nowActiveId != el.id) {
+            vm.ajaxTotalPrices(el, start, end, index, days);
+        } else {
+            vm.ajaxPlusPrices(el, start, end, index, days)
+            OrderHandler.updateOrderInfo()
+        }
+    },
+    ajaxTotalPrices: function (el, start, end, index, days) {
+        var vm = avalon.vmodels.vm_order_operate;
+        $.post('/index/roomStatus/priceLocked', {
+            start: start,
+            end: end
+        }).done(function (rs) {
+            if (rs.status == 200) {
+
+                vm.ajaxPlusPrices(el, start, end, index, days, rs)
+
+                OrderHandler.updateOrderInfo()
+
+            } else {
+                tmsky.ui.dialog.alert('获取锁房/周末价错误！')
+            }
+        })
+    },
+    ajaxPlusPrices: function (el, start, end, index, days, rs) {
+        //加法先后逻辑
+        //1.先遍历周末价格和特殊价格，其余日期为默认价格，
+        //2.再将修改过价格的订单中，既没有周末价也没有特殊价的日期以最后一天价格继承(注：周末或特殊日期前)
+        //3.最后替换掉subOrderPrices中日期已经已有的价格
+
+
+        var vm = avalon.vmodels.vm_order_operate
+        var order = vm.order;
+        var normalPrice = Number(el.room.roomType.normalPrice);
+        var speWeekDate = []  //特殊价周末价的日期
+        var weeks = [];
+        if (vm.nowActiveId != 0 && vm.nowActiveId == el.id) {
+
+        } else {
+            vm.ajaxPrice.givenPrices = rs.specialPrices,
+                vm.ajaxPrice.weekPrices = rs.weekPrices;
+        }
+
+        vm.nowActiveId = el.id
+        var roomtypeId, roomtype, price, priceArr, weekArr, cdate, nowRoomtypeId
+        var roomPrice = [];//roomPrice为所有的日期价格
+        var idCount = 0
+        // 周末价
+        vm.ajaxPrice.weekPrices.forEach(function (el3) {
+            roomtypeId = el3.roomTypeId
+            nowRoomtypeId = order.subOrders[index].room.roomType.id;
+            if (roomtypeId == nowRoomtypeId) {
+                idCount++
+                priceArr = []
+                for (var p = 0; p < 7; p++) {
+                    priceArr.push(normalPrice)
+                }
+                if (el3.price != '') {
+                    var priceWeek = el3.price.split(',')
+                    var week = el3.week.split(',')
+                    weeks = week;
+                    for (var p1 = 0; p1 < week.length; p1++) {
+                        priceArr[week[p1] - 1] = Number(priceWeek[p1])
+                    }
+                }
+                //判断是周几的房价
+                for (var i = 1; i <= days; i++) {
+                    var nowWeek = tmsky.date.plusDate(start, i - 1, 'd', 'yyyy-MM-dd')
+                    var json = {}
+                    json.cdate = nowWeek
+                    nowWeek = tmsky.date.getWeek(nowWeek)  //周几
+                    nowWeek = vm.convertWeekToIndex(nowWeek)  //周几对应的下标
+                    nowWeek = priceArr[nowWeek] //周几对应的价格
+                    json.price = nowWeek  //赋值
+                    roomPrice.push(json)
+                }
+            }
+        })
+        if (idCount == 0) {
+            var priceArr = []
+            for (var p = 0; p < 7; p++) {
+                priceArr.push(normalPrice)
+            }
+            for (var i = 1; i <= days; i++) {
+                var nowWeek = tmsky.date.plusDate(start, i - 1, 'd', 'yyyy-MM-dd')
+                var json = {}
+                json.cdate = nowWeek
+                nowWeek = tmsky.date.getWeek(nowWeek)  //周几
+                nowWeek = vm.convertWeekToIndex(nowWeek)  //周几对应的下标
+                nowWeek = priceArr[nowWeek] //周几对应的价格
+                json.price = nowWeek  //赋值
+                roomPrice.push(json)
+            }
+        }
+        // 特殊价
+        var nowActiveId = 0;
+
+        vm.ajaxPrice.givenPrices.forEach(function (el2) {
+            roomtypeId = el2.roomTypeId
+            nowRoomtypeId = order.subOrders[index].room.roomType.id;
+
+            if (roomtypeId == nowRoomtypeId) {
+
+                var spePrice = el2.price,
+                    speDate = el2.specialDate
+
+                //计算总价中替换特殊价
+                roomPrice.forEach(function (e, i) {
+                    if (e.cdate == speDate) {
+                        e.price = spePrice
+
+                        //有特殊价的日期
+                        speWeekDate.push(e.cdate)
+                    }
+                })
+            }
+        })
+
+
+        //如果suborderprice的价格是修改过的，与默认价格不同，那么roomPrice中没有的日期（没有特殊价&&周末价）则全部继承最后一天晚上的价格。
+        if (el.subOrderPrices.length > 0 && el.subOrderPrices[el.subOrderPrices.length - 1].price != normalPrice) {
+
+            //有周末价的日期
+            for (var i = 1; i <= days; i++) {
+                var nowDate = tmsky.date.plusDate(start, i - 1, 'd', 'yyyy-MM-dd'),
+
+                    nowWeek = tmsky.date.getWeek(nowDate)  //周几
+                var nowDateIndex = vm.convertWeekToIndex(nowWeek) + 1  //周几对应的数字 1,2,3,4,5,6,7
+                for (var w = 0; w < weeks.length; w++) {
+                    if (weeks[w] == nowDateIndex) {
+                        speWeekDate.push(nowDate)
+                    }
+                }
+
+            }
+
+            //继承最后一天晚上的价格
+            roomPrice.forEach(function (e, i) {
+                if (speWeekDate.length == 0) {
+                    e.price = el.subOrderPrices[el.subOrderPrices.length - 1].price
+                } else {
+                    speWeekDate.forEach(function (e2, i) {
+                        if (e2 != e.cdate && vm.getSmallDate(e.cdate, speWeekDate)) {
+                            e.price = el.subOrderPrices[el.subOrderPrices.length - 1].price
+                        }
+                    })
+                }
+
+            })
+        }
+
+        //suborderprice中之前修改前已有的价格替换
+        roomPrice.forEach(function (e, i) {
+
+            el.subOrderPrices.$model.forEach(function (e2, i) {
+                var subPrice = Number(e2.price),
+                    subDate = e2.cdate
+                if (e.cdate == subDate) {
+                    e.price = subPrice
+                }
+            })
+
+        })
+
+        roomPrice.forEach(function (e, i) {
+            nowActiveId += Number(e.price)
+        })
+
+        var newSubOrderPrices = []
+        roomPrice.forEach(function (e, i) {
+            e.id = null
+            el.subOrderPrices.$model.forEach(function (e2, i2) {
+                if (e.cdate == e2.cdate) {
+                    e.id = e2.id
+                }
+            })
+
+        })
+
+        el.subOrderPrices = roomPrice
+        el.roomPrice = nowActiveId;
+    },
+    //date是否小于arrayDate中的最小日期
+    getSmallDate: function (date, arrayDate) {
+        var newArray = [];
+        //得到数组中最小值日期
+        arrayDate.forEach(function (e, i) {
+            newArray.push(Number(tmsky.date.parse(e).getTime()));
+        })
+        var minDate = Math.min.apply(null, newArray);
+        date = Number(tmsky.date.parse(date).getTime());
+        if (date >= minDate) {
+            return false
+        } else if (date < minDate) {
+            return true
+        }
+    },
+    //将周期转换为数字下标
+    convertWeekToIndex: function (nowWeek) {
+        var index = 0
+        if (nowWeek == '一') {
+            index = 0
+        }
+        if (nowWeek == '二') {
+            index = 1
+        }
+        if (nowWeek == '三') {
+            index = 2
+        }
+        if (nowWeek == '四') {
+            index = 3
+        }
+        if (nowWeek == '五') {
+            index = 4
+        }
+        if (nowWeek == '六') {
+            index = 5
+        }
+        if (nowWeek == '日') {
+            index = 6
+        }
+        return index
+    },
+
+    goChangeRoom: function () {
+        var id = $('.goChangeRoom').attr('mainid'),
+            checkInAt = $('.goChangeRoom').attr('checkInAt'),
+            url = 'index.html?changeRoom=' + id + '&&' + 'checkInAt=' + checkInAt;
+        window.open(url)
+    },
+    openIdcardWindow: function (orders, index) {
+        $('#order-info-input-container').hide();
+        $('#order-operate-popups-container').hide();
+        avalon.vmodels.vm_idcard_main.openIdcardWindow(orders,index,'order')
+        avalon.scan(document.getElementById("#vm_idcard_input"));
+    },
+    showPop: function(){
+        $('#order-info-input-container').show();
+        $('#order-operate-popups-container').show();
+    },
+    cgCommission: function () {
+        var cfid = vm_order_operate.customerFrom.currId,
+            commission = vm_order_operate.commissions[cfid]
+        if (vm_order_operate.customerFrom.datas[cfid]) {
+            vm_order_operate.customerFrom.curr = vm_order_operate.customerFrom.datas[cfid]
+        }
+        vm_order_operate.order.commission = commission && commission.commissionValue || null
+    },
+    updateAveragePrice: function (el) {
+        var priceArr = 0
+        el.subOrderPrices.forEach(function (e, i) {
+            priceArr += e.price
+        })
+        // 均分价格
+        el.subOrderPrices.forEach(function (e, i) {
+            if (priceArr == 0) {
+                e.price = (el.roomPrice * (1 / el.subOrderPrices.length)).toFixed(2) * 1
+            } else {
+                e.price = (el.roomPrice * (e.price / priceArr)).toFixed(2) * 1
+            }
+        })
+    },
+    addNewShop: function () {
+        var id = $('.goChangeRoom').eq(0).attr('mainid')
+        avalon.vmodels.vm_shopcost.openShopCost(id)
+    },
+    initCheckout: function () {
+        //初始化退房界面
+        var vm = vm_order_operate
+        var checkoutDate = []
+        for (var i = 0; i <= tmsky.date.diffDays(tmsky.date.today(), vm.order.checkOutAt); i++) {
+            checkoutDate.push(tmsky.date.addDays(tmsky.date.today(), i, 'yyyy-MM-dd'))
+        }
+        vm.text.title = '办理退房'
+        vm.checkoutDate = checkoutDate
+        vm.checkoutFlag = true
+        vm.allCheckOutDate = tmsky.date.today()
+        vm.orderHandle.initCheckoutDate()
+        vm.isBeforeCheckOut = vm.order.checkOutAt > today
+        //子订单排序
+        var order = $.extend(true, {}, vm.order.$model)
+        vm.order = OrderHandler.sortOrder(order)
+        OrderHandler.subOrdersCheckDate(tmsky.date.today())
+        //标记是否为部分退房操作
+        var actives = OrderHandler.countActives(vm)
+        vm.isPartOpr = actives != OrderHandler.getCheckInStatusOrdersLength()
+    },
+    reset: function () {
+        vm_order_operate.checkoutDate = []
+        vm_order_operate.isBeforeCheckOut = false
+        vm_order_operate.allCheckout = true
+        if (vm_order_operate.order.status == COMMON_CONST.M_OUT) {
+            vm_order_operate.buttonHandler.toggleBtnActive(true)
+        }
+        vm_order_operate.checkoutFlag = false
+    },
+    deleteOrder: function () {
+        // 删除订单
+        tmsky.ui.dialog.confirm('将删除该订单全部信息（非取消订单），只保留删除日志，确定要删除此订单？', function () {
+            vm_order_operate.ajaxDeleteOrder()
+        })
+    },
+    ajaxDeleteOrder: function () {
+        if (!$('.goChangeRoom:first').attr('mainid'))
+            return
+        var id = $('.goChangeRoom:first').attr('mainid')
+        // tmsky.ui.dialog.loading()
+        // $.get('/order/delOrder/' + id).done(function (rs) {
+        //     tmsky.ui.dialog.loading.close()
+        //     if (rs.status == 200) {
+        //         tmsky.ui.dialog.tips('删除成功', 'success')
+        //         setTimeout(function () {
+        //             location.reload()
+        //         }, 1000)
+        //     } else {
+        //         tmsky.ui.dialog.tips('删除失败：' + rs.message, 'error')
+        //     }
+        // }).always(function (rs) {
+        //     tmsky.ui.dialog.loading.close
+        //     // 百度统计
+        //     _hmt.push(['_trackEvent', 'order', 'click', '删除订单'])
+        // })
+    },
+    //打印  只有入住和退房的订单才能打印  并且要开通功能库
+    printClick: function () {
+        // 检验
+        var mainId = $('.goChangeRoom:first').attr('mainid'),
+            type = vm_order_operate.order.orderStatus
+
+        if (type != 3 && type != 4 && type != 5) {
+            tmsky.ui.dialog.tips("该状态订单不能打印！", 'error')
+            return;
+        }
+
+        if (type === 3 && !vm_order_operate.hasCkinTpl()) {
+            tmsky.ui.dialog.tips("您还没有设置[入住凭证打印模板]，请到功能库中设置", 'error')
+            return;
+        }
+        if (type === 4 && !vm_order_operate.hasCkoutTpl()) {
+            tmsky.ui.dialog.tips("您还没有设置[结账单打印模板]，请到功能库中设置", 'error')
+            return;
+        }
+        window.open("/inns/print/" + type + "/" + mainId);
+    },
+    printDatas: [],
+    hasCkinTpl: function () {
+        var rs = false;
+        vm_order_operate.printDatas.forEach(function (el) {
+            if (el.printType === "3") {
+                rs = true;
+            }
+        });
+        return rs;
+    },
+    hasCkoutTpl: function () {
+        var rs = false;
+        vm_order_operate.printDatas.forEach(function (el) {
+            if (el.printType === "4") {
+                rs = true;
+            }
+        });
+        return rs;
+    },
+    printInit: function (list) {
+        vm_order_operate.printDatas = list || []
+    },
+    houseEditShop: function (index) {
+        var spend = vm_order_operate.spend.goodSpends[index]
+        var vm_shopcost = avalon.vmodels.vm_shopcost,
+            vm_shop = avalon.vmodels.vm_shop
+        var shop = {
+            rooms: 2,  //无意义值
+            spendAt: spend.spendTime,
+            realPrice: spend.realPrice,
+            goodNum: spend.goodNum,
+            name: spend.good.name,
+            selectedShop: vm_shop.getGoodsIndex(spend.good.id),
+            gsid: spend.id,
+            goodId: spend.good.id,
+            settleType: spend.settleType,
+            mainId: vm_order_operate.order.id,
+            pcid: tmsky.isEmpty(spend.innFinanceRecord) ? null : spend.innFinanceRecord.payChannel.id,
+            financeId: tmsky.isEmpty(spend.innFinanceRecord) ? null : spend.innFinanceRecord.id
+        }
+        vm_shop.editShopCost(shop, 0)
+    },
+    houseDeleteShop: function (el, $index) {
+        var spend = el
+        var vm_shopcost = avalon.vmodels.vm_shopcost,
+            vm_shop = avalon.vmodels.vm_shop
+        var shop = {
+            rooms: 2,  //无意义值
+            spendAt: spend.spendTime,
+            realPrice: spend.realPrice,
+            goodNum: spend.goodNum,
+            name: spend.good.name,
+            selectedShop: vm_shop.getGoodsIndex(spend.good.id),
+            gsid: spend.id,
+            goodId: spend.good.id,
+            settleType: spend.settleType,
+            mainId: vm_order_operate.order.id,
+            pcid: tmsky.isEmpty(spend.innFinanceRecord) ? null : spend.innFinanceRecord.payChannel.id,
+            financeId: tmsky.isEmpty(spend.innFinanceRecord) ? null : spend.innFinanceRecord.id
+        }
+        vm_shop.deleteShopCost(shop, $index)
+    }
+})

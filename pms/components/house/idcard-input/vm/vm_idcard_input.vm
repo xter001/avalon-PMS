@@ -1,0 +1,463 @@
+var CONST = require('../../../common/js/const.js')
+var Service = require('../../services/idcard-service')
+var vm_idcard_input = avalon.define({
+    $id: 'vm_idcard_input',
+    checkinListDialog: false,
+    inputTypeDialog: false,
+    editMsgDialog: false,
+    persons: [],
+    maxPerson: 8,
+    inputType: 1,// 录入方式，1：手动；2：读卡
+    orderIndex: '',
+    editData: {},
+    editInitData:{
+        cardTypes: [],
+        nations:[],
+        cardAddr:[],
+        sex:[]
+    },
+    deviceParam: {
+        deviceId: '',
+        cardID: '',
+        readType: ''
+    },
+    init: function () {
+        var vm = vm_idcard_input
+    },
+    initEditData: function (inputType) {
+        var vm = vm_idcard_input
+        // 该弹框中省市县渲染较慢，故加loading
+        tmsky.ui.dialog.loading()
+
+        // 隐藏入住人列表，显示信息录入框
+        vm.checkinListDialog = false
+        vm.editMsgDialog = true
+
+        // 手动 or 读卡
+        vm.inputType = inputType
+
+        // 初始化日期插件
+        vm._initDatePicker()
+
+        // 初始化下拉列数据（证件类型:IDCType，民族:Nation， 省市县:SSX，性别：Sex）
+        vm._getInputConfig(function(inputConfigData){
+            if(inputConfigData){
+                vm.editInitData.cardTypes = inputConfigData.IDCType.Codes
+                vm.editInitData.nations = inputConfigData.Nation.Codes
+                vm.editInitData.cardAddr = inputConfigData.SSX.Codes
+                vm.editInitData.sex = inputConfigData.Sex.Codes
+
+                // 民族，省市县绑定点击事件
+                vm._select2BindEvent()
+
+                vm.editData = {
+                    id: '',
+                    name: '',
+                    phone: '',
+                    cardType: 11,// 默认居民身份证
+                    cardNo: '',
+                    address: '',
+                    nationType: 0,//(0:国内 ，1：国外),
+                    nation: '汉族',// 默认汉族
+                    nationCode: '01',// 默认汉族
+                    picStream: '',//头像
+                    // iSForeign: 0, //(0:国内 ，1：国外),
+                    birthday: '',
+                    sex: '1',   // 1 男 2女
+                    ssx: '', // 省市县(四川成都xx县)
+                    ssxCode: '', // 省市县 3322116
+                    modifyStatus: false,
+                    index: 0,
+                }
+
+                if(inputType == 2) {
+                    // 查看已连接设备,获取设备参数
+                    Service.getDeviceList({ISForeing: 0}).done(function (rs) {
+                        if(rs.code == 1){
+                            var mainDevice = rs.data[0]
+                            vm.deviceParam.cardID = mainDevice.CardType[0].CardID
+                            vm.deviceParam.readType = mainDevice.CardType[0].ReadType
+                            vm.deviceParam.deviceId = mainDevice.DeviceId
+
+                            tmsky.ui.dialog.loading.close()
+                            // 尝试读取读卡器上的证件信息
+                            var  person = vm.getInfoFromCardReader(vm.$model.deviceParam)
+                            vm.editData.name = person.Name
+                            vm.editData.cardNo = person.IDC
+                            vm.editData.address = person.Address
+
+                            vm.editData.nationCode = person.Nation
+                            vm.editData.nation = vm._getNationNameByNationCode(person.Nation)
+
+                            vm.editData.picStream = 'data:image/png;base64,' + person.Small_Photo
+                            vm.editData.birthday = person.Birthday
+                            vm.editData.sex = person.Sex
+
+                            vm.editData.ssxCode = person.SSX
+                            vm.editData.ssx = vm._getSSXbyIDNO(person.IDC).Name
+
+                        }else{
+                            tmsky.ui.dialog.tips(rs.msg, 'error')
+                        }
+                    }).fail(function (rs) {
+                        tmsky.ui.dialog.tips(rs.msg, 'error')
+                    }).always(function (rs) {
+                        tmsky.ui.dialog.loading.close()
+                    })
+                }else{
+                    tmsky.ui.dialog.loading.close()
+                }
+            }
+        })
+    },
+    /**
+     * 从入住人列表删除一条
+     * @param index
+     */
+    removeFromList: function (index) {
+        var vm = vm_idcard_input
+        vm.persons.removeAt(index)
+    },
+    /**
+     * 调身份证读卡器读取数据
+     * async: false
+     * @returns {{}}
+     */
+    getInfoFromCardReader: function (param) {
+        var vm = vm_idcard_input
+        var person = {}
+
+        tmsky.ui.dialog.loading('正在读取证件信息...')
+        // async: false
+        Service.getInfoFromCardReader(param).done(function(rs){
+            // 设备在线
+            if(rs.code == 1){
+                person = rs.Data
+            }else{
+                tmsky.ui.dialog.tips(rs.msg, 'error')
+            }
+        }).fail(function(rs){
+            tmsky.ui.dialog.tips(rs.msg, 'error')
+        }).always(function(rs){
+            tmsky.ui.dialog.loading.close()
+        })
+        return person
+    },
+    closeDialog: function (type, command) {
+        var vm = vm_idcard_input;
+        switch (type) {
+            case 'checkinListDialog':
+                vm.checkinListDialog = false
+                if (avalon.vmodels.vm_idcard_main.from === 'order') {
+                    avalon.vmodels.vm_order_operate.showPop();
+                }
+                if (command === 'cancel') {
+                    return;
+                }
+                //保存到房态或者订单的子订单信息中
+                if (command === 'save') {
+                    if (avalon.vmodels.vm_idcard_main.from === 'house') {
+                        avalon.vmodels.vm_idcard_main.subOrders[vm.orderIndex].persons = vm.persons.$model;
+                        avalon.vmodels.vm_orders.orders[vm.orderIndex].persons = vm.persons.$model;
+                        avalon.vmodels.vm_idcard_main.getAllPersons();
+                        var people = avalon.vmodels.vm_guests.datas;
+                        if (people && avalon.vmodels.vm_idcard_main.personsList.length && (!people.length || !people[0].name)) {
+                            avalon.vmodels.vm_guests.datas = avalon.vmodels.vm_idcard_main.personsList[0].$model;
+                        }
+                    } else if (avalon.vmodels.vm_idcard_main.from === 'order') {
+                        avalon.vmodels.vm_order_operate.order.subOrders[vm.orderIndex].persons = vm.persons.$model;
+                    }
+                }
+                break;
+            case 'inputTypeDialog':
+                vm.inputTypeDialog = false
+                break;
+            case 'editMsgDialog':
+                vm.editMsgDialog = false
+                break;
+        }
+        return
+    },
+    //判断数组中cardNo,cardType是否有重复
+    validRepeatPersonInfo: function (cardNo, cardType) {
+        var vm = vm_idcard_input;
+        var personList = avalon.vmodels.vm_idcard_main.subOrders.$model,
+            isRepeat = false
+        personList.forEach(function (el, i) {
+            el.persons.forEach(function (item) {
+                if (item.cardNo == cardNo && item.cardType == cardType) {
+                    isRepeat = true
+                }
+            })
+        });
+        vm.persons.forEach(function (p) {
+            if (p.cardNo == cardNo && p.cardType == cardType) {
+                isRepeat = true
+            }
+        });
+        if (isRepeat == true) {
+            tmsky.ui.dialog.alert('该入住人已填写！')
+        }
+        return isRepeat
+    },
+    //选择录入信息方式
+    // openInputTypeDialog : function () {
+    //     var vm = vm_idcard_input
+    //     vm.inputTypeDialog = true
+    //     vm.checkinListDialog = false
+    // },
+
+    //去录信息
+    toInputMsg: function (type) {  //(type=1 手动，type=2 读卡器)
+        var vm = vm_idcard_input
+        if(vm.$model.persons.length >= 8){
+            tmsky.ui.dialog.errorTips('每间客房最多只能录入8个客人！');
+            return;
+        }
+        vm.initEditData(type)
+        if (type == 2) {
+
+        }
+    },
+    //境内、境外
+    checkIsForeign: function (val) {
+        var vm = vm_idcard_input
+        switch (val) {
+            case 0:
+                vm.editData.iSForeign = 0
+                break;
+            case 1:
+                vm.editData.iSForeign = 1
+                break;
+            default:
+
+        }
+    },
+    editBackList: function () {
+        var vm = vm_idcard_input;
+        vm.editMsgDialog = false;
+        vm.checkinListDialog = true;
+    },
+    // 证件信息提交前验证
+    _validateCardInfo: function () {
+        var vm = vm_idcard_input;
+
+        if (!vm.editData.cardNo) {
+            tmsky.ui.dialog.errorTips('请录入证件号码');
+            return false;
+        }
+        if ( vm.editData.cardNo && !tmsky.isNoLessZero(vm.editData.cardNo)) {
+            tmsky.ui.dialog.errorTips('请录入正确的证件号码');
+            return false;
+        }
+        if (!vm.editData.name) {
+            tmsky.ui.dialog.errorTips('请录入姓名');
+            return false;
+        }
+        if (vm.editData.name && !tmsky.isChinese(vm.editData.name)) {
+            tmsky.ui.dialog.errorTips('姓名只能是中文');
+            return false;
+        }
+        if (!vm.editData.birthday) {
+            tmsky.ui.dialog.errorTips('请录入出生日期');
+            return false;
+        }
+        if (!vm.editData.sex) {
+            tmsky.ui.dialog.errorTips('请录入性别');
+            return false;
+        }
+
+        if (vm.inputType === 1) {
+            // 手动录入
+        } else if (vm.inputType === 2) {
+            // 扫描录入
+            if (!vm.editData.nation) {
+                tmsky.ui.dialog.errorTips('请录入民族.');
+                return false;
+            }
+            if (!vm.editData.address) {
+                tmsky.ui.dialog.errorTips('请录入详细地址.');
+                return false;
+            }
+            if (!vm.editData.ssx) {
+                tmsky.ui.dialog.errorTips('请录入省市县.');
+                return false;
+            }
+
+        }
+        return true;
+    },
+    // 保存该客人信息
+    saveThisMsg: function (type) {
+        var vm = vm_idcard_input
+        // 每个房间最多录入8个人
+        if(vm.$model.persons.length > 8){
+            tmsky.ui.dialog.errorTips('每间客房最多只能录入8个客人！');
+            return;
+        }
+
+        // 验证信息
+        if (!vm._validateCardInfo()) {
+            return;
+        }
+        // 不是修改，check重复
+        if (!vm.editData.modifyStatus && vm.validRepeatPersonInfo(vm.editData.cardNo, vm.editData.cardType)) {
+            return;
+        }
+        if (!vm.editData.modifyStatus) {
+            vm.persons.push($.extend({}, vm.editData.$model));
+        } else {
+            vm.persons.set(vm.editData.index, vm.editData.$model);
+        }
+
+
+        if (type == 'save') {
+            vm.editBackList();
+        } else if (type == 'encore') {
+            vm.initEditData(vm.inputType)
+        }
+    },
+    // 修改
+    modify: function (el, index) {
+        var vm = vm_idcard_input
+        vm.checkinListDialog = false
+        vm.editMsgDialog = true
+
+        // 初始化信息录入框
+        vm.initEditData(1)
+
+        el.modifyStatus = true
+        el.index = index;
+        vm.editData = $.extend({}, vm.$model.editData, el.$model)
+        vm.editData.nation = vm._getNationNameByNationCode(vm.$model.editData.nationCode)
+        vm.editData.ssx = vm._getSSXbyIDNO(vm.$model.editData.ssxCode).Name
+    },
+    byIdcard: function () {
+        var vm = vm_idcard_input
+        if(vm.$model.editData.cardType == '11') vm._autoDataByIDNO(vm.editData.cardNo)
+    },
+
+    /**
+     * 根据身份证号填充 出生日期， 性别， 省市县
+     * @param IDNO
+     */
+    _autoDataByIDNO: function (IDNO) {
+        var vm = vm_idcard_input
+        IDNO = vm_idcard_input.trim(IDNO);
+        var theValidInfo = tmsky.isIDNO(IDNO);
+        if (theValidInfo.code !== 1) {
+            tmsky.ui.dialog.errorTips(theValidInfo.msg);
+        } else {
+            var res = theValidInfo.msg.split(',');
+            vm.editData.birthday = res[1]
+            vm.editData.sex = res[2] == '男' ? 1 : 2
+            var ssxInfo = vm._getSSXbyIDNO(IDNO)
+            vm.editData.ssxCode = ssxInfo.Code
+            vm.editData.ssx = ssxInfo.Name
+        }
+    },
+    //删除左右两端的空格
+    trim: function (str) {
+        return str.replace(/(^\s*)|(\s*$)/g, "");
+    },
+    cardTypeChange:function () {
+        var vm = vm_idcard_input
+        vm.editData.cardType = $(this).val()
+    },
+    sexChange:function () {
+        var vm = vm_idcard_input
+        vm.editData.sex = $(this).val()
+    },
+    /**
+     * 提供旅客信息录入项
+     * @private
+     */
+    _getInputConfig:function(cb){
+
+        if (window.localStorage && window.localStorage.getItem('psb_getInputConfig')) {
+            cb ? cb(JSON.parse(window.localStorage.getItem('psb_getInputConfig'))) : null
+        }else {
+            var param = {
+                ISForeing: 0,
+                ReturnWordDetail: 1
+            }
+            tmsky.ui.dialog.loading()
+            Service.getInputConfig(param).done(function(rs) {
+                if(rs.code == 1) {
+                    //格式化数据（将 FieldID 作为 key）并localstorage
+                    var getInputConfigData = {}
+                    for(var i = 0, len = rs.data.length; i < len; i++){
+                        getInputConfigData[rs.data[i].FieldID] = rs.data[i]
+                    }
+                    cb ? cb(getInputConfigData) : null
+                    window.localStorage.setItem('psb_getInputConfig', JSON.stringify(getInputConfigData))
+                }else{
+                    tmsky.ui.dialog.tips(rs.msg, 'error')
+                }
+                tmsky.ui.dialog.loading.close()
+            }).fail(function(rs){
+                tmsky.ui.dialog.tips(rs.msg, 'error')
+                cb ? cb(false) : null
+            }).always(function(rs){
+                tmsky.ui.dialog.loading.close()
+            })
+        }
+    },
+    _select2BindEvent: function () {
+        var vm = vm_idcard_input
+        $('.addrList').on('click',function () {
+            vm.editData.ssxCode = this.dataset.code
+            vm.editData.ssx = this.text
+        })
+        $('.nationList').on('click',function () {
+            vm.editData.nationCode = this.dataset.code
+            vm.editData.nation = this.text
+
+        })
+    },
+    _initDatePicker: function () {
+        var vm = vm_idcard_input
+        $("#birthday").datepicker({
+            onSelect : function (selectedDate) {
+                vm.editData.birthday = selectedDate
+                $("#birthday").datepicker('hide')
+            }
+        })
+    },
+    /**
+     * 通过身份证取得省市县信息
+     * @private
+     */
+    _getSSXbyIDNO: function (IDNO) {
+        var vm = vm_idcard_input,
+            SSXData = vm.$model.editInitData.cardAddr
+        if(SSXData.length > 0) {
+            var addrNo = IDNO.substring(0, 6)
+            for(var i = 0, len = SSXData.length; i < len; i++){
+                if(SSXData[i].Code == addrNo){
+                    return SSXData[i]
+                }
+            }
+        }else{
+            tmsky.ui.dialog.errorTips('获取省市县数据失败')
+        }
+    },
+    /**
+     * 通过民族ID获取民族名字
+     * @private
+     */
+    _getNationNameByNationCode: function (nationCode) {
+        var vm = vm_idcard_input,
+            nationData = vm.$model.editInitData.nations
+        if(nationData.length > 0) {
+            for(var i = 0, len = nationData.length; i < len; i++){
+                if(nationData[i].Code == nationCode){
+                    return nationData[i].Name
+                }
+            }
+        }else{
+            tmsky.ui.dialog.errorTips('获取省市县数据失败')
+        }
+    }
+})
+

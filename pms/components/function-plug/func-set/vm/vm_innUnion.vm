@@ -1,0 +1,8 @@
+//客栈联盟（暂时不做）
+var vm_innUnion=avalon.define({
+    $id:'vm_innUnion',
+
+    init:function(){
+
+    },
+})

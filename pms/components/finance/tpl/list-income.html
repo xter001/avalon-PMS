@@ -1,0 +1,327 @@
+<div id="income_div" ms-controller="vm_inCome" class="account-book finance-book">
+    <div class="tomasky-ui-popups finance_popups" id="finance_popups" ms-visible="costRecord">
+        <div class="tomasky-ui-popups-backdrop"></div>
+        <div class="ui-popups-dialog">
+            <em ms-click="closeCostRecord()" class="close" data-dismiss="popups"></em>
+            <div class="ui-popups-head">
+                <h3 class="ui-popups-title">记一笔流水修改历史记录</h3>
+            </div>
+            <div class="ui-popups-body" style="padding: 5px;overflow-y: auto;max-height: 500px;">
+                <table ms-visible="costRecordIndex==0" class="table" style="width:920px;">
+                    <thead>
+                    <tr>
+                        <th>收支项目</th>
+                        <th>收入金额</th>
+                        <th>支付方式</th>
+                        <th>单价</th>
+                        <th>数量</th>
+                        <th>操作类型</th>
+                        <th>操作人</th>
+                        <th>记录时间</th>
+                    </tr>
+                    </thead>
+                    <tbody ms-class-bg-table-even="$index/2==0">
+                    <tr ms-repeat="shopRecordList">
+                        <td>{{el.name}}（商品）</td>
+                        <td>{{el.price | toFixed}}</td>
+                        <td>{{el.payChannel.name}}</td>
+                        <td>{{el.d_price | toFixed}}</td>
+                        <td>{{el.num}}</td>
+                        <td>{{el.operateType}}</td>
+                        <td>{{el.createdUser}}</td>
+                        <td>{{el.recordAt}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <table ms-visible="costRecordIndex==1" class="table" style="width:920px;">
+                    <thead>
+                    <tr>
+                        <th>收支项目</th>
+                        <th>{{costRecordList[0].data.type==1?'收入':'支出'}}金额</th>
+                        <th>支付方式</th>
+                        <th>操作人</th>
+                        <th>操作时间</th>
+                    </tr>
+                    </thead>
+                    <tbody ms-class-bg-table-even="$index/2==0">
+                    <tr ms-repeat="costRecordList">
+                        <td>{{el.data.item}}（{{el.data.operateName}}）</td>
+                        <td>{{el.data.fee}}</td>
+                        <td>{{el.data.payChannelName}}</td>
+                        <td>{{el.data.operator}}</td>
+                        <td>{{el.data.date}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="account-book-head finance-nav-head" style="overflow: inherit">
+        <div>
+            <h1>筛选条件</h1>
+            <div class="income-part1">
+                <ul>
+                    <li ms-click="toggleList()">
+                        <span>支付方式</span>
+                        <i></i>
+                        <div class="income-list">
+                            <dl>
+                                <dd ms-click="selectListValue(el)" ms-class-income-seleted="el.isChecked" ms-repeat="pcs" ms-attr-pay="el.name">
+                                    <b></b>
+                                    <label>{{el.name}}</label>
+                                </dd>
+                            </dl>
+                            <div class="income-list-bar">
+                                <b ms-click="selectAllValue('pcs')"></b>
+                                <label ms-click="selectAllValue('pcs')">全选</label>
+                                <a ms-click="searchBtn('pcs')" class="income-search fr">确定</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li ms-click="toggleList()">
+                        <span>收入项目</span>
+                        <i></i>
+                        <div class="income-list">
+                            <dl>
+                                <dd ms-click="selectListValue(el)" ms-class-income-seleted="el.isChecked" ms-repeat="inAcs">
+                                    <b></b>
+                                    <label>{{el.name}}</label>
+                                </dd>
+                            </dl>
+                            <div class="income-list-bar">
+                                <b ms-click="selectAllValue('inAcs')"></b>
+                                <label ms-click="selectAllValue('inAcs')">全选</label>
+                                <a ms-click="searchBtn('inAcs')" class="income-search fr">确定</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li ms-click="toggleList()">
+                        <span>支出项目</span>
+                        <i></i>
+                        <div class="income-list">
+                            <dl>
+                                <dd ms-click="selectListValue(el)" ms-class-income-seleted="el.isChecked" ms-repeat="outAcs">
+                                    <b></b>
+                                    <label>{{el.name}}</label>
+                                </dd>
+                            </dl>
+                            <div class="income-list-bar">
+                                <b ms-click="selectAllValue('outAcs')"></b>
+                                <label ms-click="selectAllValue('outAcs')">全选</label>
+                                <a ms-click="searchBtn('outAcs')" class="income-search fr">确定</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li ms-click="toggleList()">
+                        <span>操作人</span>
+                        <i></i>
+                        <div class="income-list">
+                            <dl>
+                                <dd ms-click="selectListValue(el)" ms-class-income-seleted="el.isChecked" ms-repeat="operates">
+                                    <b></b>
+                                    <label>{{el.userCode}}({{el.name}})</label>
+                                </dd>
+                            </dl>
+                            <div class="income-list-bar">
+                                <b ms-click="selectAllValue('operates')"></b>
+                                <label ms-click="selectAllValue('operates')">全选</label>
+                                <a ms-click="searchBtn('operates')" class="income-search fr">确定</a>
+                            </div>
+                        </div>
+                    </li>
+                    <li style="width:24%;">
+                        <div class="time-list-box" style="margin-left: 0">
+                            <div class="time-cover big-box" ms-click="openIncomeTimeBox()" style="margin: 0 auto">
+                                <i></i>{{formatTime(data.from,true)}}&nbsp;&nbsp;到&nbsp;&nbsp;{{formatTime(data.to,true)}}
+                            </div>
+                            <div class="time-select" style="top: 47px;right: 143px;">
+                                <input id="income_from" ms-duplex="tempTime.from" type="text" placeholder="开始时间"
+                                       class="select-time">
+                                到
+                                <input id="income_to" ms-duplex="tempTime.to" type="text" placeholder="结束时间"
+                                       class="select-time"></br>
+                                <button class="btn-sure" ms-click="searchIncome">确定</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="account-book-head finance-nav-head" style="overflow: inherit">
+        <div>
+            <h1 class="income-title">收支流水表（{{formatTime(data.from,true)}} 到 {{formatTime(data.to,true)}} ）<a
+                    ms-click="exportExcelByJs('excelTable')" class="button_yuding fr">导出excel</a></h1>
+            <div class="income-part2">
+                <div class="income-part2-l">
+                    <ul>
+                        <li></li>
+                        <li>收入</li>
+                        <li>支出</li>
+                        <li>结余</li>
+                    </ul>
+                    <ul>
+                        <li>合计</li>
+                        <li class="back-yellow">¥<strong>{{reportTotal.in}}</strong></li>
+                        <li class="back-yellow">¥<strong>{{reportTotal.out}}</strong></li>
+                        <li class="back-yellow">¥<strong>{{reportTotal.remain}}</strong></li>
+                    </ul>
+                </div>
+                <!--表格打印区，不显示-->
+                <table id="excelTable" class="table table-bordered table-hover"
+                       style="visibility: hidden;position: absolute;">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>合计</th>
+                        <th ms-repeat="reportItems">{{el}}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>收入</td>
+                        <td>¥{{reportTotal.in}}</td>
+                        <td ms-repeat="reportsData">{{el.in||'-'}}</td>
+                    </tr>
+                    <tr>
+                        <td>支出</td>
+                        <td>¥{{reportTotal.out}}</td>
+                        <td ms-repeat="reportsData">{{el.out||'-'}}</td>
+                    </tr>
+                    <tr>
+                        <td>结余</td>
+                        <td>¥{{reportTotal.remain}}</td>
+                        <td ms-repeat="reportsData">{{el.remain||'-'}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <!--表格显示-->
+
+                <div class="income-part2-r">
+                    <table ms-visible="reportItems.length!=0" style="border-left: 0;" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th ms-repeat="reportItems">{{el}}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td ms-repeat="reportsData">{{el.in||'-'}}</td>
+                        </tr>
+                        <tr>
+                            <td ms-repeat="reportsData">{{el.out||'-'}}</td>
+                        </tr>
+                        <tr>
+                            <td ms-repeat="reportsData">{{el.remain||'-'}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <table ms-visible="reportItems.length==0" class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th>暂无支付方式，请刷新再试</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="income-part3">
+                <h4 class="income-part3-title">
+                    <span ms-click="changeSubTab('orderDetail')" ms-class-on="tab.orderDetail">订单收支明细</span>
+                    <span ms-click="changeSubTab('costList')" ms-class-on="tab.costList">记一笔收支明细</span>
+                    <label ms-click="changeSelect()" ms-visible="tab.costList"
+                           ms-class-income-seleted="costListShowDel">
+                        <i></i>显示已删除的记录
+                    </label>
+                    <a ms-click="exportOrderDetail()" class="button_yuding fr">导出excel</a>
+                </h4>
+                <table ms-visible="tab.orderDetail" class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th style="width:200px">记录时间</th>
+                        <th>操作人</th>
+                        <th>房间号</th>
+                        <th>客人姓名</th>
+                        <th>收支项目</th>
+                        <th>支付方式</th>
+                        <th>收入</th>
+                        <th>支出</th>
+                        <th>订单详情</th>
+                    </tr>
+                    </thead>
+                    <tbody ms-repeat-el="orderList" ms-if="orderList.length>0">
+                    <tr ms-repeat-item="el.bops">
+                        <td>{{item.recordAt}}</td>
+                        <td>{{item.recordUser}}</td>
+                        <td ms-if-loop="$index==0" ms-attr-rowspan="el.bops.length">{{el.roomNos}}</td>
+                        <td ms-if-loop="$index==0" ms-attr-rowspan="el.bops.length">{{el.consumer}}</td>
+                        <td>{{item.item}}</td>
+                        <td>{{item.payChannelName||getPayNameById(item.payChannelId)}}</td>
+                        <td class="tb-bg-fd">{{item.type==1?'¥'+item.fee:'-'}}</td>
+                        <td class="tb-bg-fd">{{item.type==2?'¥'+item.fee:'-'}}</td>
+                        <td ms-if-loop="$index==0" ms-attr-rowspan="el.bops.length"><a
+                                ms-click="getInfosByCode(el.uniqueCode,'room')" class="income-edit">查看订单</a></td>
+                    </tr>
+                    </tbody>
+                    <tbody ms-if="orderList.length==0">
+                    <td colspan="9">暂无明细</td>
+                    </tbody>
+                </table>
+                <table ms-visible="tab.costList" class="table table-bordered table-hover">
+                    <thead>
+                    <tr>
+                        <th style="width:200px">记录时间</th>
+                        <th>操作人</th>
+                        <th>收支项目</th>
+                        <th>备注</th>
+                        <th>支付方式</th>
+                        <th>收入</th>
+                        <th>支出</th>
+                        <th style="width:200px">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ms-if="notesList.length==0">
+                        <td colspan="8">暂无明细</td>
+                    </tr>
+
+                    <!--删除 财务的是3，账本的是0-->
+
+                    <tr ms-class-delete-line="(el.accountBookId==-1&&el.status==3) || (el.accountBookId!=-1&&el.status==0)"
+                        ms-repeat="notesList" ms-if="notesList.length>0">
+                        <td>{{el.recordAt}}</td>
+                        <td>{{el.recordUser}}</td>
+                        <td>{{el.item}}</td>
+                        <td>{{el.note}}</td>
+                        <td>{{el.payChannelName||getPayNameById(el.payChannelId)}}</td>
+                        <td class="color-green tb-bg-fd">{{el.type==1?'¥'+el.fee:'-'}}</td>
+                        <td class="color-red tb-bg-fd">{{el.type==2?'¥'+el.fee:'-'}}</td>
+                        <td><a class="income-edit" ms-visible="!(el.accountBookId==-1&&el.status==3) && !(el.accountBookId!=-1&&el.status==0)" ms-click="openSpentWindow(el)">修改</a><a
+                                class="income-edit" ms-click="openCostRecord(el)">修改记录</a>
+                            <i class="iconfont icon-minus ui-item-del"
+                                ms-visible="!(el.accountBookId==-1&&el.status==3) && !(el.accountBookId!=-1&&el.status==0)"
+                                ms-click="removeNoteBook(el)"></i></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="page-div"></div>
+
+        </div>
+    </div>
+</div>

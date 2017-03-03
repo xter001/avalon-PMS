@@ -1,0 +1,926 @@
+var __timer__,
+    funcs = {},
+    AJAX_TIME_OUT = 10000,
+// ajax请求超时时间
+    INTERVAL_TIME = 30000 // 询间隔时间30秒
+
+var CONST = require('../../../common/js/const.js')
+var CellUtil = require('../../js/room/roomcell-util.js')
+var Controller = require('../../js/control.js')
+var MainOrderUtil = require('../../js/order/main-order-util.js')
+var User = require('../../../header/user.js')
+
+var vm_bottombar = avalon.define({
+    $id : 'vm_bottombar',
+    init : function () {
+        vm_bottombar.start()
+        //获取房型以及对应房间号
+        vm_bottombar.initGetOrders()
+    },
+    hasNewOrders : false,
+    hasClosed : false,   //是否第一次弹出
+    ordersList : {
+        autoConfirmAutoBook : [],  //1、needConfirm=false && autobook = true  自动 自动   重要通知
+        autoConfirmHandleBook : [],  //2、needConfirm=false && autobook = false  自动 手动
+        HandleConfirmAutoBook : [],  //3、needConfirm=true && autobook = true  手动 自动
+        HandleConfirmHandleBook : [],  //4、needConfirm=true && autobook = false 手动 手动
+    },
+    newOrderList : {},
+    handleOrder : {},
+    selectArr : [],//当前下拉房间号
+    alertListNum : [0, 0, 0],
+    refuseId : '',
+    roomList : [],
+    selectRoom : [],
+    commonAdviceHandle : [],
+    commonAdviceNotice : [],
+//    3：全部满房；4：到店时间过晚；5：价格不符；6：需要担保；7：特殊要求无法满足；8：重复订单；9：其他原因；20：酒店装修/停业；24：部分满房
+    refuseReasonList : {
+        list : [
+            '请选择拒单原因',
+            '全部满房',
+            '到店时间过晚',
+            '价格不符',
+            '需要担保',
+            '特殊要求无法满足',
+            '重复订单',
+            '其他原因',
+            '酒店装修/停业',
+            '部分满房'
+        ],
+        id : [0, 3, 4, 5, 6, 7, 8, 9, 20, 24],
+        selected : 0
+    },
+    beforeXY : {
+        bottom : '53px',
+        left : ''
+    },
+    bool : {
+        refuse : false,
+        handleFf : false,
+        successJd : false,
+        popup : [true, false, false]
+    },
+    getRooms : function (item) {
+        var roomIds = []
+        item.orders.forEach(function (el, i) {
+            el.roomIds ? roomIds.push(el.roomIds.split(',')) : ""
+        })
+        if (roomIds.length > 0) {
+            roomIds = vm_bottombar.arrayqc(roomIds)
+            roomIds = roomIds.join(',')
+        } else {
+            roomIds = 0
+        }
+        tmsky.ui.dialog.loading()
+        var url = '/index/bookValidRoom/' + roomIds + '/' + item.checkInAt + '/' + item.checkOutAt
+        if (item.operateType == 2 && !tmsky.isEmpty(item.fqOrderNo)) {
+            url += '/' + item.fqOrderNo
+        }
+        $.get(url)
+            .done(function (data) {
+                tmsky.ui.dialog.loading.close()
+                if (data.status === 200) {
+                    var newRooms = []
+                    var select = []
+                    data.bookValidRoomInfos.forEach(function (el2, i2) {
+                        el2.rooms.forEach(function (el3, i3) {
+                            el3.roomIndex = i3
+                            el3.roomTypeName = el2.name
+                            el3.roomTypeIndex = i2
+                            newRooms.push(el3)
+                        })
+                    })
+                    if (newRooms.length == 0) {
+                        //没有可分房间
+                        vm_bottombar.selectRoom = [
+                            {
+                                data : [],
+                                room : "没有可分房间",
+                                roomIndex : "0",
+                                type : "没有可分房间",
+                                typeIndex : "0",
+                            }
+                        ]
+                        vm_bottombar.roomList = []
+                        return false
+                    }
+                    vm_bottombar.roomList = data.bookValidRoomInfos
+                    for (var i = 0; i <= Number(item.roomTypeNum) - 1; i++) {
+                        var typeIndex = newRooms[i].roomTypeIndex
+                        var json = {
+                            type : newRooms[i].roomTypeName,
+                            room : newRooms[i].name,
+                            typeIndex : typeIndex,
+                            roomIndex : newRooms[i].roomIndex,
+                            date : [item.checkInAt, item.checkOutAt]
+                        }
+                        select.push(json)
+                    }
+                    vm_bottombar.selectRoom = select
+                    vm_bottombar.shiningGridSelect()
+                }
+            })
+            .error(function () {
+                tmsky.ui.dialog.loading.close()
+                tmsky.ui.dialog.alert('查询房间失败，请检查网络情况！');
+            })
+    },
+    changearr : function (el) {
+        if (vm_bottombar.roomList.length != 0) {
+            vm_bottombar.selectArr = vm_bottombar.roomList.$model[el.typeIndex].rooms
+        }
+    },
+    shiningGridSelect : function () {
+        var select = vm_bottombar.selectRoom.$model
+        var groupRelative = []  //分组一一对应关系 日期-房号
+        select.forEach(function (el, i) {
+            var nowNo = tmsky.date.getDatePeriod(el.date[0], el.date[1], 'd')
+            if (nowNo == 1) {
+                var json = {
+                    date : el.date[0],
+                    roomno : el.room,
+                    //roomId : el.rooms[el.roomIndex].id
+                }
+                groupRelative.push(json)
+            } else {
+                for (var i = 0; i < nowNo; i++) {
+                    var json = {
+                        date : tmsky.date.plusDate(el.date[0], i, 'd', 'yyyy-MM-dd'),
+                        roomno : el.room,
+                        //roomId : el.rooms[el.roomIndex].id
+                    }
+                    groupRelative.push(json)
+                }
+            }
+
+        })
+        $('.shingGrid').remove()
+        groupRelative.forEach(function (el, i) {
+            $('#roomcell_grid td div[roomno=' + el.roomno + ']').filter('div[date=' + el.date + ']').parent('td').append('<div class="shingGrid"></div>')
+        })
+        /*滚动到第一个选定的位置*/
+        if ($('.shingGrid').length > 0) {
+            $('.content-box-grid').scrollTop(
+                $('.shingGrid:first').offset().top - $('.content-box-grid').offset().top + $('.content-box-grid').scrollTop()
+            );
+            $('.shingGrid').delay(500).stop().fadeOut(800, function () {
+                $('.shingGrid').fadeIn(500, function () {
+                    $('.shingGrid').fadeOut(800, function () {
+                        $('.shingGrid').fadeIn(500, function () {
+                            $('.shingGrid').fadeOut(800, function () {
+                                $('.shingGrid').remove()
+                            })
+                        })
+                    })
+                })
+            })
+        }
+    },
+    gopopup : function (index) {
+        var json = [false, false, false]
+        json[index] = true
+        vm_bottombar.bool.popup = json
+        vm_bottombar.reset()
+        $('.listPart').show()
+        vm_bottombar.ordersList = vm_bottombar.newOrderList.$model
+        $('.shingGrid').hide()
+    },
+    reset : function () {
+        vm_bottombar.bool.handleFf = vm_bottombar.bool.successJd = false
+        $('.listPart').show()
+    },
+    //打开拒绝下拉框界面
+    openRefuse : function (el) {
+        //只有去哪儿才有拒单
+        vm_bottombar.refuseId = el.id
+        if (el.otaId == 107) {
+            vm_bottombar.bool.refuse = true
+        } else {
+            //拒绝
+            vm_bottombar.bool.refuse = false
+            if (vm_bottombar.refuseId != '') {
+                vm_bottombar.ajaxOperateReceiveOrder('refuse', vm_bottombar.refuseId)
+            }
+        }
+    },
+    //确定拒绝
+    sureRefuse : function () {
+        if (vm_bottombar.refuseReasonList.selected == 0)return
+        vm_bottombar.bool.refuse = false
+        if (vm_bottombar.refuseId != '') {
+            var refuseType = vm_bottombar.refuseReasonList.selected
+            refuseType = vm_bottombar.refuseReasonList.id[refuseType]
+            vm_bottombar.ajaxOperateReceiveOrder('refuse', vm_bottombar.refuseId, refuseType)
+        }
+    },
+    updateHouse : function () {
+        var self = Controller,
+            date = $("#datepicker").datepicker("getDate")
+        date = tmsky.date.format(date, "yyyy-MM-dd")
+        date = tmsky.date.plusDate(date, -3, 'd', 'yyyy-MM-dd')
+        Controller.router.cleanEditor(true)
+        $('#date_range').html(date.substr(5))
+        CellUtil.updateRoomGrid(CONST.VIEW_DAYS, date)
+        MainOrderUtil.clear()
+        self.renderRoomStatus(date)
+        self.renderLockAndPrice(date)
+        $('.shingGrid').hide()
+    },
+    //稍后分房
+    laterFf : function (type) {
+        vm_bottombar.ordersList = vm_bottombar.newOrderList.$model
+        $('.listPart').show()
+        vm_bottombar.bool.handleFf = false
+        $('.shingGrid').hide()
+    },
+    //开始手动分房
+    openFf : function (type, item) {
+        if (type == 'handle') {
+            //手动分房
+            var that = $(this)
+            var okfn = function () {
+                vm_bottombar.bool.successJd = true
+                vm_bottombar.bool.handleFf = true
+                $('.listPart').hide()
+                that.parents('.listPart').show()
+                vm_bottombar.getRooms(item)
+            }
+            vm_bottombar.ajaxOperateReceiveOrder('confirm', item.id, '', '', okfn)
+        } else if (type == 'auto') {
+            //自动分房
+            vm_bottombar.bool.successJd = true
+            // vm_bottombar.getRooms(item)
+            vm_bottombar.sureFf(item)
+        } else if (type == 'later') {
+            //待分房中点击分房
+            // vm_bottombar.bool.successJd = true
+            vm_bottombar.bool.handleFf = true
+            $('.listPart').hide()
+            $(this).parents('.listPart').show()
+            vm_bottombar.getRooms(item)
+        }
+    },
+    //确认手动分房
+    sureFf : function (item) {
+        var okfn = function () {
+            vm_bottombar.updateHouse()
+        }
+        var select = vm_bottombar.selectRoom
+        var list = vm_bottombar.roomList.$model
+        var roomIds = []
+        var selectIndex = []
+        var count = 0
+        if (select.length != 0) {
+            /*判断是否有相同的房间*/
+            select.forEach(function (el, i) {
+                var json = {
+                    type : el.typeIndex,
+                    room : el.roomIndex
+                }
+                selectIndex.push(json)
+                roomIds.push(list[el.typeIndex].rooms[el.roomIndex].id)
+            })
+            roomIds = roomIds.join(',')
+
+            for (var i = 0; i < selectIndex.length; i++) {
+                if (i > 0) {
+                    if (selectIndex[i].type == selectIndex[i - 1].type && selectIndex[i].room == selectIndex[i - 1].room) {
+                        count++
+                    }
+                }
+            }
+        } else {
+            roomIds = ''
+        }
+        if (count > 0 && vm_bottombar.bool.handleFf == true) {
+            tmsky.ui.dialog.alert('不能选择相同的房间！');
+            return
+        }
+        if (item.autoBook == true && item.needConfirm == true) {
+            vm_bottombar.ajaxOperateReceiveOrder('confirm', item.id, '', roomIds, okfn, 'handleConfirmAutoBook')
+            return false
+        }
+        vm_bottombar.ajaxOperateReceiveOrder('book', item.id, '', roomIds, okfn)
+    },
+    closeRefuse : function () {
+        vm_bottombar.bool.refuse = false
+        vm_bottombar.resetRefuse()
+    },
+    closeTips : function () {
+        vm_bottombar.bool.successJd = false
+    },
+    barOpen : function () {
+        $('.house-message').removeClass('on').css('bottom', vm_bottombar.beforeXY.bottom)
+        if (vm_bottombar.beforeXY.left != '') {
+            $('.house-message').removeClass('on').css('left', vm_bottombar.beforeXY.left)
+        }
+        //每次打开前判断选项卡 123顺序
+        var nowLists = vm_bottombar.ordersList
+        //if (vm_bottombar.returnBoolArr0(nowLists.HandleConfirmAutoBook, nowLists.HandleConfirmHandleBook, nowLists.autoConfirmHandleBook)) {
+        //    vm_bottombar.bool.popup = [false, true, false]
+        //}
+        if (vm_bottombar.returnBoolArr0(vm_bottombar.commonAdviceHandle, nowLists.HandleConfirmAutoBook, nowLists.HandleConfirmHandleBook, nowLists.autoConfirmHandleBook)) {
+            vm_bottombar.bool.popup = [false, false, true]
+        }
+        if (vm_bottombar.returnBoolArr0(vm_bottombar.commonAdviceNotice, vm_bottombar.commonAdviceHandle, nowLists.HandleConfirmAutoBook, nowLists.HandleConfirmHandleBook, nowLists.autoConfirmHandleBook, nowLists.autoConfirmAutoBook)) {
+            vm_bottombar.bool.popup = [true, false, false]
+        }
+        $('.shingGrid').hide()
+    },
+    barClose : function () {
+        var w = $(window).width()
+        vm_bottombar.reset()
+        vm_bottombar.bool.popup = [true, false, false]
+        vm_bottombar.beforeXY.bottom = $('.house-message').css('bottom')
+        vm_bottombar.beforeXY.left = $('.house-message').css('left')
+        if ($('.house-message').css('left') == 'auto' && $('.house-message').css('bottom') == '53px') {
+            $('.house-message').removeClass('no').addClass('on').css('bottom', '-320px')
+        } else {
+            $('.house-message').removeClass('no').addClass('on').css('bottom', '-320px').css('left', w - 50)
+        }
+        $('.shingGrid').hide()
+    },
+    changeType : function (el) {
+        var list = vm_bottombar.roomList
+        el.type = list[el.typeIndex].name
+        el.roomIndex = 0
+        el.room = list[el.typeIndex].rooms[0].name
+        vm_bottombar.shiningGridSelect()
+    },
+    changeRoom : function (el, index) {
+        var list = vm_bottombar.roomList
+        el.roomIndex = index
+        el.type = list[el.typeIndex].name
+        el.room = vm_bottombar.selectArr.$model[index].name
+        vm_bottombar.shiningGridSelect()
+    },
+    /*重要通知*/
+    //客栈提醒
+    remind_alert : function (data) {
+        if (data.status == 200) {
+            var remind = data.innRemind;
+            if (remind) {
+                var sMsg = '提醒：[' + remind.remindTime + ']\r\n[' + remind.content + ']'
+                alert(sMsg)
+            }
+        }
+    },
+    /**
+     * 公用通知
+     */
+    adviseBtnAjax : function (el, btn, type) {
+        //判断是跳转url还是调接口
+        var typeHandle = btn.target
+        var list = []
+        if (type == 'a') {
+            list = vm_bottombar.commonAdviceNotice
+        } else {
+            list = vm_bottombar.commonAdviceHandle
+        }
+        if (typeHandle == '_API') {
+            //调接口
+            var url = btn.url.replace('{msgId}', el.id)
+            $.ajax({
+                type : "GET",
+                url : url + "?tmp=" + new Date().getMilliseconds(),
+                dataType : 'json',
+                timeout : AJAX_TIME_OUT,
+                success : function (data) {
+                    if (data.status == 200) {
+                        avalon.Array.remove(list, el)
+                        vm_bottombar.getNoReadNo()
+                    } else {
+                        tmsky.ui.alert('删除通知失败！')
+                    }
+                }
+            })
+        } else {
+            var url = btn.url
+            window.open(url, type)
+            $.ajax({
+                type : "GET",
+                url : '/common/advice/read/' + el.id + "?tmp=" + new Date().getMilliseconds(),
+                dataType : 'json',
+                success : function (data) {
+                    if (data.status == 200) {
+                        //删除advice订单
+                        avalon.Array.remove(list, el)
+                        vm_bottombar.getNoReadNo()
+                    } else {
+                        tmsky.ui.alert('全部已读删除失败！')
+                    }
+                }
+            })
+        }
+    },
+    common_advice : function (data) {
+        var commonAdviceHandle = [], commonAdviceNotice = []
+        data.forEach(function (el, i) {
+            if (el.needDeal) {
+                commonAdviceHandle.push(el)
+            } else {
+                commonAdviceNotice.push(el)
+            }
+        })
+        vm_bottombar.commonAdviceHandle = commonAdviceHandle
+        vm_bottombar.commonAdviceNotice = commonAdviceNotice
+
+        avalon.ready(function () {
+            $('.commonadvice').each(function () {
+                var that = $(this)
+                var id = $(this).attr('data-id')
+                data.forEach(function (el, i) {
+                    if (el.id == id) {
+                        that.find('h4').html(el.content)
+                    }
+                })
+            })
+        })
+
+    }
+    ,
+// 获取所有重要通知
+    initGetOrders : function () {
+        $.ajax({
+            type : "GET",
+            url : "/inns/all/poll?tmp=" + new Date().getMilliseconds(),
+            dataType : 'json',
+            timeout : AJAX_TIME_OUT,
+            success : function (data) {
+                //客栈提醒
+                if (data.innRemind) {
+                    vm_bottombar.remind_alert(data)
+                }
+
+                if (data.commonAdvices) {
+                    vm_bottombar.common_advice(data.commonAdvices)
+                }
+
+
+                //直连订单
+                if (!data.receiveOmsOrders) {
+                    vm_bottombar.ordersList = {
+                        autoConfirmAutoBook : [],
+                        autoConfirmHandleBook : [],
+                        HandleConfirmAutoBook : [],
+                        HandleConfirmHandleBook : []
+                    }
+                    vm_bottombar.newOrderList = {
+                        autoConfirmAutoBook : [],
+                        autoConfirmHandleBook : [],
+                        HandleConfirmAutoBook : [],
+                        HandleConfirmHandleBook : []
+                    }
+                    vm_bottombar.reset()
+                    if (!data.commonAdvices) {
+                        vm_bottombar.alertListNum = [0, 0, 0]
+                        vm_bottombar.hasNewOrders = false
+                        return false
+                    }
+                }
+
+
+                if (data.status == 200) {
+                    //commonAdvices
+                    var commonAdvice = data.commonAdvices
+                    //receiveOmsOrders
+                    data = data.receiveOmsOrders
+                    if (data.length != 0) {
+                        vm_bottombar.receiveHandle(data)
+                    }
+                    vm_bottombar.getNoReadNo()
+                    //如果有任意一条消息，则弹出右下角
+                    if (data.length != 0 || commonAdvice.length != 0) {
+                        if (parseInt($('.house-message').css('bottom')) <= 0) {
+                            vm_bottombar.ordersList = vm_bottombar.newOrderList.$model
+                            if (vm_bottombar.hasClosed == false) {  //第一次加载的时候有消息则弹出  之后则有新订单再弹出
+                                vm_bottombar.barOpen()
+                                vm_bottombar.hasClosed = true
+                            }
+                        }
+                        vm_bottombar.hasNewOrders = true
+                    }
+                    //alert("")新订单提醒  此次轮循只要有alert:false则弹出新订单提醒，并把所有新订单的id传值
+                    vm_bottombar.ajaxAlertFirst(data)
+                }
+            }
+        })
+    }
+    ,
+    receiveHandle : function (data) {
+        var autoConfirmAutoBook = data.filter(function (item) {
+            if (item.needConfirm == false && item.autoBook == true) {
+                return true
+            }
+        })
+        //待分房
+        var autoConfirmHandleBook = data.filter(function (item) {
+            if (item.needConfirm == false && item.autoBook == false) {
+                return true
+            }
+        })
+        //待确认
+        var HandleConfirmAutoBook = data.filter(function (item) {
+            if (item.needConfirm == true && item.autoBook == true) {
+                return true
+            }
+        })
+        //待确认
+        var HandleConfirmHandleBook = data.filter(function (item) {
+            if (item.needConfirm == true && item.autoBook == false) {
+                return true
+            }
+        })
+        vm_bottombar.newOrderList = {
+            autoConfirmAutoBook : autoConfirmAutoBook,
+            autoConfirmHandleBook : autoConfirmHandleBook,
+            HandleConfirmAutoBook : HandleConfirmAutoBook,
+            HandleConfirmHandleBook : HandleConfirmHandleBook
+        }
+        //当分房操作块关闭的时候，即时刷新页面
+        if (vm_bottombar.bool.handleFf == false) {
+            vm_bottombar.ordersList = vm_bottombar.newOrderList.$model
+        }
+    },
+    //全部已读
+    allRead : function () {
+        var system = vm_bottombar.ordersList.autoConfirmAutoBook
+        var arr = [], brr = []
+        if (system != undefined) {
+            if (system.length != 0) {
+                system.forEach(function (el, i) {
+                    arr.push(el.id)
+                })
+            }
+        }
+
+        var advices = vm_bottombar.commonAdviceNotice
+        if (advices.length != 0) {
+            advices.forEach(function (el, i) {
+                brr.push(el.id)
+            })
+        }
+
+        var str = arr.concat(brr).join(',')
+        $.ajax({
+            type : "GET",
+            url : '/common/advice/read/' + str + "?tmp=" + new Date().getMilliseconds(),
+            dataType : 'json',
+            success : function (data) {
+                if (data.status == 200) {
+                    //删除advice订单
+                    vm_bottombar.commonAdviceNotice = []
+                    //删除通知订单
+                    arr.forEach(function (el, i) {
+                        vm_bottombar.deleteOrder(el)
+                    })
+
+                    vm_bottombar.getNoReadNo()
+                } else {
+                    tmsky.ui.alert('全部已读删除失败！')
+                }
+            }
+        })
+
+    },
+    ajaxAlertFirst : function (data) {
+        var arr = [],
+            data2 = []
+        data.forEach(function (el, i) {
+            if (el.alert == false) {
+                arr.push(el.id)
+                data2.push(el)
+            }
+        })
+        data = data2[0]
+        arr = arr.join(',')
+        if (arr.length == 0)return
+        vm_bottombar.barOpen()
+        var autoBook = data.autoBook,
+            needConfirm = data.needConfirm
+        if (autoBook == false && needConfirm == true) {
+            //手动分房手动确认
+            audioRemind('daixiao.mp3');
+            setTimeout(function () {
+                alert("您有来自" + data.channelName + "的订单“等待确认”！\r\n请及时在系统右下角【消息中心】进行处理。");
+                audioRemind('stop');
+            }, 1000)
+
+        } else if (autoBook == true && needConfirm == true) {
+            //手动分房手动确认
+            audioRemind('daixiao.mp3');
+            setTimeout(function () {
+                alert("您有来自" + data.channelName + "的订单“等待确认”！\r\n请及时在系统右下角【消息中心】进行处理。");
+                audioRemind('stop');
+            }, 1000)
+        } else if (autoBook == false && needConfirm == false) {
+
+            audioRemind('daixiao.mp3');
+            setTimeout(function () {
+                alert("您有来自" + data.channelName + "的订单“等待分房”！\r\n请及时在系统右下角【消息中心】进行处理。");
+                audioRemind('stop');
+            }, 1000)
+        } else if (autoBook == true && needConfirm == false && data.operateType == 3 && (data.cancelStatus == null || data.cancelStatus == 0)) {
+            //客人取消订单
+            alert("客人取消订单成功！\r\n取消订单详情请在系统右下角【消息中心】查看。");
+        } else if (autoBook == true && needConfirm == false && data.operateType != 3) {
+            audioRemind('daixiao.mp3');
+            setTimeout(function () {
+                alert("您有来自" + data.channelName + "的新订单！\r\n订单详情请在系统右下角【消息中心】查看。");
+                audioRemind('stop');
+            }, 1000)
+
+        } else if (data.operateType == 3 && (data.cancelStatus == 1 || data.cancelStatus == 2)) {
+            //申请反馈
+            alert("您发起的信用住订单取消申请，申请成功！\r\n详情请在系统右下角【消息中心】查看。");
+        } else if (data.operateType == 3 && data.cancelStatus == 3) {
+            //申请反馈
+            alert("您发起的信用住订单取消申请，申请失败！\r\n详情请在系统右下角【消息中心】查看。");
+        }
+        //operateType = 3 and cancelStatus = 1/2 的时候  申请成功
+        //operateType = 3 and cancelStatus = 3 的时候  申请失败
+        vm_bottombar.ajaxOperateReceiveOrder('alert', arr)
+    }
+    ,
+    ajaxOperateReceiveOrder : function (operateType, imsId, refuseType, roomIds, okfn, type) {
+        var json = {
+            operateType : operateType,
+            imsId : imsId
+        }
+        if (refuseType != '' && refuseType != undefined) {
+            json.refuseType = refuseType
+        }
+        if (roomIds != '' && roomIds != undefined) {
+            json.roomIds = roomIds
+        }
+        $.ajax({
+            type : "POST",
+            url : "/ims/operateReceiveOrder",
+            dataType : 'json',
+            data : json,
+            success : function (data) {
+                if (data.status == 200) {
+                    switch (operateType) {
+                        case 'book':
+                            vm_bottombar.bool.handleFf = false
+                            vm_bottombar.deleteOrder(imsId)
+                            tmsky.ui.dialog.tips('分房成功！', 'success')
+                            break
+                        case 'refuse':
+                            vm_bottombar.bool.handleFf = false
+                            vm_bottombar.deleteOrder(imsId)
+                            vm_bottombar.resetRefuse()
+                            tmsky.ui.dialog.tips('拒绝成功！', 'success')
+                            break
+                        case 'remove':
+                            vm_bottombar.bool.handleFf = false
+                            vm_bottombar.deleteOrder(imsId)
+                            break
+                        case 'confirm':
+                            vm_bottombar.bool.handleFf = false
+                            vm_bottombar.initGetOrders()
+                            vm_bottombar.start()
+                            if (!tmsky.isEmpty(type) && type == 'handleConfirmAutoBook') {
+                                tmsky.ui.dialog.tips('确认并分房成功！', 'success')
+                            } else {
+                                //if(vm_bottombar.roomList.length==0){
+                                //    tmsky.ui.dialog.alert('没有可分房间，不能分房！');
+                                //    return false
+                                //}
+                                tmsky.ui.dialog.tips('确认成功！', 'success')
+                            }
+                            break
+                    }
+                    if (typeof okfn === 'function') {
+                        okfn()
+                    }
+                } else {
+                    if (operateType != 'alert') {
+                        tmsky.ui.dialog.tips(data.message, 'error')
+                    }
+                    vm_bottombar.bool.successJd = false
+                }
+                if (data.status != 200 && operateType != 'alert') {
+                    //401是该订单已经分房  刷新
+                    vm_bottombar.bool.handleFf = false
+                    vm_bottombar.deleteOrder(imsId)
+                    vm_bottombar.start()
+                    vm_bottombar.initGetOrders()
+                }
+            },
+            error : function (data) {
+                tmsky.ui.dialog.tips('网络错误', 'error')
+            }
+        })
+    }
+    ,
+    /*工具函数*/
+
+// 开始轮询
+    start : function (interval) {
+        interval = interval || INTERVAL_TIME
+        vm_bottombar.end()
+        __timer__ = setInterval(vm_bottombar.initGetOrders, interval)
+    }
+    ,
+    resetRefuse : function () {
+        vm_bottombar.bool.refuse = false
+        vm_bottombar.refuseReasonList = {
+            list : [
+                '请选择拒单原因',
+                '全部满房',
+                '到店时间过晚',
+                '价格不符',
+                '需要担保',
+                '特殊要求无法满足',
+                '重复订单',
+                '其他原因',
+                '酒店装修/停业',
+                '部分满房'
+            ],
+            id : [0, 3, 4, 5, 6, 7, 8, 9, 20, 24],
+            selected : 0
+        }
+    }
+    ,
+// 停止轮询
+    end : function () {
+        __timer__ && clearInterval(__timer__)
+        __timer__ = null
+    }
+    ,
+//计算菜单上的未读数字
+    getNoReadNo : function () {
+        var list = vm_bottombar.newOrderList.$model
+        var alertListNum = [0, 0, 0]
+        if (!vm_bottombar.returnBoolArr0(list.HandleConfirmAutoBook, list.HandleConfirmHandleBook, list.autoConfirmAutoBook, list.autoConfirmHandleBook)) {
+            list.autoConfirmAutoBook.forEach(function (item, i) {
+                alertListNum[2]++
+            })
+            list.autoConfirmHandleBook.forEach(function (item, i) {
+                alertListNum[1]++
+            })
+            list.HandleConfirmAutoBook.forEach(function (item, i) {
+                alertListNum[0]++
+            })
+            list.HandleConfirmHandleBook.forEach(function (item, i) {
+                alertListNum[0]++
+            })
+        }
+        var listAdvice1 = vm_bottombar.commonAdviceHandle,
+            listAdvice2 = vm_bottombar.commonAdviceNotice
+        listAdvice1.forEach(function (item, i) {
+            alertListNum[0]++
+        })
+        listAdvice2.forEach(function (item, i) {
+            alertListNum[2]++
+        })
+        vm_bottombar.alertListNum = alertListNum
+    }
+    ,
+//详情打开当前订单
+    openDetailOrder : function (id, date, operateType) {
+        if (operateType == 1 || operateType == 2) {
+            Controller.LinkMainOrder(id, date)
+        }
+    }
+    ,
+    getShortDate : function (date) {  //展示月日
+        if (date) {
+            return date.slice(5, 10)
+        }
+    }
+    ,
+    getPayTypeName : function (payType) {
+        if (payType == 1) {
+            return '预付'
+        } else if (payType == 2) {
+            return '现付'
+        } else if (payType == 3) {
+            return '信用住'
+        }
+    }
+    ,
+    getOperateTypeName : function (type, operateType, cancelStatus) {
+        if (type == 'type') {
+            if (operateType == 1) {
+                return '新订订单'
+            } else if (operateType == 3 && (cancelStatus == null || cancelStatus == 0)) {
+                return '取消订单'
+            } else if (operateType == 3 && cancelStatus != null && cancelStatus != 0) {
+                return '申请反馈'
+            } else if (operateType == 2) {
+                return '变更订单'
+            }
+        } else {
+            if (operateType == 1) {
+                return '预定成功'
+            } else if (operateType == 3 && (cancelStatus == null || cancelStatus == 0)) {
+                return '订单取消成功'
+            } else if (operateType == 3 && (cancelStatus == 1 || cancelStatus == 2)) {
+                return '订单申请取消成功'
+            } else if (operateType == 3 && cancelStatus == 3) {
+                return '订单申请取消失败'
+            }
+        }
+    }
+    ,
+//判断传入的数组是否长度都为0，为0则返回true &&
+    returnBoolArr0 : function () {
+        var length = 0
+        for (var i = 0; i < arguments.length; i++) {
+            if (!tmsky.isEmpty(arguments[i])) {
+                length += arguments[i].length
+            }
+        }
+        if (length == 0) {
+            return true
+        } else {
+            return false
+        }
+    }
+    ,
+//数组去重
+    arrayqc : function (arr) {
+        var n = {}, r = []; //n为hash表，r为临时数组
+        for (var i = 0; i < arr.length; i++) //遍历当前数组
+        {
+            if (!n[arr[i]]) //如果hash表中没有当前项
+            {
+                n[arr[i]] = true; //存入hash表
+                r.push(arr[i]); //把当前数组的当前项push到临时数组里面
+            }
+        }
+        return r;
+    }
+    ,
+//模型删除orderList中的某一条
+    deleteOrder : function (id) {
+        var count = 0
+        //如果newOrderList中没有id，证明是轮训后删除后的最新数据。直接赋值
+        //如果newOrderList中有Id，证明是老数据，将newOrderList中id所在数据删除后赋值给ordersList
+        var list = vm_bottombar.newOrderList.$model
+        list.autoConfirmAutoBook.forEach(function (el, i) {
+            if (el.id == id) {
+                count++
+                avalon.Array.removeAt(list.autoConfirmAutoBook, i)
+            }
+        })
+        list.autoConfirmHandleBook.forEach(function (el, i) {
+            if (el.id == id) {
+                count++
+                avalon.Array.removeAt(list.autoConfirmHandleBook, i)
+            }
+        })
+        list.HandleConfirmAutoBook.forEach(function (el, i) {
+            if (el.id == id) {
+                count++
+                avalon.Array.removeAt(list.HandleConfirmAutoBook, i)
+            }
+        })
+        list.HandleConfirmHandleBook.forEach(function (el, i) {
+            if (el.id == id) {
+                count++
+                avalon.Array.removeAt(list.HandleConfirmHandleBook, i)
+            }
+        })
+        //if (count > 0) {
+        //    //有Id
+        //    vm_bottombar.newOrderList = list
+        //}
+        vm_bottombar.ordersList = list
+        vm_bottombar.newOrderList = list
+        vm_bottombar.getNoReadNo()
+
+        if (vm_bottombar.returnBoolArr0(list.HandleConfirmAutoBook, list.HandleConfirmHandleBook, list.autoConfirmHandleBook, list.autoConfirmAutoBook)) {
+            vm_bottombar.hasNewOrders = false
+        }
+    },
+    //bd
+    bdInfo : {},
+    bdOpen : function () {
+        var json = {
+            pmsInnId : User.getUserInfo().innId,
+        }
+        $.ajax({
+            type : "POST",
+            url : CONST.DOMAIN.CRM + "/api/pms/getBDInfo",
+            dataType : 'json',
+            data : json,
+            success : function (data) {
+                $('.bdcover,.bdmanage').show();
+                if (data.status == 200 && !tmsky.isEmpty(data.data)) {
+                    vm_bottombar.bdInfo = data.data
+                }
+            },
+            error : function (data) {
+                $('.bdcover,.bdmanage').show();
+                //tmsky.ui.dialog.tips('网络错误', 'error')
+            }
+        })
+    },
+    bdClose : function () {
+        $('.bdcover,.bdmanage').hide();
+    }
+})

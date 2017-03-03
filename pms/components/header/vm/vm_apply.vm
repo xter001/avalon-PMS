@@ -1,0 +1,135 @@
+var USER = require('../../header/user.js')
+var COMMON_CONST = require('../../common/js/const.js')
+var vm_apply = avalon.define({
+    $id : 'vm_apply',
+    isApply : false,
+    newUser : false,
+    applying : false,
+    innName : USER.getUserInfo().innName,
+    currentInn : USER.getCurrentInn(),
+    areaList : [],
+    area : {
+        regInland : true,
+        regOverseas : false
+    },
+    applyInfo : {
+        regionId : '',
+        address : ''
+    },
+
+    init : function () {
+        var vm = vm_apply
+        if (vm.currentInn.level == 1 && vm.currentInn.applyAt == null) {//新手版
+            vm.newUser = true
+            vm.applying = false
+        } else if (vm.currentInn.level == 1 && vm.currentInn.applyAt != null) {
+            vm.newUser = false
+            vm.applying = true
+        }
+
+    },
+    //申请弹窗
+    applyPopup : function () {
+        if (vm_apply.applying == true) {
+            return
+        }
+        var arr = []
+        //获取所有地区
+        var url = '/registe/regions?t=' + new Date().getTime();
+        $.get(url).done(function (rs) {
+            if (rs.status == 200) {
+                rs.regions.forEach(function (x, i) {
+                    arr.push(x)
+                })
+                vm_apply.areaList = arr
+            } else {
+                tmsky.ui.dialog.tips(rs.message, 'error');
+            }
+        });
+    },
+    regCheckArea : function (type) {
+        var vm = vm_apply
+        if (type == 'regInland') {
+            vm.area.regInland = true
+            vm.area.regOverseas = false
+        } else if (type == 'regOverseas') {
+            vm.area.regInland = false
+            vm.area.regOverseas = true
+        }
+    },
+    isToApply : function () {
+        var vm = vm_apply
+        //国内
+        if (vm.area.regInland) {
+            if (vm.applyInfo.regionId != '' && vm.applyInfo.address != '') {
+                vm.isApply = true
+            } else {
+                vm.isApply = false
+            }
+        } else {//国外
+            if (vm.applyInfo.address != '') {
+                vm.isApply = true
+            } else {
+                vm.isApply = false
+            }
+        }
+    },
+    sendApply : function () {
+        var vm = vm_apply, datas = {},
+            url = '/refactor/sendApply?innId=' + USER.getUserInfo().innId
+        if (!vm.isApply) {
+            return
+        }
+        if (vm.area.regInland) {
+            datas = {
+                address : vm.applyInfo.address,
+                regionId : vm.applyInfo.regionId
+            }
+        } else {
+            datas = {
+                address : vm.applyInfo.address,
+                rmk : 'overseas'
+            }
+        }
+        tmsky.ui.dialog.loading()
+        $.get(url, $.param(datas, true)).done(function (rs) {
+            tmsky.ui.dialog.loading.close()
+            if (rs.status == 200) {
+                vm.newUser = false
+                vm.applying = true
+                $('#applyLevel').text('审核中')
+                vm.strogeInnApplyStatus(USER.getUserInfo().innId)
+                if(tmsky.getVm('vm_functions')) {
+                    tmsky.getVm('vm_functions').accountState='审核中'
+                }
+
+            } else {
+                tmsky.ui.dialog.errorTips(rs.message)
+            }
+
+        })
+    },
+    /**
+     * 保存客栈们的申请状态
+     * @param innId
+     */
+    strogeInnApplyStatus : function (innId) {
+        if (!localStorage) return
+
+        var curStatus = JSON.parse(localStorage.getItem("inn_account_status")) || []
+
+        var index = -1;
+        for (var i = 0, l = curStatus.length; i < l; i++) {
+            if (curStatus[i].innId == innId) {
+                curStatus[i].status = COMMON_CONST.INN_ACCOUNT_STATUS.UNDER_REVIEW
+                index = i
+            }
+        }
+
+        if (index === -1) {
+            curStatus.push({status : COMMON_CONST.INN_ACCOUNT_STATUS.UNDER_REVIEW, innId : USER.getUserInfo().innId})
+        }
+        localStorage.setItem("inn_account_status", JSON.stringify(curStatus))
+    }
+})
+
